@@ -4,3 +4,7 @@ node_modules
 !.env.example
 .git
 docs/screenshots
+.vercel
+coverage
+*.log
+tests

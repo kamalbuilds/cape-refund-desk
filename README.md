@@ -1,6 +1,16 @@
 # CAPE Refund Desk
 
-**The pre-flight check before an irreversible CAPE upload.** Powered by NVIDIA Nemotron on Nebius Token Factory.
+**The pre-flight check before an irreversible CAPE upload.**
+
+| | |
+|---|---|
+| **Models** | **NVIDIA Nemotron**: `Nemotron-3-Ultra-550b-a55b` reasons, explains and ranks; `Nemotron-3_5-Lightning` normalizes messy entry rows fast |
+| **Inference** | **Nebius Token Factory** (OpenAI-compatible API) |
+| **Hosting** | **Nebius Serverless AI** (container endpoint, `./deploy.sh`) |
+| **Rule-watch** | CBP's live IEEPA refunds page vs a July capture, confirmed by Tavily Extract |
+| **Money** | Deterministic integer cents only. Models never produce a dollar figure |
+
+Built for the Nebius Global AI Hackathon, Best Apps and Agents track.
 
 > Prepared for licensed customs broker review. **Not legal or customs advice. Verify with your licensed customs broker.**
 > Uses realistic sample entries unless you upload your own. Not affiliated with or endorsed by U.S. Customs and Border Protection.
@@ -20,14 +30,14 @@ It never asks for ACE credentials, bank details or an EIN. It does not file anyt
    - **Lightning** (`nvidia/Nemotron-3_5-Lightning`, thinking off): normalizes every entry's messy columns and broker notes. Output is cross-checked against the deterministic parser on 9 fields per entry; the deterministic value wins and disagreements are shown in the receipt.
    - **Ultra** (`nvidia/Nemotron-3-Ultra-550b-a55b`, reasoning on): explains and ranks the entries that need judgment and writes the portfolio note. A guard replaces any `$` amount that is not in the deterministic packet; citations are filtered to valid ids.
 7. **Export**: CAPE CSV (one column of 11-character entry numbers, apostrophe for leading zeros, split at 9,999 entries per declaration), a broker handoff note (.md) and a deadline CSV. Downloads sit behind an acknowledgement that the declaration is irreversible.
-8. **Rule-watch**: diffs CBP's live IEEPA refunds page against a stored snapshot of an archived capture (Internet Archive, 2026-07-11). With `TAVILY_API_KEY` the live side is fetched with Tavily Extract and compared with a Tavily Extract of the same archived capture (same extractor on both sides, page body only); without a key it fetches cbp.gov directly. If neither works it says so and shows the snapshot only. Nothing is simulated.
+8. **Rule-watch**: fetches CBP's IEEPA refunds page directly and diffs it, paragraph by paragraph, against a stored capture of the same page from 2026-07-11. Tavily Extract (`TAVILY_API_KEY`) reads the live page independently and the panel reports how many changes it confirms. If the direct fetch fails, Tavily alone is compared against a Tavily capture; if both fail, the last recorded real check is shown and labelled as recorded. Each change is quoted, with a note on whether it touches the engine. Nothing is simulated.
 9. **Receipt**: models, call counts, tokens, estimated cost, latency, normalization agreement and the Token Factory completion ids for the run.
 
 ## Privacy
 
 - "Check in this browser (no upload)" runs the whole deterministic check client side; the file never leaves the page.
 - Live runs send the CSV to this server, which forwards entry data to Token Factory and keeps nothing (no database, no accounts, no logs of file content).
-- Sample data is synthetic: `data/sample-es003.csv`, 67 made-up entries shaped like ES-003 + ES-701 with seeded traps (duplicates, a 10-character entry, wrong filer code, 80/81-day edge, leading zeros, framework-agreement entries, underpaid duty, recon-flagged, drawback, suspension, IOR with debt).
+- Sample data is synthetic: `data/sample-es003.csv`, 69 made-up entries shaped like ES-003 + ES-701 with seeded traps (duplicates, a 10-character entry, wrong filer code, 80/81-day edge, leading zeros, framework-agreement entries, underpaid duty, recon-flagged, drawback, suspension, IOR with debt, a bonded-warehouse entry type 21 that CBP now rejects, and the warehouse withdrawal type 31 that it accepts).
 
 ## CBP sources the checks mirror
 
@@ -35,6 +45,7 @@ It never asks for ACE credentials, bank details or an EIN. It does not file anyt
 - ACE Portal QRG "CAPE Declarations and Error Definitions", Pub. 5552-0526 (May 2026)
 - CAPE Trade User Information Notice, Pub# 1009-1119 (updated July 10, 2026)
 - CSMS # 69056483, Update to Entry-Level Validations for CAPE Declarations
+- CSMS # 69127837, CAPE for IEEPA Refunds - Warehouse Entries (07/02/2026): entry types 21/22 are rejected since 2026-07-07
 
 URLs are in `src/lib/cbp-rules.ts`, where every CBP error string is copied verbatim. Rules change: use the rule-watch panel and your broker.
 
@@ -53,13 +64,13 @@ npm run smoke                   # probe the Token Factory endpoints
 
 ## Deploy
 
-Next.js standalone output; a `Dockerfile` is included. Set `NEBIUS_API_KEY` (and optionally `TAVILY_API_KEY`) as platform secrets, never in the image or the repo. `data/` is traced into the build. Endpoint findings: `docs/token-factory-findings.md`.
+Next.js standalone output in a Docker image (linux/amd64, port 8080, non-root, no secrets inside). Primary target is **Nebius Serverless AI** next to Token Factory: `./deploy.sh` pushes to Nebius Container Registry and creates a public CPU endpoint (`cpu-d3`, `4vcpu-16gb`). `NEBIUS_API_KEY` and `TAVILY_API_KEY` are passed to the endpoint at create time (or via MysteryBox secrets), never baked in. Exact steps for Nebius Serverless, Vercel, Railway, Fly, Render and Hugging Face Spaces are in [`docs/DEPLOY.md`](docs/DEPLOY.md). Endpoint findings: `docs/token-factory-findings.md`.
 
 ## Layout
 
 ```
 src/lib/        cbp-rules, parse, validate, money, dates, export, nebius client, pipeline, rulewatch, browser-board
-src/app/api/    run (NDJSON stream), sample (recorded run), rulewatch
+src/app/api/    run (NDJSON stream), sample (recorded run), rulewatch, health
 src/components/ Desk.tsx (the board)
 scripts/        gen-sample, precompute, smoke, build-snapshot, build-tavily-snapshot
 data/           sample CSV, recorded run, CBP snapshots
