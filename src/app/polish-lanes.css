@@ -1,2 +1,78 @@
 @layer components {
+  html body .tab {
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+  }
+
+  html body .tab::after {
+    display: none;
+  }
+
+  html body .tab:hover {
+    border-color: #a1a1aa;
+    opacity: 1;
+  }
+
+  html body .tab[aria-selected="true"] {
+    border-color: #18181b;
+    box-shadow: 0 0 0 1px #18181b;
+  }
+
+  html body .tab.dim {
+    opacity: 0.55;
+  }
+
+  html body .tab.dim:hover {
+    opacity: 0.55;
+    border-color: #a1a1aa;
+  }
+
+  html body .tab .tab-dot {
+    background: var(--tone);
+    box-shadow: none;
+  }
+
+  html body .tab .lane-t {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #18181b;
+  }
+
+  html body .tab .lane-n {
+    font-family: var(--mono);
+    font-size: 30px;
+    line-height: 1.1;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--tone-ink);
+  }
+
+  html body .tab .lane-u {
+    color: #52525b;
+  }
+
+  html body .tab .tab-m {
+    color: #52525b;
+  }
+
+  html body .tab .tab-m b {
+    color: #18181b;
+    font-weight: 600;
+  }
+
+  html body .tab .tab-m b.neg {
+    color: #18181b;
+  }
+
+  html body .tab .tab-s {
+    color: #52525b;
+  }
 }
