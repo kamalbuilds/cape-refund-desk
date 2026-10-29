@@ -98,8 +98,8 @@ describe("file-level limits and CSV export", () => {
     expect(f.bytes).toBeLessThan(LIMITS.maxFileBytes);
   });
   it("splits into declarations of at most 9,999 entries", () => {
-    const fake = Array.from({ length: 10050 }, (_, i) => ({ ...pf.verdicts[0], key: "A7K" + String(i).padStart(8, "0"), csvValue: "A7K" + String(i).padStart(8, "0"), order: i }));
-    const files = buildCapeFiles(fake, new Set(fake.map((v) => v.key + "#" + v.order)));
+    const fake = Array.from({ length: 10050 }, (_, i) => ({ ...pf.verdicts[0], key: "A7K" + String(i).padStart(8, "0"), csvValue: "A7K" + String(i).padStart(8, "0"), order: i, id: "x" + i }));
+    const files = buildCapeFiles(fake, new Set(fake.map((v) => v.id)));
     expect(files.map((f) => f.count)).toEqual([9999, 51]);
   });
   it("handoff note and deadline list render", () => {

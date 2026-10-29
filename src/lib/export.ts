@@ -17,7 +17,7 @@ export interface CapeFile { name: string; content: string; count: number; bytes:
  * Chunked into several files if more than 9,999 are selected.
  */
 export function buildCapeFiles(verdicts: Verdict[], include: Set<string>): CapeFile[] {
-  const chosen = verdicts.filter((v) => include.has(v.key + "#" + v.order));
+  const chosen = verdicts.filter((v) => include.has(v.id));
   const files: CapeFile[] = [];
   for (let i = 0, n = 1; i < chosen.length || (i === 0 && n === 1); i += LIMITS.maxEntriesPerDeclaration, n++) {
     const slice = chosen.slice(i, i + LIMITS.maxEntriesPerDeclaration);
@@ -33,7 +33,7 @@ export function buildCapeFiles(verdicts: Verdict[], include: Set<string>): CapeF
 }
 
 export function defaultInclude(p: Portfolio): Set<string> {
-  return new Set(p.verdicts.filter((v) => v.lane === "FILE_NOW").map((v) => v.key + "#" + v.order));
+  return new Set(p.verdicts.filter((v) => v.lane === "FILE_NOW").map((v) => v.id));
 }
 
 export function deadlineCsv(p: Portfolio): string {
@@ -53,7 +53,7 @@ export function deadlineCsv(p: Portfolio): string {
 }
 
 export function handoffNote(p: Portfolio, asOf: string, include: Set<string>): string {
-  const inc = p.verdicts.filter((v) => include.has(v.key + "#" + v.order));
+  const inc = p.verdicts.filter((v) => include.has(v.id));
   const sum = (f: (v: Verdict) => number) => inc.reduce((s, v) => s + f(v), 0);
   const L: string[] = [];
   L.push(`# CAPE pre-flight note for broker review (as of ${asOf})`);

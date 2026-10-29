@@ -85,6 +85,8 @@ export const EXPECTED_HEADERS = [
   "non_ieepa_underpaid_usd", "framework_group",
 ];
 
+const LINE_COLS = new Set(["line_no","hts_number","country_of_origin","ieepa_indicator","ieepa_hts","entered_value","col1_rate_pct","general_duty","ieepa_duty","sec232_duty","sec301_duty","sec201_duty","ch99_goods_value","hts_valid","hts_relationship_ok","non_ieepa_underpaid_usd","framework_group"]);
+
 export function parseEs003(csvText: string): ParseResult {
   const table = parseCsv(csvText);
   const issues: string[] = [];
@@ -138,6 +140,7 @@ export function parseEs003(csvText: string): ParseResult {
         iorOpenDebtCents: toCents(g.ior_open_debt_usd),
         notes: g.broker_note ?? "",
         lines: [],
+        raw: Object.fromEntries(Object.entries(g).filter(([k]) => !LINE_COLS.has(k))),
         parseNotes,
       };
       slot = { entry, lineNos: new Set() };

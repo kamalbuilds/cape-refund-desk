@@ -48,6 +48,8 @@ export interface Entry {
   iorOpenDebtCents: number;
   notes: string;
   lines: Line[];
+  /** entry-level raw cell text, as uploaded (fed to Lightning for normalization) */
+  raw: Record<string, string>;
   /** parse-time observations (e.g. date reformatted) */
   parseNotes: string[];
 }
@@ -87,6 +89,8 @@ export interface Deadlines {
 }
 
 export interface Verdict {
+  id: string; // `${key}#${order}`
+  entryIdx: number; // index into the parsed entries array
   ior: string;
   key: string; // normalized 11-char entry number (or best effort)
   displayNumber: string;

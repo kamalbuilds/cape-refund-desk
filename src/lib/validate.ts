@@ -137,7 +137,7 @@ export function findingsFor(entry: Entry, key: string, opts: ValidationOptions, 
 
 export function validateEntries(entries: Entry[], opts: ValidationOptions): Portfolio {
   const seen = new Map<string, number>();
-  const prelim = entries.map((entry) => {
+  const prelim = entries.map((entry, idx) => {
     const key = normalizeEntryNumber(entry.entryNumberRaw);
     const n = seen.get(key) ?? 0;
     seen.set(key, n + 1);
@@ -147,9 +147,9 @@ export function validateEntries(entries: Entry[], opts: ValidationOptions): Port
     let lane: Lane;
     if (findings.some((x) => x.disposition === "block")) lane = "BLOCKED";
     else if (findings.some((x) => x.disposition === "wait")) lane = "WAIT";
-    else if (money.netCents < 0 || money.thinMargin) lane = "NET_BILL_RISK";
+    else if (money.netCents < 0 || money.underpaidOtherCents > 0) lane = "NET_BILL_RISK";
     else lane = "FILE_NOW";
-    return { entry, key, deadlines, findings, money, lane };
+    return { entry, idx, key, deadlines, findings, money, lane };
   });
 
   // ---- steps and ordering ----
@@ -180,6 +180,8 @@ export function validateEntries(entries: Entry[], opts: ValidationOptions): Port
     const { p } = w;
     const leadingZero = p.key.startsWith("0");
     return {
+      id: `${p.key}#${i + 1}`,
+      entryIdx: p.idx,
       ior: p.entry.ior,
       key: p.key,
       displayNumber: p.key.length === 11 ? `${p.key.slice(0, 3)}-${p.key.slice(3, 10)}-${p.key.slice(10)}` : p.entry.entryNumberRaw,
