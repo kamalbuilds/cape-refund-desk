@@ -12,7 +12,7 @@ import { LANES, laneOf } from "@/lib/lanes-ui";
 import Stage from "./Stage";
 import { CountInt, CountMoney, Reveal, TwistCard, Words } from "./motion";
 import Waterfall from "./Waterfall";
-import { AlertTriangle, Download } from "lucide-react";
+import { AlertTriangle, Download, FileText, Play, X } from "lucide-react";
 import { BTN_PRIMARY, BTN_SECONDARY, BTN_TERTIARY, Id } from "./ui";
 
 type Board = Omit<RunResult, "receipt" | "explanations" | "portfolioNote">;
@@ -27,10 +27,10 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 /* ---------- small pieces ---------- */
 const Icon = {
-  play: <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><path d="M3 1.5v11l9-5.5z" fill="currentColor" /></svg>,
+  play: <Play size={14} fill="currentColor" aria-hidden />,
   down: <Download size={16} aria-hidden />,
-  file: <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><path d="M3.5 1.5h5l2.5 2.5v8.5h-7.5z M8.5 1.5V4H11" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>,
-  close: <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+  file: <FileText size={14} aria-hidden />,
+  close: <X size={16} aria-hidden />,
 };
 function Mark() {
   return (
@@ -445,11 +445,7 @@ function Export({ board, include, incRefund, incBill, files, ack, setAck }: { bo
   return (
     <div className="panel dock">
       <h2>Your refund file</h2>
-      <div className="kpis">
-        <div className="kpi"><b>{include.size}</b><span>shipments selected</span></div>
-        <div className="kpi"><b>{money(incRefund)}</b><span>estimated refund, before interest</span></div>
-        <div className="kpi"><b className={incBill > 0 ? "neg" : ""}>{incBill > 0 ? money(incBill) : "$0.00"}</b><span>possible bills in this selection</span></div>
-      </div>
+      <p className="text-sm text-zinc-600 mb-4"><b className="font-medium text-zinc-900">{include.size}</b> shipments selected. Estimated refund before interest <Id>{money(incRefund)}</Id>.{incBill > 0 && <> Possible bills in this selection <Id className="text-red-700!">{money(incBill)}</Id>.</>}</p>
       {heldWait > 0 && <p className="error" style={{ marginBottom: 12 }}>{heldWait} selected shipments need fixing first.</p>}
       <label className="ack"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /><span>I understand that once Customs accepts this file I can't edit it or remove shipments, and that my licensed customs broker will review the list before it is uploaded.</span></label>
       <div className="btns">
@@ -507,8 +503,6 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
           <div className="parts">
             <div><span>Struck-down tariff you paid</span><Id>{money(m.grossIeepaCents)}</Id></div>
             {m.frameworkCarveOutCents > 0 && <div><span>Part that stays owed under a trade deal ({m.frameworkGroups.join("/")})</span><Id>-{money(m.frameworkCarveOutCents)}</Id></div>}
-            <div><span>Refundable tariff</span><Id className="text-zinc-900!">{money(m.ieepaRefundableCents)}</Id></div>
-            {m.underpaidOtherCents > 0 && <div><span>Other duties you underpaid</span><Id className="text-red-700!">-{money(m.underpaidOtherCents)}</Id></div>}
           </div>
         </div>
         <p className="fine">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>
