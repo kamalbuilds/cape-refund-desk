@@ -21,9 +21,9 @@ describe("sample dataset", () => {
     expect(lane("Liquidated early August").lane).toBe("BLOCKED");
     expect(lane("Liquidated early August").findings[0].cbpError).toBe(ENTRY_ERRORS.FINAL_LIQ);
     expect(lane("Protest 2704-26-000123").lane).toBe("WAIT");
-    expect(lane("Type 09 already filed").findings.map((f) => f.cbpError)).toContain(ENTRY_ERRORS.RECON_FILED);
-    expect(lane("TIB entry type 23").findings.map((f) => f.cbpError)).toContain(ENTRY_ERRORS.TYPE_NOT_ALLOWED);
-    expect(lane("301 on line 2 never declared").lane).not.toBe("FILE_NOW");
+    expect(lane("Recon entry already filed").findings.map((f) => f.cbpError)).toContain(ENTRY_ERRORS.RECON_FILED);
+    expect(lane("Temporary import under bond").findings.map((f) => f.cbpError)).toContain(ENTRY_ERRORS.TYPE_NOT_ALLOWED);
+    expect(lane("Importer says 301 was declared on both lines").lane).not.toBe("FILE_NOW");
   });
   it("leading zero gets an apostrophe; csv value is 11 chars + apostrophe", () => {
     const v = lane("Filer code starts with zero");
