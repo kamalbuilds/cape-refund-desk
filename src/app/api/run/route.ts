@@ -1,4 +1,4 @@
-import { hasKey } from "@/lib/nebius";
+import { ModelUnavailableError, hasKey } from "@/lib/nebius";
 import { runPipeline, type RunEvent } from "@/lib/pipeline";
 import fs from "node:fs";
 import path from "node:path";
@@ -16,8 +16,8 @@ let runs = 0;
 export async function POST(req: Request) {
   let body: { csv?: string; sample?: boolean; asOf?: string; filerCodes?: string[] };
   try { body = await req.json(); } catch { return Response.json({ error: "Invalid JSON body." }, { status: 400 }); }
-  if (!hasKey()) return Response.json({ error: "Live runs are disabled on this host (no NEBIUS_API_KEY). Use the recorded run." }, { status: 503 });
-  if (runs >= MAX_RUNS) return Response.json({ error: "Live-run budget for this instance is used up. Use the recorded run." }, { status: 429 });
+  if (!hasKey()) return Response.json({ error: "Live runs are disabled on this host (no NEBIUS_API_KEY). Use the recorded run.", code: "disabled" }, { status: 503 });
+  if (runs >= MAX_RUNS) return Response.json({ error: "Live-run budget for this instance is used up. Use the recorded run.", code: "cap" }, { status: 429 });
 
   let csv = body.csv ?? "";
   let asOf = body.asOf || new Date().toISOString().slice(0, 10);
@@ -46,7 +46,10 @@ export async function POST(req: Request) {
     async start(controller) {
       const send = (e: RunEvent) => controller.enqueue(enc.encode(JSON.stringify(e) + "\n"));
       try { await runPipeline(csv, { asOf, filerCodes, label }, send); }
-      catch (err) { send({ type: "error", message: err instanceof Error ? err.message : "Run failed" }); }
+      catch (err) {
+        if (err instanceof ModelUnavailableError) send({ type: "error", message: err.message, code: err.kind });
+        else send({ type: "error", message: err instanceof Error ? err.message : "Run failed" });
+      }
       controller.close();
     },
   });

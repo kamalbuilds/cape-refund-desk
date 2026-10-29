@@ -32,6 +32,7 @@ export default function Desk() {
   const [stage, setStage] = useState<"idle" | "lightning" | "ultra" | "done">("idle");
   const [mode, setMode] = useState<"" | "replay" | "live" | "browser">("");
   const [err, setErr] = useState("");
+  const [notice, setNotice] = useState<NoticeState | null>(null);
   const [sel, setSel] = useState<string | null>(null);
   const [include, setInclude] = useState<Set<string>>(new Set());
   const [ack, setAck] = useState(false);
@@ -42,7 +43,7 @@ export default function Desk() {
   const [liveOk, setLiveOk] = useState<boolean | null>(null);
   const t0 = useRef(0);
 
-  const reset = () => { setBoard(null); setExpl({}); setPnote(null); setReceipt(null); setProg({ l: [0, 0], u: [0, 0] }); setSel(null); setAck(false); setErr(""); };
+  const reset = () => { setBoard(null); setExpl({}); setPnote(null); setReceipt(null); setProg({ l: [0, 0], u: [0, 0] }); setSel(null); setAck(false); setErr(""); setNotice(null); };
 
   const apply = useCallback((e: RunEvent) => {
     if (e.type === "start") { setStage("lightning"); setProg((p) => ({ ...p, l: [0, e.lightningTotal || e.entries] })); }
@@ -51,8 +52,15 @@ export default function Desk() {
     else if (e.type === "ultra-plan") setProg((p) => ({ ...p, u: [0, e.total] }));
     else if (e.type === "ultra") { setExpl((x) => ({ ...x, [e.id]: e.explanation })); setProg((p) => ({ ...p, u: [e.done, e.total] })); }
     else if (e.type === "portfolio-note") setPnote(e.note);
-    else if (e.type === "done") { setExpl(e.result.explanations); setPnote(e.result.portfolioNote); setReceipt(e.result.receipt); setStage("done"); }
-    else if (e.type === "error") { setErr(e.message); setStage("done"); }
+    else if (e.type === "done") {
+      setExpl(e.result.explanations); setPnote(e.result.portfolioNote); setReceipt(e.result.receipt); setStage("done");
+      const u = e.result.receipt.ultra, l = e.result.receipt.lightning;
+      if (e.result.receipt.mode === "live" && (u.failed > 0 || l.failed > 0) && Object.keys(e.result.explanations).length === 0) setNotice({ kind: "partial", detail: u.firstError ?? l.firstError });
+    }
+    else if (e.type === "error") {
+      if (e.code) { setNotice({ kind: e.code, detail: e.message }); setStage("idle"); setBoard(null); }
+      else { setErr(e.message); setStage("done"); }
+    }
   }, []);
 
   async function replay() {
@@ -74,7 +82,11 @@ export default function Desk() {
     reset(); setMode("live"); t0.current = Date.now();
     try {
       const res = await fetch("/api/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(useSample ? { sample: true } : { csv: csvText, asOf, filerCodes: filer ? [filer] : [] }) });
-      if (!res.ok || !res.body) { const j = await res.json().catch(() => ({})); setErr(j.error ?? `Request failed (${res.status})`); setStage("idle"); return; }
+      if (!res.ok || !res.body) {
+        const j = await res.json().catch(() => ({}));
+        if (j.code) setNotice({ kind: j.code, detail: j.error }); else setErr(j.error ?? `Request failed (${res.status})`);
+        setStage("idle"); return;
+      }
       const rd = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
       for (;;) {
         const { value, done } = await rd.read(); if (done) break;
@@ -166,6 +178,8 @@ export default function Desk() {
           {err && <p className="error">{err}</p>}
         </div>
       </section>
+
+      {notice && <Notice n={notice} replay={replay} canBrowser={!!csvText} inBrowser={inBrowser} />}
 
       {(running || stage === "done") && board === null && stage !== "done" && (
         <Progress prog={prog} stage={stage} />
@@ -359,7 +373,7 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
             <p><b>Broker next step:</b> {ex.brokerAction}</p>
             <p><b>Why this order:</b> {ex.whyThisOrder}</p>
             {ex.citations.length > 0 && <p className="cites">{ex.citations.map((c) => <span className="pill" key={c}>{c}</span>)}</p>}
-            {ex.guardStripped > 0 && <p className="fine">Number guard removed {ex.guardStripped} amount(s) not in the deterministic packet.</p>}
+            {ex.guardStripped > 0 && <p className="fine">Number guard replaced {ex.guardStripped} figure{ex.guardStripped === 1 ? "" : "s"} that did not match the engine.</p>}
             {ex.reasoning && <details><summary>Ultra&apos;s reasoning trace ({ex.ms} ms)</summary><pre>{ex.reasoning}</pre></details>}
           </div>
         )}
@@ -416,6 +430,29 @@ function focus(before: string, after: string): { b: React.ReactNode; a: React.Re
     return <>{f > 0 && "… "}{W.slice(f, p).join(" ")}{" "}<mark className={cls}>{W.slice(p, W.length - q).join(" ")}</mark>{" "}{W.slice(W.length - q, t).join(" ")}{t < W.length && " …"}</>;
   };
   return { b: B.length ? render(B, "del") : null, a: A.length ? render(A, "ins") : null };
+}
+
+type NoticeState = { kind: "credit" | "auth" | "disabled" | "cap" | "partial"; detail?: string };
+const NOTICE: Record<NoticeState["kind"], { title: string; body: string }> = {
+  credit: { title: "Live runs are paused: the model account is out of credit.", body: "Nebius Token Factory answered HTTP 402 (credit balance exhausted), so no model ran. Nothing was charged to you and your file was not stored. The recorded real run shows exactly what a live run returns, completion ids included." },
+  auth: { title: "Live runs are paused: the model key on this host was rejected.", body: "Token Factory refused the host's key (HTTP 401/403), so no model ran. Your file was not stored. The recorded real run shows what a live run returns." },
+  disabled: { title: "Live runs are switched off on this host.", body: "No Token Factory key is configured here. The recorded real run shows what a live run returns." },
+  cap: { title: "This host's live-run budget is used up.", body: "To keep the demo affordable each instance allows a fixed number of live runs. The recorded real run shows what a live run returns." },
+  partial: { title: "The models did not answer, so there are no explanations on this board.", body: "The rule checks and the money below are deterministic and complete. Only the model explanations are missing." },
+};
+function Notice({ n, replay, canBrowser, inBrowser }: { n: NoticeState; replay: () => void; canBrowser: boolean; inBrowser: () => void }) {
+  const t = NOTICE[n.kind];
+  return (
+    <section className="notice" role="alert">
+      <h3>{t.title}</h3>
+      <p>{t.body}</p>
+      <div className="runrow">
+        <button className="btn primary" onClick={replay}>▶ Play the recorded real run</button>
+        {canBrowser && <button className="btn" onClick={inBrowser}>Check my file in this browser (rules only, no models)</button>}
+      </div>
+      {n.detail && <details><summary>What the server said</summary><pre>{n.detail}</pre></details>}
+    </section>
+  );
 }
 
 const IMPACT: Record<number, string> = { 0: "Engine changed", 1: "Checked against the engine, unchanged", 3: "Not modeled by this tool" };

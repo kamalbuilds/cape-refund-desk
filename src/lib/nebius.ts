@@ -43,6 +43,15 @@ export interface ChatOpts {
   timeoutMs?: number;
 }
 
+/** Account-level failures that will not fix themselves mid-run: out of credit (HTTP 402) or a bad key (401/403). */
+export function modelErrorKind(text: string): "credit" | "auth" | null {
+  if (/HTTP 402|insufficient_quota|credit_balance_exhausted/i.test(text)) return "credit";
+  if (/HTTP 40[13]\b/.test(text)) return "auth";
+  return null;
+}
+export class ModelUnavailableError extends Error {
+  constructor(readonly kind: "credit" | "auth", detail: string) { super(detail); this.name = "ModelUnavailableError"; }
+}
 export function hasKey() { return !!process.env.NEBIUS_API_KEY; }
 
 export async function chat(o: ChatOpts): Promise<ChatResult> {

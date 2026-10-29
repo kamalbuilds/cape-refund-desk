@@ -1,7 +1,7 @@
 import { MONEY_RE, figuresFor, guardCounts, guardDays, guardEntryText, portfolioDays } from "./numberguard";
 import { ERROR_DEFINITIONS, FILING_ORDER_RULES, LIMITS, SOURCES } from "./cbp-rules";
 import { fmtUsd } from "./money";
-import { chat, costUsd, hasKey, parseJson, type ChatResult, type ModelKey } from "./nebius";
+import { ModelUnavailableError, chat, costUsd, hasKey, modelErrorKind, parseJson, type ChatResult, type ModelKey } from "./nebius";
 import { normalizeEntryNumber, parseEs003 } from "./parse";
 import { validateEntries, type Portfolio } from "./validate";
 import type { Entry, Verdict } from "./types";
@@ -37,7 +37,7 @@ export type RunEvent =
   | { type: "ultra-plan"; total: number }
   | { type: "ultra"; id: string; done: number; total: number; explanation: Explanation }
   | { type: "portfolio-note"; note: PortfolioNote }
-  | { type: "error"; message: string }
+  | { type: "error"; message: string; code?: "credit" | "auth" }
   | { type: "done"; result: RunResult };
 
 /* ---------- helpers ---------- */
@@ -254,7 +254,9 @@ export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent
   const signals = new Map<number, { signals: string[]; summary: string }>();
   if (live) {
     let done = 0;
+    let fatal: ModelUnavailableError | null = null;
     await pool(entries.map((e, i) => ({ e, i })), o.lightningConcurrency ?? 10, async ({ e, i }) => {
+      if (fatal) return; // out of credit or bad key: stop calling, do not burn through 69 doomed requests
       try {
         const c = await chat({ model: "lightning", thinking: false, json: true, system: LIGHTNING_SYSTEM, user: lightningInput(e), maxTokens: 500 });
         track(lr, "lightning", c);
@@ -265,8 +267,15 @@ export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent
           signals.set(i, { signals: (j.note_signals ?? []).filter((s) => (SIGNALS as readonly string[]).includes(s)), summary: String(j.note_summary ?? "") });
         } else lr.failed++;
         done++; emit({ type: "lightning", done, total: entries.length, lastMs: c.ms });
-      } catch (e) { lr.failed++; lr.firstError ??= errText(e); done++; emit({ type: "lightning", done, total: entries.length, lastMs: 0 }); }
+      } catch (e) {
+        lr.failed++; lr.firstError ??= errText(e); done++;
+        const kind = modelErrorKind(errText(e));
+        if (kind) fatal ??= new ModelUnavailableError(kind, errText(e));
+        emit({ type: "lightning", done, total: entries.length, lastMs: 0 });
+      }
     });
+    // Nothing was explained or normalized. Say so plainly instead of showing a board that looks complete.
+    if (fatal) throw fatal;
   }
 
   // 2. Deterministic validation + money
