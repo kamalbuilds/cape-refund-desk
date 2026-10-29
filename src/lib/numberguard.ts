@@ -119,7 +119,7 @@ export function reguardRun<R extends { portfolio: { verdicts: Verdict[] }; expla
   const byId = new Map(vs.map((v) => [v.id, v]));
   const explanations: Record<string, R["explanations"][string]> = {};
   for (const [id, e] of Object.entries(run.explanations)) {
-    const v = byId.get(id); if (!v) { explanations[id] = e; continue; }
+    const v = byId.get(id); if (!v) { explanations[id] = e as R["explanations"][string]; continue; }
     const f = figuresFor(v); let n = 0;
     const g = (t: string) => { const r = guardEntryText(t, f); n += r.stripped; return r.text; };
     explanations[id] = { ...e, summary: g(e.summary), brokerAction: g(e.brokerAction), whyThisOrder: g(e.whyThisOrder), guardStripped: e.guardStripped + n } as R["explanations"][string];
