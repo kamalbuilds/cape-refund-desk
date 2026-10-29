@@ -1,3 +1,4 @@
+import { MONEY_RE, figuresFor, guardCounts, guardDays, guardEntryText, portfolioDays } from "./numberguard";
 import { ERROR_DEFINITIONS, FILING_ORDER_RULES, LIMITS, SOURCES } from "./cbp-rules";
 import { fmtUsd } from "./money";
 import { chat, costUsd, hasKey, parseJson, type ChatResult, type ModelKey } from "./nebius";
@@ -152,7 +153,7 @@ function entryPacket(v: Verdict, info: EntryInfo) {
   };
 }
 
-const MONEY_RE = /\$\s?-?[\d,]+(?:\.\d+)?/g;
+
 function allowedMoney(text: string): Set<string> {
   const set = new Set<string>();
   for (const m of text.match(MONEY_RE) ?? []) set.add(m.replace(/[\s,$]/g, "").replace(/\.00$/, ""));
@@ -182,9 +183,9 @@ async function explainEntry(v: Verdict, info: EntryInfo, ctx: string, receipt: M
     track(receipt, "ultra", c);
     const j = parseJson<{ summary?: string; broker_action?: string; why_this_order?: string; citations?: string[] }>(c.content);
     if (!j) { receipt.failed++; return null; }
-    const allowed = allowedMoney(packet);
+    const figs = figuresFor(v);
     let stripped = 0;
-    const g = (s?: string) => { const r = guardText(String(s ?? ""), allowed); stripped += r.stripped; return r.text; };
+    const g = (s?: string) => { const r = guardEntryText(String(s ?? ""), figs); stripped += r.stripped; return r.text; };
     return {
       summary: g(j.summary), brokerAction: g(j.broker_action), whyThisOrder: g(j.why_this_order),
       citations: (j.citations ?? []).filter((x) => VALID_CITES.has(x)),
@@ -213,8 +214,9 @@ async function portfolioNote(p: Portfolio, ctx: string, receipt: ModelReceipt): 
     const j = parseJson<{ headline?: string; priorities?: { id: string; reason: string }[]; broker_questions?: string[] }>(c.content);
     if (!j) { receipt.failed++; return null; }
     const allowed = allowedMoney(packet);
+    const dayOk = portfolioDays(top.map((t) => p.verdicts.find((v) => v.id === t.id)!).filter(Boolean));
     let stripped = 0;
-    const g = (s?: string) => { const r = guardText(String(s ?? ""), allowed); stripped += r.stripped; return r.text; };
+    const g = (s?: string) => { const r = guardText(String(s ?? ""), allowed); const d = guardDays(r.text, dayOk); const c = guardCounts(d.text, p.verdicts); stripped += r.stripped + d.stripped + c.stripped; return c.text; };
     const ids = new Set(top.map((t) => t.id));
     return {
       headline: g(j.headline),
