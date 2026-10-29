@@ -1,0 +1,450 @@
+[
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "plain",
+  "http": 200,
+  "ms": 1208,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": true,
+  "reasoning_chars": 176,
+  "usage": {
+   "p": 49,
+   "c": 81,
+   "reasoning": 54
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "json_object",
+  "http": 200,
+  "ms": 726,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": true,
+  "reasoning_chars": 176,
+  "usage": {
+   "p": 49,
+   "c": 81,
+   "reasoning": 54
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "json_schema",
+  "http": 200,
+  "ms": 1838,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 241,
+  "usage": {
+   "p": 49,
+   "c": 91,
+   "reasoning": 68
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "thinking_off_kwargs",
+  "http": 200,
+  "ms": 420,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": false,
+  "reasoning_chars": 0,
+  "usage": {
+   "p": 49,
+   "c": 26,
+   "reasoning": 0
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "reasoning_effort_low",
+  "http": 200,
+  "ms": 814,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": true,
+  "reasoning_chars": 176,
+  "usage": {
+   "p": 49,
+   "c": 81,
+   "reasoning": 54
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "reasoning_effort_high",
+  "http": 200,
+  "ms": 1675,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 241,
+  "usage": {
+   "p": 49,
+   "c": 91,
+   "reasoning": 68
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "json_object_thinking_off",
+  "http": 200,
+  "ms": 423,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": false,
+  "reasoning_chars": 0,
+  "usage": {
+   "p": 49,
+   "c": 26,
+   "reasoning": 0
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "plain",
+  "http": 200,
+  "ms": 1705,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 705,
+  "usage": {
+   "p": 49,
+   "c": 274,
+   "reasoning": 251
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "json_object",
+  "http": 200,
+  "ms": 2008,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 867,
+  "usage": {
+   "p": 49,
+   "c": 331,
+   "reasoning": 308
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "json_schema",
+  "http": 200,
+  "ms": 2051,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 915,
+  "usage": {
+   "p": 49,
+   "c": 340,
+   "reasoning": 317
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "thinking_off_kwargs",
+  "http": 200,
+  "ms": 535,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": false,
+  "reasoning_chars": 0,
+  "usage": {
+   "p": 49,
+   "c": 26,
+   "reasoning": 0
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "reasoning_effort_low",
+  "http": 200,
+  "ms": 1896,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": true,
+  "reasoning_chars": 869,
+  "usage": {
+   "p": 49,
+   "c": 309,
+   "reasoning": 282
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "reasoning_effort_high",
+  "http": 200,
+  "ms": 2130,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 944,
+  "usage": {
+   "p": 49,
+   "c": 342,
+   "reasoning": 319
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "json_object_thinking_off",
+  "http": 200,
+  "ms": 522,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": false,
+  "reasoning_chars": 0,
+  "usage": {
+   "p": 49,
+   "c": 22,
+   "reasoning": 0
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "plain",
+  "http": 200,
+  "ms": 1057,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": true,
+  "reasoning_chars": 202,
+  "usage": {
+   "p": 49,
+   "c": 85,
+   "reasoning": 58
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "json_object",
+  "http": 200,
+  "ms": 497,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": true,
+  "reasoning_chars": 176,
+  "usage": {
+   "p": 49,
+   "c": 81,
+   "reasoning": 54
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "json_schema",
+  "http": 200,
+  "ms": 539,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": true,
+  "reasoning_chars": 202,
+  "usage": {
+   "p": 49,
+   "c": 85,
+   "reasoning": 58
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "thinking_off_kwargs",
+  "http": 200,
+  "ms": 397,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": false,
+  "reasoning_chars": 0,
+  "usage": {
+   "p": 49,
+   "c": 26,
+   "reasoning": 0
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "reasoning_effort_low",
+  "http": 200,
+  "ms": 519,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": true,
+  "reasoning_chars": 202,
+  "usage": {
+   "p": 49,
+   "c": 85,
+   "reasoning": 58
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "reasoning_effort_high",
+  "http": 200,
+  "ms": 518,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": true,
+  "reasoning_chars": 202,
+  "usage": {
+   "p": 49,
+   "c": 85,
+   "reasoning": 58
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "test": "json_object_thinking_off",
+  "http": 200,
+  "ms": 394,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": false,
+  "reasoning_chars": 0,
+  "usage": {
+   "p": 49,
+   "c": 26,
+   "reasoning": 0
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "plain",
+  "http": 200,
+  "ms": 3051,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 861,
+  "usage": {
+   "p": 49,
+   "c": 339,
+   "reasoning": 316
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "json_object",
+  "http": 200,
+  "ms": 2195,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 867,
+  "usage": {
+   "p": 49,
+   "c": 331,
+   "reasoning": 308
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "json_schema",
+  "http": 200,
+  "ms": 2325,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 915,
+  "usage": {
+   "p": 49,
+   "c": 338,
+   "reasoning": 315
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "thinking_off_kwargs",
+  "http": 200,
+  "ms": 945,
+  "content": "{\n  \"entry\": \"0123456789A\",\n  \"ok\": true\n}",
+  "has_reasoning": false,
+  "reasoning_chars": 0,
+  "usage": {
+   "p": 49,
+   "c": 26,
+   "reasoning": 0
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "reasoning_effort_low",
+  "http": 200,
+  "ms": 2200,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 894,
+  "usage": {
+   "p": 49,
+   "c": 331,
+   "reasoning": 308
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "reasoning_effort_high",
+  "http": 200,
+  "ms": 2204,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": true,
+  "reasoning_chars": 732,
+  "usage": {
+   "p": 49,
+   "c": 285,
+   "reasoning": 262
+  },
+  "valid_json": true
+ },
+ {
+  "host": "api.tokenfactory.us-central1.nebius.com/v1",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "test": "json_object_thinking_off",
+  "http": 200,
+  "ms": 623,
+  "content": "{\"entry\": \"0123456789A\", \"ok\": true}",
+  "has_reasoning": false,
+  "reasoning_chars": 0,
+  "usage": {
+   "p": 49,
+   "c": 22,
+   "reasoning": 0
+  },
+  "valid_json": true
+ }
+]
