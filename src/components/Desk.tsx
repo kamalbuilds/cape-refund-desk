@@ -8,16 +8,12 @@ import type { Explanation, PortfolioNote, Receipt, RunEvent, RunResult } from "@
 import type { WatchResult, Change } from "@/lib/rulewatch";
 import type { Lane, Verdict } from "@/lib/types";
 import { PLAIN_FINDING, plainStep, plainTitle, plainVerdict } from "@/lib/plain";
+import { LANES, laneOf } from "@/lib/lanes-ui";
+import Stage from "./Stage";
+import { CountInt, CountMoney, Reveal, TwistCard, Words } from "./motion";
+import Waterfall from "./Waterfall";
 
 type Board = Omit<RunResult, "receipt" | "explanations" | "portfolioNote">;
-type Tone = "go" | "hold" | "decide" | "stop";
-const LANES: { id: Lane; title: string; sub: string; tone: Tone }[] = [
-  { id: "FILE_NOW", title: "Safe to claim", sub: "Customs' checks found nothing wrong. These are ready to include.", tone: "go" },
-  { id: "WAIT", title: "Fix first", sub: "A correction, an open appeal or an error has to be sorted out before these can go in.", tone: "hold" },
-  { id: "NET_BILL_RISK", title: "Your broker decides", sub: "Claiming could cost you more than it refunds. Your customs broker should make this call.", tone: "decide" },
-  { id: "BLOCKED", title: "Leave out", sub: "Customs would reject these. Don't put them in the file.", tone: "stop" },
-];
-const laneOf = (id: Lane) => LANES.find((l) => l.id === id)!;
 const PAGE = 12;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const money = (c: number) => fmtUsd(c);
@@ -36,35 +32,7 @@ const Icon = {
 };
 function Mark() {
   return (
-    <svg className="mark" viewBox="0 0 64 64" aria-hidden><rect width="64" height="64" rx="12" fill="#141414" /><g fill="#fff"><rect x="13" y="22" width="5" height="20" rx="1" /><rect x="22" y="14" width="5" height="36" rx="1" /><rect x="31" y="26" width="5" height="12" rx="1" /><rect x="40" y="14" width="5" height="36" rx="1" /><rect x="49" y="22" width="3" height="20" rx="1" /></g></svg>
-  );
-}
-
-/** Counts up while a streamed run lands the board; renders the final figure immediately otherwise. */
-function Count({ n, animate }: { n: number; animate: boolean }) {
-  const [v, setV] = useState(animate ? 0 : n);
-  useEffect(() => {
-    if (!animate || (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) { setV(n); return; }
-    let raf = 0; const t0 = performance.now();
-    const step = (t: number) => { const k = Math.min(1, (t - t0) / 650); setV(Math.round(n * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(step); };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [n, animate]);
-  return <>{v}</>;
-}
-
-/** One tick per entry, like a barcode on a customs manifest. Ghost while loading, lane-coloured once the board lands. */
-function Manifest({ verdicts, ghost, filled, explained, animate, active, onOpen }: { verdicts: Verdict[]; ghost: number; filled: number; explained: Set<string>; animate: boolean; active?: Lane; onOpen?: (id: string) => void }) {
-  if (verdicts.length === 0) {
-    return <div className="manifest" aria-hidden>{Array.from({ length: ghost }, (_, i) => <span key={i} className={`tick ${i < Math.round(filled * ghost) ? "on" : "ghost"}`} />)}</div>;
-  }
-  const sorted = LANES.flatMap((l) => verdicts.filter((v) => v.lane === l.id));
-  return (
-    <div className="manifest" aria-hidden>
-      {sorted.map((v, i) => (
-        <button key={v.id} tabIndex={-1} className={`tick ${laneOf(v.lane).tone} ${animate ? "sweep" : ""} ${explained.has(v.id) ? "has" : ""} ${active && v.lane !== active ? "dim" : ""}`} style={animate ? { animationDelay: `${i * 12}ms` } : undefined} title={v.displayNumber} onClick={() => onOpen?.(v.id)} />
-      ))}
-    </div>
+    <svg className="mark" viewBox="0 0 64 64" aria-hidden><rect width="64" height="64" rx="16" fill="var(--text)" /><g fill="var(--ground)"><rect x="13" y="22" width="5" height="20" rx="1" /><rect x="22" y="14" width="5" height="36" rx="1" /><rect x="31" y="26" width="5" height="12" rx="1" /><rect x="40" y="14" width="5" height="36" rx="1" /><rect x="49" y="22" width="3" height="20" rx="1" /></g></svg>
   );
 }
 
@@ -80,7 +48,7 @@ export default function Desk() {
   const [err, setErr] = useState("");
   const [notice, setNotice] = useState<NoticeState | null>(null);
   const [sel, setSel] = useState<string | null>(null);
-  const [lane, setLane] = useState<Lane>("FILE_NOW");
+  const [lane, setLane] = useState<Lane | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [include, setInclude] = useState<Set<string>>(new Set());
   const [ack, setAck] = useState(false);
@@ -91,7 +59,7 @@ export default function Desk() {
   const [liveOk, setLiveOk] = useState<boolean | null>(null);
   const t0 = useRef(0);
 
-  const reset = () => { setBoard(null); setExpl({}); setPnote(null); setReceipt(null); setProg({ l: [0, 0], u: [0, 0] }); setTotal(0); setSel(null); setAck(false); setErr(""); setNotice(null); setLane("FILE_NOW"); setExpanded(false); };
+  const reset = () => { setBoard(null); setExpl({}); setPnote(null); setReceipt(null); setProg({ l: [0, 0], u: [0, 0] }); setTotal(0); setSel(null); setAck(false); setErr(""); setNotice(null); setLane(null); setExpanded(false); };
 
   const apply = useCallback((e: RunEvent) => {
     if (e.type === "start") { setStage("lightning"); setTotal(e.entries); setProg((p) => ({ ...p, l: [0, e.lightningTotal || e.entries] })); }
@@ -116,7 +84,8 @@ export default function Desk() {
     const r = (await (await fetch("/api/sample")).json()) as RunResult;
     const n = r.receipt.lightning.calls;
     apply({ type: "start", entries: r.portfolio.verdicts.length, lightningTotal: n });
-    for (let i = 1; i <= n; i++) { apply({ type: "lightning", done: i, total: n, lastMs: 0 }); await sleep(18); }
+    for (let i = 1; i <= n; i++) { apply({ type: "lightning", done: i, total: n, lastMs: 0 }); await sleep(Math.max(18, Math.round(1900 / n))); }
+    await sleep(350);
     const { receipt: _r, explanations, portfolioNote, ...base } = r; void _r;
     apply({ type: "board", result: base });
     const ids = Object.keys(explanations);
@@ -175,16 +144,41 @@ export default function Desk() {
 
   const toggle = (id: string) => setInclude((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const attention = verdicts.filter((v) => v.lane !== "FILE_NOW").length;
-  const laneList = verdicts.filter((v) => v.lane === lane);
-  const laneMeta = laneOf(lane);
+  const laneList = lane ? verdicts.filter((v) => v.lane === lane) : [];
+  const laneMeta = lane ? laneOf(lane) : null;
   const canInclude = lane === "FILE_NOW" || lane === "NET_BILL_RISK";
   const allIn = laneList.length > 0 && laneList.every((v) => include.has(v.id));
   const setLaneInclude = (on: boolean) => setInclude((s) => { const n = new Set(s); laneList.forEach((v) => (on ? n.add(v.id) : n.delete(v.id))); return n; });
   const shown = expanded ? laneList : laneList.slice(0, PAGE);
   const openFirstLane = (id: string) => { const v = verdicts.find((x) => x.id === id); if (v) setLane(v.lane); setSel(id); };
+  const panelRef = useRef<HTMLElement | null>(null);
+  const pickLane = (l: Lane) => {
+    setLane(l); setExpanded(false);
+    setTimeout(() => panelRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }), 60);
+  };
+  const arrived = board ? total : Math.round((prog.l[1] ? prog.l[0] / prog.l[1] : 0) * total);
+  const laneTotals = board ? board.portfolio.lanes : null;
 
   const controls = (
     <RunControls {...{ running, liveOk, csvText, fileName, filer, setFiler, asOf, setAsOf, err, onFile, replay, live, inBrowser }} compact={!!board || running} />
+  );
+
+  const zone = board ? (
+    <div className="zone-in">
+      <h2 className="headline"><b><CountInt n={attention} animate={animate} dur={1000} delay={500} /></b> of {verdicts.length} shipments shouldn&apos;t go in the refund file yet. Here&apos;s why.</h2>
+      {laneTotals && (
+        <p className="answer">
+          You could get back <b><CountMoney cents={laneTotals.FILE_NOW.refundCents} animate={animate} dur={800} delay={300} /></b> on {laneTotals.FILE_NOW.count} safe shipments.{" "}
+          {laneTotals.NET_BILL_RISK.count} {laneTotals.NET_BILL_RISK.count === 1 ? "shipment" : "shipments"} could turn a refund into a bill.
+        </p>
+      )}
+    </div>
+  ) : (
+    <div className="zone-in">
+      <p className="eyebrow"><span className="dot" />Checking the file</p>
+      <h2 className="headline">Sorting {total || 69} shipments into four groups.</h2>
+      <Progress prog={prog} stage={stage} />
+    </div>
   );
 
   return (
@@ -197,42 +191,63 @@ export default function Desk() {
             <p>Check your tariff refund file before you send it.</p>
           </div>
         </div>
-        <div className="powered">Nemotron AI models<br />on Nebius Token Factory</div>
+        <div className="powered"><i className="live-dot" aria-hidden />Nemotron AI models<br />on Nebius Token Factory</div>
       </header>
 
       <div className="irrev" role="alert">
+        <span className="lock" aria-hidden><svg width="16" height="16" viewBox="0 0 16 16"><path d="M4.5 7V5a3.5 3.5 0 017 0v2M3.5 7h9v6.5h-9z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /></svg></span>
         <p><strong>Can&apos;t be undone.</strong> {IRREVERSIBLE_PLAIN}</p>
         <span className="prepared">{PREPARED_FOR_PLAIN}</span>
       </div>
 
       {!board && !running && (
-        <section className="hero">
-          <div>
-            <h2>Check the refund file before you send it.</h2>
-            <p className="lead">
-              US importers are owed money back for tariffs that were struck down. To get it, they upload one file to Customs, and it can&apos;t be undone. One wrong shipment can turn a refund into a bill. <b>This checks the file first.</b>
-            </p>
-            <div className="cta">
-              <button className="btn primary lg" disabled={running} onClick={replay}>{Icon.play} Run the sample <span className="sub">recorded real run</span></button>
-              <button className="btn lg" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls the AI now: allow up to about 3 minutes"}>Run it live</button>
+        <>
+          <section className="hero">
+            <div className="hero-copy">
+              <p className="eyebrow"><span className="dot" />For small importers and their customs brokers</p>
+              <h2 className="display" aria-label="Check the refund file before you send it.">
+                <span className="ln"><Words text="Check the refund file" /></span>
+                <span className="ln"><Words text="before you send it." base={260} /></span>
+              </h2>
+              <p className="lead">
+                US importers are owed money back for tariffs that were struck down. To get it, they upload one file to Customs, and it can&apos;t be undone. One wrong shipment can turn a refund into a bill. <b>This checks the file first.</b>
+              </p>
+              <div className="cta">
+                <button className="btn primary lg" disabled={running} onClick={replay}>{Icon.play} Run the sample <span className="sub">recorded real run</span></button>
+                <button className="btn lg" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls the AI now: allow up to about 3 minutes"}>Run it live</button>
+              </div>
+              <p className="fine">Sample data: made-up shipments, not real trade data. Not legal advice. We never ask for logins or bank details.</p>
             </div>
-            <ol className="how">
-              <li><b>Plain code</b> does all the money math and sorts every shipment. The AI never makes up a number.</li>
-              <li><b>A fast AI</b> (Nemotron Lightning) cleans up messy data.</li>
-              <li><b>A reasoning AI</b> (Nemotron Ultra) explains each tricky case.</li>
-            </ol>
-            <p className="fine">Sample data: made-up shipments, not real trade data. Not legal advice. We never ask for logins or bank details.</p>
-          </div>
-          {controls}
-        </section>
-      )}
+            <TwistCard />
+          </section>
 
-      {!board && !running && (
-        <section className="panel" aria-label="What a run produces">
-          <div className="strip-cap"><span>Each tick is one shipment. A run sorts every shipment into one of four groups.</span></div>
-          <Manifest verdicts={[]} ghost={64} filled={0} explained={explained} animate={false} />
-          <div className="legend"><span className="go"><i />Safe to claim</span><span className="hold"><i />Fix first</span><span className="decide"><i />Your broker decides</span><span className="stop"><i />Leave out</span></div>
-        </section>
+          <Reveal>
+            <section className="bento" aria-label="How it works">
+              <article className="bn bn-a">
+                <span className="bn-n">01</span>
+                <h3>Plain code</h3>
+                <p><b>Plain code</b> does all the money math and sorts every shipment. The AI never makes up a number.</p>
+                <ul className="ledger" aria-hidden>
+                  <li><span>Refundable tariff</span><b>$10,500.00</b></li>
+                  <li><span>Other duties underpaid</span><b className="neg">-$13,125.00</b></li>
+                  <li className="sum"><span>You&apos;d owe Customs</span><b className="neg">-$2,625.00</b></li>
+                </ul>
+              </article>
+              <article className="bn bn-b">
+                <span className="bn-n">02</span>
+                <h3>Fast AI</h3>
+                <p><b>A fast AI</b> (Nemotron Lightning) cleans up messy data.</p>
+              </article>
+              <article className="bn bn-c">
+                <span className="bn-n">03</span>
+                <h3>Reasoning AI</h3>
+                <p><b>A reasoning AI</b> (Nemotron Ultra) explains each tricky case.</p>
+              </article>
+            </section>
+          </Reveal>
+
+          <Reveal>{controls}</Reveal>
+        </>
       )}
 
       {(board || running) && (
@@ -244,65 +259,50 @@ export default function Desk() {
 
       {notice && <Notice n={notice} replay={replay} canBrowser={!!csvText} inBrowser={inBrowser} />}
 
-      {running && board === null && (
-        <section className="panel">
-          <Progress prog={prog} stage={stage} />
-          <div style={{ height: 16 }} />
-          <Manifest verdicts={[]} ghost={Math.max(total, 1)} filled={prog.l[1] ? prog.l[0] / prog.l[1] : 0} explained={explained} animate={false} />
-        </section>
+      {(board || running) && (
+        <>
+          {board && (
+            <div className="datalabel">
+              <span className="tag">{mode === "replay" ? "Recorded run" : mode === "live" ? "Live run" : "Browser-only check"}</span> <span>{/^SYNTHETIC SAMPLE/.test(board.label) ? `Sample data: ${verdicts.length} made-up shipments that look like real Customs exports. Not real trade data. Checked as of ${board.asOf}.` : board.label}</span>
+            </div>
+          )}
+
+          <Stage verdicts={verdicts} count={total || 69} arrived={arrived} lanes={laneTotals} animate={animate} lane={lane} onLane={pickLane} onOpen={openFirstLane} explained={explained} zone={zone} running={running} />
+
+          {board && running && <section className="panel"><Progress prog={prog} stage={stage} /></section>}
+          {board && !lane && <p className="hint">Pick a group above to see its shipments.</p>}
+
+          {board && laneMeta && lane && (
+            <section ref={panelRef} className={`panel lanepanel ${laneMeta.tone}`} role="tabpanel" aria-label={laneMeta.title}>
+              <div className="lanepanel-h">
+                <div>
+                  <h2><span className={`pill ${laneMeta.tone}`}>{laneMeta.title}</span> <span className="muted">{laneList.length} shipments</span></h2>
+                  <p>{laneMeta.sub}</p>
+                </div>
+                {canInclude && laneList.length > 0 && <button className="btn sm" onClick={() => setLaneInclude(!allIn)}>{allIn ? "Take this group out of the file" : "Add this group to the file"}</button>}
+              </div>
+              {laneList.length === 0 ? <p className="empty">No shipments in this group.</p> : (
+                <>
+                  <div className="thead"><span /><span>Shipment</span><span>Importer</span><span>What Customs found</span><span className="r">Time left to claim</span><span className="r">{lane === "NET_BILL_RISK" ? "You'd get or owe" : "Refund"}</span></div>
+                  <ul className="rows" key={lane}>
+                    {shown.map((v, i) => (
+                      <Row key={v.id} v={v} ex={expl[v.id]} i={i} animate checked={include.has(v.id)} canInclude={canInclude} active={sel === v.id} onToggle={() => toggle(v.id)} onOpen={() => setSel(v.id)} />
+                    ))}
+                  </ul>
+                  {laneList.length > PAGE && !expanded && <div className="more-row"><button className="btn" onClick={() => setExpanded(true)}>Show all {laneList.length} shipments</button></div>}
+                </>
+              )}
+            </section>
+          )}
+        </>
       )}
 
       {board && (
         <>
-          <div className="datalabel">
-            <span className="tag">{mode === "replay" ? "Recorded run" : mode === "live" ? "Live run" : "Browser-only check"}</span> <span>{/^SYNTHETIC SAMPLE/.test(board.label) ? `Sample data: ${verdicts.length} made-up shipments that look like real Customs exports. Not real trade data. Checked as of ${board.asOf}.` : board.label}</span>
-          </div>
-
-          {running && <section className="panel"><Progress prog={prog} stage={stage} /></section>}
-
-          <section className="panel summary" aria-label="Board summary">
-            <div className="panel-h">
-              <h2 className="headline"><b>{attention}</b> of {verdicts.length} shipments shouldn&apos;t go in the refund file yet. Here&apos;s why.</h2>
-            </div>
-            <Manifest verdicts={verdicts} ghost={0} filled={1} explained={explained} animate={animate} active={lane} onOpen={openFirstLane} />
-            <div className="tabs" role="tablist" aria-label="Groups">
-              {LANES.map((l) => {
-                const t = board.portfolio.lanes[l.id];
-                return (
-                  <button key={l.id} role="tab" aria-selected={lane === l.id} className={`tab ${l.tone}`} onClick={() => { setLane(l.id); setExpanded(false); }}>
-                    <span className="lane-h"><span className="lane-t">{l.title}</span><span className="lane-n"><Count n={t.count} animate={animate} /></span></span>
-                    <span className="tab-m">{l.id === "NET_BILL_RISK" ? <>{money(t.refundCents)} refund, but up to {money(t.billCents)} in bills</> : <>{money(t.refundCents)} in tariffs paid</>}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="panel lanepanel" role="tabpanel" aria-label={laneMeta.title}>
-            <div className="lanepanel-h">
-              <div>
-                <h2><span className={`pill ${laneMeta.tone}`}>{laneMeta.title}</span> <span className="muted">{laneList.length} shipments</span></h2>
-                <p>{laneMeta.sub}</p>
-              </div>
-              {canInclude && laneList.length > 0 && <button className="btn sm" onClick={() => setLaneInclude(!allIn)}>{allIn ? "Take this group out of the file" : "Add this group to the file"}</button>}
-            </div>
-            {laneList.length === 0 ? <p className="empty">No shipments in this group.</p> : (
-              <>
-                <div className="thead"><span /><span>Shipment</span><span>Importer</span><span>What Customs found</span><span className="r">Time left to claim</span><span className="r">{lane === "NET_BILL_RISK" ? "You&apos;d get or owe" : "Refund"}</span></div>
-                <ul className="rows" key={lane}>
-                  {shown.map((v, i) => (
-                    <Row key={v.id} v={v} ex={expl[v.id]} i={i} animate checked={include.has(v.id)} canInclude={canInclude} active={sel === v.id} onToggle={() => toggle(v.id)} onOpen={() => setSel(v.id)} />
-                  ))}
-                </ul>
-                {laneList.length > PAGE && !expanded && <div className="more-row"><button className="btn" onClick={() => setExpanded(true)}>Show all {laneList.length} shipments</button></div>}
-              </>
-            )}
-          </section>
-
           {pnote && (
-            <section className="panel">
-              <h2>The reasoning AI&apos;s overview <span className="cid">{pnote.completionId}</span></h2>
-              <p className="headline2" style={{ marginTop: 8 }}>{pnote.headline}</p>
+            <section className="panel analyst">
+              <div className="analyst-h"><span className="spark" aria-hidden /><h2>The reasoning AI&apos;s overview</h2><span className="cid">{pnote.completionId}</span></div>
+              <p className="headline2">{pnote.headline}</p>
               <div className="cols">
                 <div>
                   <h3>Look at these first</h3>
@@ -352,12 +352,19 @@ export default function Desk() {
       {!board && <RuleWatch />}
 
       <footer className="foot">
-        <p><b>{DISCLAIMER}</b> Uses made-up sample shipments unless you upload your own. Not affiliated with or endorsed by U.S. Customs and Border Protection (CBP).</p>
-        <p>
-          Checks follow the published rules of the refund program (called CAPE):{" "}
-          {Object.entries(SOURCES).map(([k, s], i) => <span key={k}>{i ? ", " : ""}<a href={s.url} target="_blank" rel="noreferrer">{k}</a></span>)}. MIT licensed.
-        </p>
+        <div className="foot-grid">
+          <p><b>{DISCLAIMER}</b> Uses made-up sample shipments unless you upload your own. Not affiliated with or endorsed by U.S. Customs and Border Protection (CBP).</p>
+          <p>
+            Checks follow the published rules of the refund program (called CAPE):{" "}
+            {Object.entries(SOURCES).map(([k, s], i) => <span key={k}>{i ? ", " : ""}<a href={s.url} target="_blank" rel="noreferrer">{k}</a></span>)}. MIT licensed.
+          </p>
+        </div>
+        <div className="wordmark" aria-hidden>CAPE Refund Desk</div>
       </footer>
+
+      {board && !selV && (
+        <div className="pinbar"><button className="btn primary lg" onClick={() => document.querySelector(".dock")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" })}>Send the safe part to my broker</button></div>
+      )}
 
       {selV && board && <Drawer v={selV} board={board} ex={expl[selV.id]} onClose={() => setSel(null)} included={include.has(selV.id)} onToggle={() => toggle(selV.id)} />}
     </div>
@@ -492,19 +499,21 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
     <div className="drawer-wrap" onClick={onClose}>
       <aside className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Shipment ${v.displayNumber}`}>
         <button ref={closeRef} className="x" onClick={onClose} aria-label="Close">{Icon.close}</button>
-        <div className="d-meta"><span className="mono">{v.ior}</span><span>Order to file: #{v.order}</span></div>
+        <div className="d-meta"><span>Importer <span className="mono">{v.ior}</span></span><span>Number {v.order} in your filing order</span></div>
         <h2>{v.displayNumber}</h2>
         <span className={`pill ${meta.tone}`}>{meta.title}</span>
         <p className="verdict">{plainVerdict(v)}</p>
         <p className="step" title={v.filingStep}>{plainStep(v.filingStep)}</p>
 
-        <div className="netbox">
-          <div className="big"><span>{m.netCents < 0 ? "You'd owe Customs" : "You'd get back"}</span><b className={m.netCents < 0 ? "neg" : ""}>{money(m.netCents)}</b></div>
+        <div className={`story ${m.netCents < 0 ? "bill" : "ok"}`}>
+          <span className="story-l">{m.netCents < 0 ? "You'd owe Customs" : "You'd get back"}</span>
+          <b className="story-n"><CountMoney cents={m.netCents} animate dur={1000} delay={150} /></b>
+          <Waterfall m={m} />
           <div className="parts">
             <div><span>Struck-down tariff you paid</span><span>{money(m.grossIeepaCents)}</span></div>
-            {m.frameworkCarveOutCents > 0 && <div><span>Part that stays owed under a trade deal ({m.frameworkGroups.join("/")})</span><span>−{money(m.frameworkCarveOutCents)}</span></div>}
+            {m.frameworkCarveOutCents > 0 && <div><span>Part that stays owed under a trade deal ({m.frameworkGroups.join("/")})</span><span>-{money(m.frameworkCarveOutCents)}</span></div>}
             <div><span>Refundable tariff</span><b>{money(m.ieepaRefundableCents)}</b></div>
-            {m.underpaidOtherCents > 0 && <div><span>Other duties you underpaid</span><span className="neg">−{money(m.underpaidOtherCents)}</span></div>}
+            {m.underpaidOtherCents > 0 && <div><span>Other duties you underpaid</span><span className="neg">-{money(m.underpaidOtherCents)}</span></div>}
           </div>
         </div>
         <p className="fine">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>
@@ -512,9 +521,10 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
 
         {ex && (
           <div className="sect ultra">
-            <h3>What the reasoning AI says <span className="cid">{ex.completionId}</span></h3>
+            <div className="analyst-h"><span className="spark" aria-hidden /><h3>What the reasoning AI says</h3><span className="cid">{ex.completionId}</span></div>
+            <span className="ai-tag">AI analyst · Nemotron Ultra</span>
             <p>{ex.summary}</p>
-            <p><b>Next step:</b> {ex.brokerAction}</p>
+            <p className="next"><b>Next step:</b> {ex.brokerAction}</p>
             <p><b>Why it sits here:</b> {ex.whyThisOrder}</p>
             {ex.citations.length > 0 && <div className="cites">{ex.citations.map((c) => <span key={c}>{c}</span>)}</div>}
             {ex.guardStripped > 0 && <p className="fine">The number guard removed {ex.guardStripped} figure{ex.guardStripped === 1 ? "" : "s"} that didn't match the code's math.</p>}
