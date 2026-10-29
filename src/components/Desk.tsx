@@ -305,11 +305,12 @@ function Card({ v, ex, checked, canInclude, onToggle, onOpen }: { v: Verdict; ex
       </div>
       <div className="card-mid">
         <span className="amt">{v.lane === "NET_BILL_RISK" ? money(v.money.netCents) : money(v.money.ieepaRefundableCents)}</span>
+        {v.lane === "NET_BILL_RISK" && <span className="ior">net</span>}
         <span className="ior">{v.ior}</span>
         {d.capeDaysLeft !== null && d.capeDaysLeft >= 0 && <span className={`days ${d.capeDaysLeft <= 7 ? "hot" : ""}`}>{d.capeDaysLeft}d left</span>}
         {d.reconDeadlineDaysLeft !== null && v.lane !== "BLOCKED" && <span className="days hot">Recon {d.reconDeadlineDaysLeft}d</span>}
       </div>
-      {f?.cbpError ? <div className="cbp">&ldquo;{f.cbpError}&rdquo;</div> : f ? <div className="cbp soft">{f.detail}</div> : <div className="cbp ok">{v.filingStep}</div>}
+      {f?.cbpError ? <div className="cbp">&ldquo;{f.cbpError}&rdquo;</div> : f ? <div className="cbp soft">{f.detail}</div> : <div className={`cbp ${v.lane === "FILE_NOW" ? "ok" : ""}`}>{v.filingStep}</div>}
       {v.findings.length > 1 && <div className="more">+{v.findings.length - 1} more</div>}
       {v.money.frameworkGroups.length > 0 && <span className="pill">Framework {v.money.frameworkGroups.join("/")}</span>}
       {v.leadingZeroFix && <span className="pill">leading zero: apostrophe added</span>}
