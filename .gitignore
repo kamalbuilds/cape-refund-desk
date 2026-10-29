@@ -6,3 +6,4 @@ node_modules
 next-env.d.ts
 out
 .DS_Store
+.vercel

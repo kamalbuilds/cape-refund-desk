@@ -18,7 +18,7 @@ export interface Explanation {
   guardStripped: number; completionId: string; ms: number;
 }
 export interface PortfolioNote { headline: string; priorities: { id: string; reason: string }[]; brokerQuestions: string[]; guardStripped: number; completionId: string }
-export interface ModelReceipt { model: string; calls: number; failed: number; promptTokens: number; completionTokens: number; reasoningTokens: number; costUsd: number; avgMs: number; ids: string[] }
+export interface ModelReceipt { model: string; calls: number; failed: number; promptTokens: number; completionTokens: number; reasoningTokens: number; costUsd: number; avgMs: number; ids: string[]; firstError?: string }
 export interface Receipt { lightning: ModelReceipt; ultra: ModelReceipt; wallMs: number; host: string; mode: "live" | "replay"; ranAt: string }
 export interface RunResult {
   asOf: string; filerCodes: string[]; label: string; parseIssues: string[];
@@ -46,6 +46,8 @@ async function pool<T>(items: T[], n: number, fn: (t: T, i: number) => Promise<v
     while (next < items.length) { const i = next++; await fn(items[i], i); }
   }));
 }
+/** Short error text for the receipt. Token Factory errors never include the key. */
+const errText = (e: unknown) => String(e instanceof Error ? e.message : e).slice(0, 200);
 const emptyReceipt = (model: string): ModelReceipt => ({ model, calls: 0, failed: 0, promptTokens: 0, completionTokens: 0, reasoningTokens: 0, costUsd: 0, avgMs: 0, ids: [] });
 function track(r: ModelReceipt, key: ModelKey, c: ChatResult) {
   r.calls++; r.promptTokens += c.promptTokens; r.completionTokens += c.completionTokens; r.reasoningTokens += c.reasoningTokens;
@@ -189,7 +191,7 @@ async function explainEntry(v: Verdict, info: EntryInfo, ctx: string, receipt: M
       reasoning: c.reasoning.slice(0, 2500), guardStripped: stripped, completionId: c.id, ms: c.ms,
     };
   } catch (e) {
-    receipt.failed++; void e; return null;
+    receipt.failed++; receipt.firstError ??= errText(e); return null;
   }
 }
 
@@ -220,7 +222,7 @@ async function portfolioNote(p: Portfolio, ctx: string, receipt: ModelReceipt): 
       brokerQuestions: (j.broker_questions ?? []).slice(0, 4).map((x) => g(x)),
       guardStripped: stripped, completionId: c.id,
     };
-  } catch { receipt.failed++; return null; }
+  } catch (e) { receipt.failed++; receipt.firstError ??= errText(e); return null; }
 }
 
 /** Which entries get an Ultra deep-dive: the ones where a broker's decision matters. */
@@ -261,7 +263,7 @@ export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent
           signals.set(i, { signals: (j.note_signals ?? []).filter((s) => (SIGNALS as readonly string[]).includes(s)), summary: String(j.note_summary ?? "") });
         } else lr.failed++;
         done++; emit({ type: "lightning", done, total: entries.length, lastMs: c.ms });
-      } catch { lr.failed++; done++; emit({ type: "lightning", done, total: entries.length, lastMs: 0 }); }
+      } catch (e) { lr.failed++; lr.firstError ??= errText(e); done++; emit({ type: "lightning", done, total: entries.length, lastMs: 0 }); }
     });
   }
 
