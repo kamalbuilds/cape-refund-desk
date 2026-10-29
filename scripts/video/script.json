@@ -1,0 +1,160 @@
+{
+ "beats": [
+  {
+   "id": "B01",
+   "title": "Problem",
+   "sentences": [
+    {
+     "say": "Maya runs a tiny import business, and she is owed tariff refunds by U.S. customs.",
+     "cap": "Maya runs a tiny import business, and she is owed tariff refunds by U.S. customs."
+    },
+    {
+     "say": "To collect, she uploads one file to a customs portal called CAPE.",
+     "cap": "To collect, she uploads one file to a customs portal called CAPE."
+    },
+    {
+     "say": "Once it's accepted, she can't edit it, or pull an entry out.",
+     "cap": "Once it's accepted, she can't edit it or pull an entry out."
+    },
+    {
+     "say": "One wrong line stays.",
+     "cap": "One wrong line stays."
+    }
+   ]
+  },
+  {
+   "id": "B02",
+   "title": "Product",
+   "sentences": [
+    {
+     "say": "Cape Refund Desk checks that file before the upload nobody can undo.",
+     "cap": "CAPE Refund Desk checks that file before the upload nobody can undo."
+    },
+    {
+     "say": "Plain code makes every call. Nemotron models explain them. No model ever touches the money.",
+     "cap": "Plain code makes every call. Nemotron models explain them. No model ever touches the money."
+    }
+   ]
+  },
+  {
+   "id": "B03",
+   "title": "Board",
+   "sentences": [
+    {
+     "say": "Maya drops in her entries. Here, a synthetic sample of sixty-nine.",
+     "cap": "Maya drops in her entries. Here, a synthetic sample of 69."
+    },
+    {
+     "say": "Nemotron Lightning cleans the messy columns. Nemotron Ultra reads the hard ones.",
+     "cap": "Nemotron Lightning cleans the messy columns. Nemotron Ultra reads the hard ones."
+    },
+    {
+     "say": "Four lanes. Thirty-six clear to file, thirteen to fix first, five for her broker, and fifteen customs would reject.",
+     "cap": "Four lanes: 36 clear to file, 13 to fix first, 5 for her broker, 15 customs would reject."
+    }
+   ]
+  },
+  {
+   "id": "B04",
+   "title": "Blocked entry",
+   "sentences": [
+    {
+     "say": "Open one of the fifteen, and you get the exact error customs would return.",
+     "cap": "Open one of the 15 and you get the exact error customs would return."
+    },
+    {
+     "say": "Liquidated a hundred thirty days ago, past the eighty-day window.",
+     "cap": "Liquidated 130 days ago, past the 80-day window."
+    }
+   ]
+  },
+  {
+   "id": "B05",
+   "title": "The trap",
+   "sentences": [
+    {
+     "say": "Now the trap. This entry looks like eight thousand dollars.",
+     "cap": "Now the trap. This entry looks like $8,000."
+    },
+    {
+     "say": "But five thousand six hundred of underpaid duty gets netted against it, so the real refund is twenty-four hundred.",
+     "cap": "But $5,600 of underpaid duty gets netted against it. The real refund is $2,400."
+    },
+    {
+     "say": "Ultra explains why her broker must decide first, and shows its reasoning.",
+     "cap": "Ultra explains why her broker must decide first, and shows its reasoning."
+    }
+   ]
+  },
+  {
+   "id": "B06",
+   "title": "Number guard",
+   "sentences": [
+    {
+     "say": "Models slip. In our recording, Ultra wrote that seven entries expire today.",
+     "cap": "Models slip. In our recording, Ultra wrote that 7 entries expire today."
+    },
+    {
+     "say": "The engine counted one. A number guard corrected it before Maya saw it.",
+     "cap": "The engine counted 1. A number guard corrected it before Maya saw it."
+    }
+   ]
+  },
+  {
+   "id": "B07",
+   "title": "Export",
+   "sentences": [
+    {
+     "say": "She confirms the upload can't be undone, and exports only the safe entries, in the format customs publishes.",
+     "cap": "She confirms the upload can't be undone, and exports only the safe entries in the format customs publishes."
+    },
+    {
+     "say": "Her broker uploads it. We never ask for a login.",
+     "cap": "Her broker uploads it. We never ask for a login."
+    }
+   ]
+  },
+  {
+   "id": "B08",
+   "title": "Rule-watch",
+   "sentences": [
+    {
+     "say": "Customs changes its rules, so the desk checks the live page against a July copy.",
+     "cap": "Customs changes its rules, so the desk checks the live page against a July copy."
+    },
+    {
+     "say": "Four changes touch these checks, like warehouse entries now being rejected. A second search service confirms them independently.",
+     "cap": "Four changes touch these checks, like warehouse entries now being rejected. A second search service confirms them independently."
+    }
+   ]
+  },
+  {
+   "id": "B09",
+   "title": "Receipt",
+   "sentences": [
+    {
+     "say": "Each run leaves a Token Factory receipt.",
+     "cap": "Each run leaves a Token Factory receipt."
+    },
+    {
+     "say": "Lightning did all sixty-nine entries for a third of a cent. Ultra's reasoning cost under ten cents.",
+     "cap": "Lightning did all 69 entries for a third of a cent. Ultra's reasoning cost under ten cents."
+    }
+   ]
+  },
+  {
+   "id": "B10",
+   "title": "Close",
+   "sentences": [
+    {
+     "say": "Cape Refund Desk. Check the file before the upload nobody can undo.",
+     "cap": "CAPE Refund Desk. Check the file before the upload nobody can undo."
+    },
+    {
+     "say": "It's live, and open source. Prepared for broker review, not legal advice.",
+     "cap": "It's live, and open source. Prepared for broker review. Not legal advice."
+    }
+   ]
+  }
+ ]
+}

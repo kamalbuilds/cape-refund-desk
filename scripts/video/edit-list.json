@@ -1,0 +1,17 @@
+{
+  "_about": "Order of segments in the final cut. Set a segment's enabled to true/false and run: node scripts/video/render.mjs. Each segment = a clip of exact duration D plus its narration timeline (timelines.json from timeline.mjs, or a timelineFile).",
+  "out": "cape-refund-desk-demo.mp4",
+  "segments": [
+    { "id": "B01", "enabled": true },
+    { "id": "B02", "enabled": true },
+    { "id": "B03", "enabled": true },
+    { "id": "L1", "enabled": false, "clip": "live/L1.mp4", "timelineFile": "live/L1.timeline.json", "note": "LIVE Nemotron call, time-lapse. Needs Token Factory credit. Make it with: node scripts/video/capture-live.mjs" },
+    { "id": "B04", "enabled": true },
+    { "id": "B05", "enabled": true },
+    { "id": "B06", "enabled": true },
+    { "id": "B07", "enabled": true },
+    { "id": "B08", "enabled": true },
+    { "id": "B09", "enabled": true },
+    { "id": "B10", "enabled": true }
+  ]
+}
