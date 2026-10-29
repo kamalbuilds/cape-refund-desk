@@ -159,6 +159,9 @@ mk({ iorIdx: 4, lines: [{ good: 2, value: 40000, underFrac: 0.7 }], note: "301 u
 mk({ iorIdx: 7, debt: "4200.00", lines: [{ good: 3, value: 61000 }] });
 mk({ iorIdx: 4, liqAgo: 44, lines: [{ good: 6, value: 42000, underFrac: 1.25 }], note: "301 underdeclared on liquidated entry." });
 mk({ iorIdx: 7, lines: [{ good: 9, value: 38000, underFrac: 0.2 }] });
+// ---- H. Warehouse (CSMS 69127837, effective 2026-07-07): types 21/22 rejected; withdrawals 31/32/34/38 still accepted ----
+mk({ type: "21", lines: [{ good: 6 }], note: "Bonded warehouse entry, withdrawals to follow." });
+mk({ type: "31", lines: [{ good: 5 }], note: "Warehouse withdrawal for consumption." });
 
 const header = COLS.join(",");
 const esc = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));

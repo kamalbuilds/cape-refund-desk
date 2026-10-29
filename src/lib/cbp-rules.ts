@@ -27,6 +27,10 @@ export const SOURCES: Record<string, { label: string; url: string }> = {
     label: "CAPE Trade User Information Notice (Pub# 1009-1119, updated July 10, 2026)",
     url: "https://www.cbp.gov/sites/default/files/2026-07/26_0723_trade_information_notice_CAPE.pdf",
   },
+  "CSMS-69127837": {
+    label: "CSMS # 69127837 - UPDATE - CAPE for IEEPA Refunds - Warehouse Entries (07/02/2026)",
+    url: "https://content.govdelivery.com/bulletins/gd/USDHSCBP-41ece9d",
+  },
   "CSMS-69056483": {
     label: "CSMS # 69056483 - Update to Entry-Level Validations for CAPE Declarations",
     url: "https://content.govdelivery.com/accounts/USDHSCBP/bulletins/41db7e3",
@@ -117,8 +121,11 @@ export const LIMITS = {
   protestDays: 180,
   /** [FAQ] "If the reconciliation filing deadline is close to expiring (e.g., less than 30 days) ... prioritize the filing of the reconciliation" */
   reconPriorityDays: 30,
-  /** [FAQ] entry types excluded: Duty Deferral (08), Reconciliation (09), TIB (23), Drawback (047) */
-  excludedEntryTypes: ["08", "09", "23", "47"],
+  /** [FAQ] entry types excluded: Duty Deferral (08), Reconciliation (09), TIB (23), Drawback (047).
+   *  [CSMS-69127837] "Effective July 7, 2026, warehouse entries (Entry Types 21 and 22) will no longer be accepted on a CAPE
+   *  Declaration ... rejected with the existing ENTRY TYPE NOT ALLOWED error message." Warehouse withdrawals (31, 32, 34, 38) still are.
+   *  Found by the rule-watch diff against the 2026-07-11 capture: CBP's page now lists warehouse entries under "Subsequent Deployments". */
+  excludedEntryTypes: ["08", "09", "21", "22", "23", "47"],
 } as const;
 
 export const FRAMEWORK_GROUPS: Record<string, string> = {

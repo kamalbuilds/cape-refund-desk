@@ -1,0 +1,115 @@
+// Browser walk-through: upload the sample CSV, run the in-browser check and the live check, open an entry, download every export and
+// validate the CAPE CSV against CBP's published file rules. Usage: node scripts/e2e.mjs [baseUrl]  (needs Chrome installed; live step needs NEBIUS_API_KEY on the server)
+import { chromium } from "playwright-core";
+import fs from "node:fs";
+const BASE = process.argv[2] ?? "http://localhost:3100";
+const OUT = process.env.E2E_OUT ?? "/tmp/e2e";
+fs.mkdirSync(OUT, { recursive: true });
+const problems = [];
+const ok = (c, m) => { console.log(c ? "  ok  " : "  FAIL", m); if (!c) problems.push(m); };
+
+function validateCapeCsv(text, name) {
+  const lines = text.replace(/\r/g, "").split("\n").filter((l) => l.length);
+  ok(lines[0].trim().toLowerCase() === "entry number", `${name}: header is "Entry Number" (got "${lines[0]}")`);
+  const rows = lines.slice(1);
+  ok(rows.length >= 1 && rows.length <= 9999, `${name}: ${rows.length} entries, within 1..9,999 per declaration`);
+  ok(Buffer.byteLength(text) < 1024 * 1024, `${name}: ${Buffer.byteLength(text)} bytes, under 1 MB`);
+  const keys = rows.map((r) => r.replace(/^'/, "").replace(/-/g, "").trim());
+  ok(keys.every((k) => /^[A-Z0-9]{11}$/.test(k)), `${name}: every entry number is 11 alphanumeric characters, no dashes`);
+  ok(rows.every((r) => !/^\d/.test(r) || r.startsWith("'") || !/^0/.test(r)), `${name}: no bare leading zero (Excel would drop it)`);
+  ok(rows.filter((r) => /^[0-9]/.test(r.replace(/^'/, ""))).every((r) => r.startsWith("'")), `${name}: apostrophe before every number that starts with a digit`);
+  ok(new Set(keys).size === keys.length, `${name}: no duplicates`);
+  ok(rows.every((r) => !r.includes(",")), `${name}: single column`);
+  return keys;
+}
+
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { width: 390, height: 844 }]]) {
+  console.log(`\n=== viewport ${label} ===`);
+  const ctx = await browser.newContext({ viewport: vp, acceptDownloads: true, deviceScaleFactor: label === "390" ? 2 : 1, isMobile: label === "390" });
+  const page = await ctx.newPage();
+  const errs = [];
+  page.on("pageerror", (e) => errs.push(String(e)));
+  page.on("console", (m) => m.type() === "error" && errs.push(m.text()));
+  page.on("response", (r) => r.status() >= 400 && errs.push(`HTTP ${r.status()} ${r.url()}`));
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  ok(overflow <= 1, `landing: no horizontal overflow (${overflow}px)`);
+  await page.screenshot({ path: `${OUT}/landing-${label}.png` });
+
+  // --- in-browser check (no upload): network must stay quiet
+  const posts = [];
+  page.on("request", (r) => r.method() === "POST" && posts.push(r.url()));
+  await page.locator('input[type=file]').setInputFiles("data/sample-es003.csv");
+  await page.getByLabel("Filer code").fill("A7K");
+  await page.getByRole("button", { name: /Check in this browser/ }).click();
+  await page.locator(".lane").first().waitFor({ timeout: 15000 });
+  const lanes = await page.locator(".lane").evaluateAll((els) => els.map((e) => [e.querySelector("h3")?.textContent, Number(e.querySelector(".lane-h span")?.textContent)]));
+  console.log("  lanes:", JSON.stringify(lanes));
+  ok(lanes.length === 4 && lanes.reduce((a, [, n]) => a + n, 0) >= 60, "in-browser check fills 4 lanes with the sample");
+  ok(posts.length === 0, `in-browser check made no POST requests (${posts.join(",") || "none"})`);
+  const ov2 = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  ok(ov2 <= 1, `board: no horizontal overflow (${ov2}px)`);
+  await page.screenshot({ path: `${OUT}/board-${label}.png`, fullPage: false });
+
+  // --- drawer on a trap entry
+  const trap = page.locator(".card", { hasText: /Entry Type Not Allowed/ }).first();
+  await trap.scrollIntoViewIfNeeded();
+  await trap.click();
+  const dr = page.locator(".drawer");
+  await dr.waitFor({ timeout: 5000 });
+  const dtext = await dr.innerText();
+  ok(/Entry Type Not Allowed/.test(dtext), "drawer shows the exact CBP error string");
+  ok(/FAQ|QRG|CSMS|Pub\./.test(dtext), "drawer cites its source");
+  await page.screenshot({ path: `${OUT}/drawer-${label}.png` });
+  await dr.locator(".x").click();
+  await dr.waitFor({ state: "detached", timeout: 3000 });
+  ok(true, "drawer closes");
+
+  // --- warehouse entry 21 is blocked with the CSMS cite
+  const wh = page.locator(".card", { hasText: /A7K-?9828170/ }).first();
+  if (await wh.count()) { await wh.click(); const t = await page.locator(".drawer").innerText(); ok(/69127837/.test(t), "warehouse entry 21 cites CSMS 69127837"); await page.locator(".drawer .x").click(); }
+  else ok(false, "warehouse entry 21 card is on the board");
+
+  // --- exports (must be gated on the acknowledgement)
+  const capeBtn = page.getByRole("button", { name: /^⬇ cape-declaration/ }).first();
+  await capeBtn.scrollIntoViewIfNeeded();
+  ok(await capeBtn.isDisabled(), "CAPE CSV download is disabled until the irreversibility box is ticked");
+  await page.getByLabel(/I understand an accepted CAPE declaration/).check();
+  ok(await capeBtn.isEnabled(), "CAPE CSV download enables after the box is ticked");
+  await page.screenshot({ path: `${OUT}/export-${label}.png` });
+  const grab = async (btn, file) => { const [d] = await Promise.all([page.waitForEvent("download"), btn.click()]); const p = `${OUT}/${label}-${d.suggestedFilename()}`; await d.saveAs(p); return [d.suggestedFilename(), fs.readFileSync(p, "utf8")]; };
+  const names = await page.getByRole("button", { name: /^⬇ cape-declaration/ }).count();
+  for (let i = 0; i < names; i++) { const [n, t] = await grab(page.getByRole("button", { name: /^⬇ cape-declaration/ }).nth(i)); console.log("  file", n); validateCapeCsv(t, n); }
+  const [hn, ht] = await grab(page.getByRole("button", { name: /Broker handoff note/ }));
+  ok(hn.endsWith(".md") && /Not legal or customs advice/.test(ht) && ht.length > 500, `handoff note ${hn} (${ht.length} chars) carries the disclaimer`);
+  ok(!/claim your refund|ACE login|password/i.test(ht), "handoff note avoids 'claim your refund' / credential asks");
+  const [dn, dt] = await grab(page.getByRole("button", { name: /Deadline list/ }));
+  const dl = dt.trim().split("\n"); ok(dn.endsWith(".csv") && dl.length > 5, `deadline CSV ${dn} has ${dl.length - 1} rows; header: ${dl[0]}`);
+  ok(errs.length === 0, `no console/page errors ${errs.slice(0, 6).join(" | ")}`);
+  await ctx.close();
+}
+
+// --- live path with an uploaded file (1440 only): Lightning + Ultra via the server
+if (process.env.SKIP_LIVE !== "1") {
+  console.log("\n=== live upload path ===");
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
+  const page = await ctx.newPage();
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  await page.locator('input[type=file]').setInputFiles("data/sample-es003.csv");
+  await page.getByLabel("Filer code").fill("A7K");
+  const t0 = Date.now();
+  await page.getByRole("button", { name: /Check with Lightning/ }).click();
+  await page.locator(".receipt").getByText(/live run/).waitFor({ timeout: 120000 });
+  console.log(`  live run finished in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+  const rc = await page.locator(".receipt").innerText();
+  ok(/Lightning/.test(rc) && /Ultra/.test(rc), "receipt shows both models");
+  ok(await page.locator(".lane").count() === 4, "live board has 4 lanes");
+  await page.screenshot({ path: `${OUT}/live-board-1440.png` });
+  await page.locator(".receipt").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${OUT}/live-receipt-1440.png` });
+  await ctx.close();
+}
+await browser.close();
+console.log(problems.length ? `\n${problems.length} problem(s):\n- ` + problems.join("\n- ") : "\nall checks passed");
+process.exit(problems.length ? 1 : 0);

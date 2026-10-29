@@ -1,0 +1,139 @@
+{
+ "checkedAt": "2026-10-29T09:41:06.764Z",
+ "tavilyConfigured": true,
+ "snapshot": {
+  "capturedAt": "2026-07-11T19:38:12Z",
+  "via": "Internet Archive Wayback Machine capture 20260711193812 of the CBP page (web.archive.org/web/20260711193812id_/https://www.cbp.gov/trade/programs-administration/trade-remedies/ieepa-duty-refunds)",
+  "lines": 319,
+  "sha256": "3f2c803e21043f8f"
+ },
+ "ok": true,
+ "liveVia": "direct",
+ "note": "Live page fetched directly from cbp.gov and compared with the stored 2026-07-11 capture (same HTML-to-text path on both sides). Tavily Extract read the page independently and agrees with 11 of 11 changes. CBP's page now says \"Last Modified: Oct 28, 2026\"; the July capture said \"Last Modified: Jul 07, 2026\".",
+ "live": {
+  "lines": 338,
+  "sha256": "2425ad2307c1ffb9"
+ },
+ "changes": [
+  {
+   "kind": "added",
+   "before": "",
+   "after": "Warehouse entries (entry type 21 and 22) (see CSMS # 69127837 for details)",
+   "relevant": true,
+   "engine": "Engine updated after this diff: entry types 21 and 22 are blocked with CBP's \"Entry Type Not Allowed\" (CSMS 69127837, effective 2026-07-07); warehouse withdrawals (31, 32, 34, 38) are still accepted.",
+   "engineLevel": 0,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "reworded",
+   "before": "CBP plans to implement CAPE through a phased development approach, adding more functionality in subsequent phases for more complicated scenarios. Phase 1 is limited to certain unliquidated entries and certain entries within 80 days of liquidation.",
+   "after": "CBP is implementing CAPE through a phased development approach, adding more functionality in subsequent phases for more complicated scenarios. Phase 1: certain unliquidated entries and certain entries within 80 days of liquidation Phase 2: entries flagged for reconciliation where the reconciliation entry is not yet on file",
+   "relevant": true,
+   "engine": "Engine unchanged: the 80-day liquidation window (LIMITS.liquidationWindowDays) still matches. Engine unchanged: recon-flagged entries without a Recon on file are accepted if unliquidated or within 80 days; they go to \"Recon first\" when the deadline is near.",
+   "engineLevel": 1,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "reworded",
+   "before": "During Phase 1, ACE will accept CAPE Declarations containing entries liquidated within the preceding 80 days. This will allow sufficient time for CBP to process and reliquidate entries by the 90th day to meet the agency’s legal timeframe for voluntary reliquidation pursuant to 19 U.S.C. § 1501.",
+   "after": "ACE accepts CAPE Declarations containing entries liquidated within the preceding 80 days. This allows sufficient time for CBP to process and reliquidate entries by the 90th day to meet the agency’s legal timeframe for voluntary reliquidation pursuant to 19 U.S.C. § 1501.",
+   "stampBefore": "Updated 4/10/2026",
+   "stampAfter": "Updated 9/2/2026",
+   "relevant": true,
+   "engine": "Engine unchanged: the 80-day liquidation window (LIMITS.liquidationWindowDays) still matches. Engine unchanged: 90-day voluntary reliquidation limit.",
+   "engineLevel": 1,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "reworded",
+   "before": "If, after reviewing the scenarios above, you still believe your refund amount contains an error, you may file a Protest to dispute CBP’s refund decision upon liquidation or reliquidation.",
+   "after": "Should you disagree with the calculation of your IEEPA refund, you retain the right to file a protest under 19 U.S. C. § 1514, contesting the liquidated or reliquidated IEEPA refund amount. Filing a timely protest will keep the liquidated or reliquidated IEEPA refund amount from becoming final and will provide an opportunity to submit additional information or corrections for liquidated/reliquidated entries as needed. To ensure that CBP has complete and accurate information, please check your entry records and confirm that all information, including the duty, classification, and value information for each entry summary line, was correctly declared in accordance with the CBP Form 7501 instructions and CSMS messaging, and please explain and correct any errors you believe to exist in the documentation supporting your timely protest. To be timely, a protest contesting the liquidated or reliquidated IEEPA refund amount must be filed within 180 days after the date of liquidation or reliquidation. Regardless of whether a protest is filed, if CBP discovers an error in the liquidation/reliquidation of an entry with an IEEPA refund, CBP will aim to reliquidate the entry within 90 days from the date of the original liquidation. However, due to the volume of entries involved, and the need for agency-wide consistency in the exercise of its voluntary reliquidation authority with regard to IEEPA refunds, the Centers of Excellence and Expertise will not be responding to questions regarding the liquidated or reliquidated IEEPA refund amounts received for specific entries, other than by processing a timely filed protest contesting the liquidated or reliquidated IEEPA refund amount. IEEPA refund-related inquiries that do not concern, or are not limited to, the liquidated or re-liquidated IEEPA refund amount received for specific entries may be directed to IEEPARefunds@cbp.dhs.gov .",
+   "relevant": true,
+   "engine": "Engine unchanged: protest window stays 180 days (19 U.S.C. 1514); PSCs and protests on entries in an accepted declaration remain blocked until liquidation. Engine unchanged: 90-day voluntary reliquidation limit.",
+   "engineLevel": 1,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "reworded",
+   "before": "Yes, at least for entries in Phase 1, which covers unliquidated entries and entries within the 90-day voluntary reliquidation period. Liquidation constitutes the final assessment of duties on an entry for all purposes, and a voluntary reliquidation within the 90-day period may correct any error in the original liquidation. CAPE processing removes all IEEPA tariffs from an entry. Nonetheless, entries are still subject to any duties, taxes, and fees, including pursuant to other trade remedy provisions, that are applicable upon liquidation or reliquidation within the 90-day period. It is possible to receive a bill after CAPE processing if the amount paid on the entry as a whole is less than the recalculated duty owed at liquidation or reliquidation. As with all refunds issued by CBP, CBP will check for any unpaid debts owed to CBP by the IOR before issuing the refund, and the refund (or bill) amount will be equal to the difference between the IEEPA duties to be refunded and the amount owed on an entry-by-entry basis.",
+   "after": "Yes. Liquidation constitutes the final assessment of duties on an entry for all purposes, and a voluntary reliquidation within the 90-day period may correct any error in the original liquidation. CAPE processing removes all IEEPA tariffs from an entry. Nonetheless, entries are still subject to any duties, taxes, and fees, including pursuant to other trade remedy provisions, that are applicable upon liquidation or reliquidation within the 90-day period. It is possible to receive a bill after CAPE processing if the amount paid on the entry as a whole is less than the recalculated duty owed at liquidation or reliquidation. As with all refunds issued by CBP, CBP will check for any unpaid debts owed to CBP by the IOR before issuing the refund, and the refund (or bill) amount will be equal to the difference between the IEEPA duties to be refunded and the amount owed on an entry-by-entry basis.",
+   "stampBefore": "Updated 5/20/2026",
+   "stampAfter": "Updated 9/2/2026",
+   "relevant": true,
+   "engine": "Engine unchanged: 90-day voluntary reliquidation limit.",
+   "engineLevel": 1,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "reworded",
+   "before": "At this time, CBP is evaluating functionality for the following types of entries in subsequent phases of CAPE, in accordance with appropriate statutory authority or court order. Further communications will be issued as additional capabilities are developed.",
+   "after": "CBP is evaluating functionality for the following types of entries in subsequent deployments of CAPE, in accordance with appropriate statutory authority or court order. Further communications will be issued as additional capabilities are developed. For more information, please see the CAPE Trade Information Notice . Entries with type Entry Type 09 - Reconciliation Summary Entries flagged for reconciliation with Entry Type 09 already on file, (see CSMS # 69035485 for details)",
+   "stampBefore": "Updated 6/24/2026",
+   "stampAfter": "Updated 9/2/2026",
+   "relevant": true,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "added",
+   "before": "",
+   "after": "It is the responsibility of the trade community to ensure that the information provided on the CBP Form 5106 is accurate and complete. Importers and other entities can update their CBP Form 5106 using two methods: Licensed Customs Broker: A licensed customs broker with a valid Power of Attorney (POA) can submit updates on an importer’s behalf using Action Code U (Update) in the Automated Broker Interface (ABI). Through the ACE Portal: Importers can update their information directly using the web-based ACE Secure Data Portal. The portal also allows users to run reports, respond to CBP forms, create declarations, and manage accounts. To use the ACE Portal, your company must first set up an account and grant user access. Learn more at Apply for an ACE Portal Account . To prevent processing delays, please ensure that all required data fields on the CBP Form 5106 are fully and accurately completed when submitting an update.",
+   "stampAfter": "Updated 9/30/2026",
+   "relevant": true,
+   "engine": "Not modeled on purpose: this tool never asks for or stores bank details or an ACE login. The importer or broker handles ACH enrollment in ACE.",
+   "engineLevel": 3,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "reworded",
+   "before": "You must have your U.S. bank account information in your ACE Portal account. With rare exceptions, all refunds will be made through a secure ACH payment to a verified party, not through a paper check disbursed through the mail to a non-verified address. For more information see: Applying for an ACE Portal Importer Account and Enrolling in ACH Refunds .",
+   "after": "You must have your U.S. bank account information in your ACE Portal account ( Electronic Refund Enrollment in CBPs ACE Portal ). With rare exceptions, all refunds will be made through a secure ACH payment to a verified party, not through a paper check disbursed through the mail to a non-verified address. For more information see: CSMS # 68569567 - Best Practices for Protecting Your Information Regarding IEEPA Refunds Fact Sheet: CAPE Refund Fraud Solicitation",
+   "relevant": true,
+   "engine": "Not modeled on purpose: this tool never asks for or stores bank details or an ACE login. The importer or broker handles ACH enrollment in ACE.",
+   "engineLevel": 3,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "reworded",
+   "before": "ACE Portal users with Importer sub-account access can monitor refund activity using ACE Reports. The REV-603 Trade Refund report covers successful refunds. The REV-613 ACH Rejected Refunds report highlights any refunds that have been rejected due to the recipient not being enrolled in ACH Refunds. For help with refund reports, review the ACE Refund Report training guide . For more information about rejected refunds, see Replacement Refund Instructions .",
+   "after": "ACE Portal users with Importer sub-account access can monitor refund activity using ACE Reports. The ES-022 CAPE Entry Summary report links accepted CAPE declarations, entries, and refund numbers to help track the refund process at the entry summary level and displays refund amounts separated by principal and interest. The REV-603 Trade Refund report covers successful refunds. The REV-613 ACH Rejected Refunds report highlights any refunds that have been rejected due to the recipient not being enrolled in ACH Refunds. For help with refund reports, review the ACE Refund Report training guide and CBP Offers Multiple ACE Reports for Monitoring CAPE Refund Claims . For more information about rejected refunds, see Replacement Refund Instructions .",
+   "stampBefore": "Updated 4/15/2026",
+   "stampAfter": "Updated 9/2/2026",
+   "relevant": true,
+   "engine": "Not modeled on purpose: this tool never asks for or stores bank details or an ACE login. The importer or broker handles ACH enrollment in ACE. Informational: ES-022 links accepted declarations to entries and refund numbers. Nothing to change here.",
+   "engineLevel": 3,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "reworded",
+   "before": "CBP encourages importers who do not have an ACE Portal account, who are instead employing a customs broker to file their CAPE Declarations, to coordinate with their brokers to track their refund status. For ACE Portal users with Importer sub-account access, you can monitor aggregated refund activity using ACE Reports.",
+   "after": "CBP encourages importers who do not have an ACE Portal account, who are instead employing a customs broker to file their CAPE Declarations, to coordinate with their brokers to track their refund status. For ACE Portal users with Importer sub-account access, you can monitor aggregated refund activity using ACE Reports. For help with refund reports, review the ACE Refund Report training guide and CBP Offers Multiple ACE Reports for Monitoring CAPE Refund Claims . ES-003 Entry Summary Line Tariff Details report helps users identify entries that may be eligible for CAPE refunds. By including the IEEPA tariff indicator, the report displays all entry lines with assessed duties. ES-022 CAPE Entry Summary report links accepted CAPE declarations, entries, and refund numbers to help track the refund process at the entry summary level. It displays refund amounts separated by principal and interest.",
+   "stampBefore": "Updated 5/20/2026",
+   "stampAfter": "Updated 9/2/2026",
+   "relevant": true,
+   "engine": "Informational: ES-022 links accepted declarations to entries and refund numbers. Nothing to change here.",
+   "engineLevel": 3,
+   "confirmedByTavily": true
+  },
+  {
+   "kind": "reworded",
+   "before": "All refunds are required to be paid electronically via Automated Clearing House (ACH) (Federal Register Document 2025-24171 ). To receive a refund, CBP must have your bank information on file. If bank information designated for refunds is not on file with CBP, the refund will not be paid until that information is provided through the ACE Secure Data Portal (ACE Portal). See more information at ACH Refund Enrollment Overview .",
+   "after": "All refunds are required to be paid electronically via Automated Clearing House (ACH) ( Federal Register Document 2025-24171 ). To receive a refund, CBP must have your bank information on file. This bank account information is specific for refunds and may be separate from any ACH information used to make payments to CBP. If bank information designated for refunds is not on file with CBP, the refund will not be paid until that information is provided through the ACE Secure Data Portal (ACE Portal). See more information at ACH Refund Enrollment Overview .",
+   "stampBefore": "Updated 4/10/2026",
+   "stampAfter": "Updated 9/2/2026",
+   "relevant": true,
+   "engine": "Not modeled on purpose: this tool never asks for or stores bank details or an ACE login. The importer or broker handles ACH enrollment in ACE.",
+   "engineLevel": 3,
+   "confirmedByTavily": true
+  }
+ ],
+ "lastModified": {
+  "before": "Jul 07, 2026",
+  "after": "Oct 28, 2026"
+ },
+ "changed": true,
+ "added": [],
+ "removed": [],
+ "unchangedLines": 298,
+ "noiseDropped": 30,
+ "relevantChanges": 11
+}

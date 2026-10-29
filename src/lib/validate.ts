@@ -65,8 +65,10 @@ export function findingsFor(entry: Entry, key: string, opts: ValidationOptions, 
     f.push(find("CANCELLED", ENTRY_ERRORS.CANCELLED, "FAQ", "block", `Entry summary status is ${entry.summaryStatus}; it must be "Accepted".`));
   }
   if (LIMITS.excludedEntryTypes.includes(entry.entryType as never)) {
-    const label = { "08": "Duty Deferral (08)", "09": "Reconciliation (09)", "23": "TIB (23)", "47": "Drawback (047)" }[entry.entryType] ?? entry.entryType;
-    f.push(find("TYPE_NOT_ALLOWED", ENTRY_ERRORS.TYPE_NOT_ALLOWED, "FAQ", "block", `Entry type ${label} is excluded from CAPE.`));
+    const label = { "08": "Duty Deferral (08)", "09": "Reconciliation (09)", "21": "Warehouse (21)", "22": "Warehouse (22)", "23": "TIB (23)", "47": "Drawback (047)" }[entry.entryType] ?? entry.entryType;
+    const wh = entry.entryType === "21" || entry.entryType === "22";
+    f.push(find("TYPE_NOT_ALLOWED", ENTRY_ERRORS.TYPE_NOT_ALLOWED, wh ? "CSMS-69127837" : "FAQ", "block", `Entry type ${label} is excluded from CAPE.`,
+      wh ? "Since 2026-07-07 CBP rejects warehouse entries (types 21/22) with this message. File the warehouse withdrawals (31, 32, 34, 38) instead; refunds are paid when CBP (re)liquidates the warehouse entry." : undefined));
   }
   if (entry.drawbackClaim) {
     f.push(find("DRAWBACK", ENTRY_ERRORS.DRAWBACK, "FAQ", "block", "Entry is already designated on a drawback claim."));

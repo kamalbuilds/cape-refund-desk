@@ -23,6 +23,11 @@ describe("sample dataset", () => {
     expect(lane("Protest 2704-26-000123").lane).toBe("WAIT");
     expect(lane("Recon entry already filed").findings.map((f) => f.cbpError)).toContain(ENTRY_ERRORS.RECON_FILED);
     expect(lane("Temporary import under bond").findings.map((f) => f.cbpError)).toContain(ENTRY_ERRORS.TYPE_NOT_ALLOWED);
+    const wh = lane("Bonded warehouse entry");
+    expect(wh.lane).toBe("BLOCKED");
+    expect(wh.findings[0].cbpError).toBe(ENTRY_ERRORS.TYPE_NOT_ALLOWED);
+    expect(wh.findings[0].sourceId).toBe("CSMS-69127837");
+    expect(lane("Warehouse withdrawal for consumption").lane).toBe("FILE_NOW");
     expect(lane("Importer says 301 was declared on both lines").lane).not.toBe("FILE_NOW");
   });
   it("leading zero gets an apostrophe; csv value is 11 chars + apostrophe", () => {
