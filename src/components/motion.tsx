@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { fmtUsd } from "@/lib/money";
 
 export function useReducedMotion() {
@@ -53,26 +53,17 @@ export function CountInt({ n, animate, dur = 900, delay = 0 }: { n: number; anim
   return <>{v}</>;
 }
 
-/** Fades and lifts its children in the first time they scroll into view. Transform and opacity only. */
+/** Renders its children in a plain wrapper. Content is always visible, never hidden behind scroll or a transition. */
 export function Reveal({ children, className = "", delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [on, setOn] = useState(false);
-  useLayoutEffect(() => {
-    const el = ref.current; if (!el) return;
-    if (typeof IntersectionObserver === "undefined") { setOn(true); return; }
-    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { setOn(true); io.disconnect(); } }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return <div ref={ref} className={`rv ${on ? "in" : ""} ${className}`} style={delay ? { transitionDelay: `${delay}ms` } : undefined}>{children}</div>;
+  return <div className={className}>{children}</div>;
 }
 
-/** Line-mask word reveal for the hero statement. Accessible name stays on the container. */
+/** Renders a statement as plain words. No masking or delayed reveal. Accessible name stays on the container. */
 export function Words({ text, base = 0, step = 70 }: { text: string; base?: number; step?: number }) {
   return (
     <>
       {text.split(" ").map((w, i) => (
-        <Fragment key={i}><span className="w" aria-hidden><span style={{ animationDelay: `${base + i * step}ms` }}>{w}</span></span>{" "}</Fragment>
+        <span key={i}>{w} </span>
       ))}
     </>
   );
@@ -106,9 +97,8 @@ export function TwistCard() {
   const value = Math.round(T < 2600 ? REFUND * up : REFUND + (NET - REFUND) * rollE);
   const bill = T >= 3200;
   const under = T >= 2000;
-  const fade = T > 8300 ? Math.max(0, 1 - (T - 8300) / 600) : 1;
   return (
-    <div className={`twist ${bill ? "bill" : ""}`} style={{ opacity: fade }} role="img" aria-label="Example: a shipment worth a $10,500.00 refund turns into a $2,625.00 bill once other duties it underpaid are netted off.">
+    <div className={`twist ${bill ? "bill" : ""}`} role="img" aria-label="Example: a shipment worth a $10,500.00 refund turns into a $2,625.00 bill once other duties it underpaid are netted off.">
       <div className="twist-top">
         <span className="mono">A7K-7344990-0</span>
         <span className="twist-tag">{bill ? "After other duties come off" : "Struck-down tariff, refundable"}</span>
@@ -117,7 +107,7 @@ export function TwistCard() {
         <span className="twist-lbl">{bill ? "You'd owe Customs" : "You'd get back"}</span>
         <b>{fmtUsd(value)}</b>
       </div>
-      <div className={`twist-step ${under ? "on" : ""}`} aria-hidden>
+      <div className="twist-step on" aria-hidden>
         <span>Other duties underpaid on the same shipment</span>
         <b>{fmtUsd(-UNDER)}</b>
       </div>

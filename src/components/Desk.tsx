@@ -181,7 +181,7 @@ export default function Desk() {
     </div>
   ) : (
     <div className="zone-in">
-      <p className="eyebrow"><span className="dot" />Checking the file</p>
+      <p className="text-sm font-medium text-zinc-900">Checking the file</p>
       <h2 className="headline text-3xl font-semibold tracking-tight text-zinc-900">Sorting {total || 69} shipments into four groups.</h2>
       <Progress prog={prog} stage={stage} />
     </div>
@@ -212,7 +212,6 @@ export default function Desk() {
         <>
           <section className="hero">
             <div className="hero-copy">
-              <p className="eyebrow"><span className="dot" />For small importers and their customs brokers</p>
               <h2 className="display text-3xl font-semibold tracking-tight text-zinc-900" aria-label="Check the refund file before you send it.">
                 <span className="ln"><Words text="Check the refund file" /></span>
                 <span className="ln"><Words text="before you send it." base={260} /></span>
@@ -229,30 +228,14 @@ export default function Desk() {
             <TwistCard />
           </section>
 
-          <Reveal>
-            <section className="bento" aria-label="How it works">
-              <article className="bn bn-a">
-                <span className="bn-n">01</span>
-                <h3>Plain code</h3>
-                <p><b>Plain code</b> does all the money math and sorts every shipment. The AI never makes up a number.</p>
-                <ul className="ledger" aria-hidden>
-                  <li><span>Refundable tariff</span><Id>$10,500.00</Id></li>
-                  <li><span>Other duties underpaid</span><Id className="text-red-700!">-$13,125.00</Id></li>
-                  <li className="sum"><span>You&apos;d owe Customs</span><Id className="text-red-700!">-$2,625.00</Id></li>
-                </ul>
-              </article>
-              <article className="bn bn-b">
-                <span className="bn-n">02</span>
-                <h3>Fast AI</h3>
-                <p><b>A fast AI</b> (Nemotron Lightning) cleans up messy data.</p>
-              </article>
-              <article className="bn bn-c">
-                <span className="bn-n">03</span>
-                <h3>Reasoning AI</h3>
-                <p><b>A reasoning AI</b> (Nemotron Ultra) explains each tricky case.</p>
-              </article>
-            </section>
-          </Reveal>
+          <section aria-label="How it works" className="mt-12 mb-8 max-w-2xl">
+            <h3 className="text-sm font-medium text-zinc-900">How the check works</h3>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-600 leading-relaxed list-disc pl-5">
+              <li><b className="font-medium text-zinc-900">Plain code</b> does all the money math and sorts every shipment. The AI never makes up a number.</li>
+              <li><b className="font-medium text-zinc-900">A fast AI</b> (Nemotron Lightning) cleans up messy data.</li>
+              <li><b className="font-medium text-zinc-900">A reasoning AI</b> (Nemotron Ultra) explains each tricky case.</li>
+            </ul>
+          </section>
 
           <Reveal>{controls}</Reveal>
         </>
