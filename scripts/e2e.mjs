@@ -43,8 +43,8 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   await page.locator('input[type=file]').setInputFiles("data/sample-es003.csv");
   await page.getByLabel("Filer code").fill("A7K");
   await page.getByRole("button", { name: /Check in this browser/ }).click();
-  await page.locator(".lane").first().waitFor({ timeout: 15000 });
-  const lanes = await page.locator(".lane").evaluateAll((els) => els.map((e) => [e.querySelector("h3")?.textContent, Number(e.querySelector(".lane-h span")?.textContent)]));
+  await page.locator(".tabs .tab").first().waitFor({ timeout: 15000 });
+  const lanes = await page.locator(".tabs .tab").evaluateAll((els) => els.map((e) => [e.querySelector(".lane-t")?.textContent, Number(e.querySelector(".lane-n")?.textContent)]));
   console.log("  lanes:", JSON.stringify(lanes));
   ok(lanes.length === 4 && lanes.reduce((a, [, n]) => a + n, 0) >= 60, "in-browser check fills 4 lanes with the sample");
   ok(posts.length === 0, `in-browser check made no POST requests (${posts.join(",") || "none"})`);
@@ -52,10 +52,22 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(ov2 <= 1, `board: no horizontal overflow (${ov2}px)`);
   await page.screenshot({ path: `${OUT}/board-${label}.png`, fullPage: false });
 
+  // --- find a row by text in any lane tab (expanding a long lane if needed)
+  const findRow = async (re) => {
+    const tabs = page.locator(".tabs .tab");
+    for (let i = 0; i < await tabs.count(); i++) {
+      await tabs.nth(i).click();
+      const more = page.getByRole("button", { name: /^Show all \d+ entries/ });
+      if (await more.count()) await more.click();
+      const r = page.locator(".row", { hasText: re }).first();
+      if (await r.count()) return r;
+    }
+    return page.locator(".row", { hasText: re }).first();
+  };
   // --- drawer on a trap entry
-  const trap = page.locator(".card", { hasText: /Entry Type Not Allowed/ }).first();
+  const trap = await findRow(/Entry Type Not Allowed/);
   await trap.scrollIntoViewIfNeeded();
-  await trap.click();
+  await trap.locator(".en").click();
   const dr = page.locator(".drawer");
   await dr.waitFor({ timeout: 5000 });
   const dtext = await dr.innerText();
@@ -67,20 +79,20 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(true, "drawer closes");
 
   // --- warehouse entry 21 is blocked with the CSMS cite
-  const wh = page.locator(".card", { hasText: /A7K-?9828170/ }).first();
-  if (await wh.count()) { await wh.click(); const t = await page.locator(".drawer").innerText(); ok(/69127837/.test(t), "warehouse entry 21 cites CSMS 69127837"); await page.locator(".drawer .x").click(); }
+  const wh = await findRow(/A7K-?9828170/);
+  if (await wh.count()) { await wh.locator(".en").click(); const t = await page.locator(".drawer").innerText(); ok(/69127837/.test(t), "warehouse entry 21 cites CSMS 69127837"); await page.locator(".drawer .x").click(); }
   else ok(false, "warehouse entry 21 card is on the board");
 
   // --- exports (must be gated on the acknowledgement)
-  const capeBtn = page.getByRole("button", { name: /^⬇ cape-declaration/ }).first();
+  const capeBtn = page.getByRole("button", { name: /^cape-declaration/ }).first();
   await capeBtn.scrollIntoViewIfNeeded();
   ok(await capeBtn.isDisabled(), "CAPE CSV download is disabled until the irreversibility box is ticked");
   await page.getByLabel(/I understand an accepted CAPE declaration/).check();
   ok(await capeBtn.isEnabled(), "CAPE CSV download enables after the box is ticked");
   await page.screenshot({ path: `${OUT}/export-${label}.png` });
   const grab = async (btn, file) => { const [d] = await Promise.all([page.waitForEvent("download"), btn.click()]); const p = `${OUT}/${label}-${d.suggestedFilename()}`; await d.saveAs(p); return [d.suggestedFilename(), fs.readFileSync(p, "utf8")]; };
-  const names = await page.getByRole("button", { name: /^⬇ cape-declaration/ }).count();
-  for (let i = 0; i < names; i++) { const [n, t] = await grab(page.getByRole("button", { name: /^⬇ cape-declaration/ }).nth(i)); console.log("  file", n); validateCapeCsv(t, n); }
+  const names = await page.getByRole("button", { name: /^cape-declaration/ }).count();
+  for (let i = 0; i < names; i++) { const [n, t] = await grab(page.getByRole("button", { name: /^cape-declaration/ }).nth(i)); console.log("  file", n); validateCapeCsv(t, n); }
   const [hn, ht] = await grab(page.getByRole("button", { name: /Broker handoff note/ }));
   ok(hn.endsWith(".md") && /Not legal or customs advice/.test(ht) && ht.length > 500, `handoff note ${hn} (${ht.length} chars) carries the disclaimer`);
   ok(!/claim your refund|ACE login|password/i.test(ht), "handoff note avoids 'claim your refund' / credential asks");
@@ -104,7 +116,7 @@ if (process.env.SKIP_LIVE !== "1") {
   console.log(`  live run finished in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   const rc = await page.locator(".receipt").innerText();
   ok(/Lightning/.test(rc) && /Ultra/.test(rc), "receipt shows both models");
-  ok(await page.locator(".lane").count() === 4, "live board has 4 lanes");
+  ok(await page.locator(".tabs .tab").count() === 4, "live board has 4 lanes");
   await page.screenshot({ path: `${OUT}/live-board-1440.png` });
   await page.locator(".receipt").scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${OUT}/live-receipt-1440.png` });
