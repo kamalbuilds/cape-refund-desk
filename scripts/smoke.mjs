@@ -1,4 +1,4 @@
-// Token Factory smoke test. Never prints the key. Usage: NEBIUS_API_KEY=... node scripts/smoke.mjs > docs/smoke-raw.json
+// Token Factory smoke test. Never prints the key. Usage: export the Nebius key in your shell, then run: node scripts/smoke.mjs > docs/smoke-raw.json
 const KEY = process.env.NEBIUS_API_KEY;
 if (!KEY) { console.error("NEBIUS_API_KEY missing"); process.exit(1); }
 const HOSTS = ["https://api.tokenfactory.nebius.com/v1", "https://api.tokenfactory.us-central1.nebius.com/v1"];
