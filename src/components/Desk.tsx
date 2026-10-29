@@ -2,19 +2,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ERROR_DEFINITIONS, FILING_ORDER_RULES, SOURCES } from "@/lib/cbp-rules";
 import { browserBoard } from "@/lib/browser-board";
-import { buildCapeFiles, deadlineCsv, defaultInclude, DISCLAIMER, handoffNote, IRREVERSIBLE, PREPARED_FOR } from "@/lib/export";
+import { buildCapeFiles, deadlineCsv, defaultInclude, DISCLAIMER, handoffNote, IRREVERSIBLE_PLAIN, PREPARED_FOR_PLAIN } from "@/lib/export";
 import { fmtUsd } from "@/lib/money";
 import type { Explanation, PortfolioNote, Receipt, RunEvent, RunResult } from "@/lib/pipeline";
 import type { WatchResult, Change } from "@/lib/rulewatch";
 import type { Lane, Verdict } from "@/lib/types";
+import { PLAIN_FINDING, plainStep, plainTitle, plainVerdict } from "@/lib/plain";
 
 type Board = Omit<RunResult, "receipt" | "explanations" | "portfolioNote">;
 type Tone = "go" | "hold" | "decide" | "stop";
 const LANES: { id: Lane; title: string; sub: string; tone: Tone }[] = [
-  { id: "FILE_NOW", title: "Cleared to file", sub: "No CBP error found by the checks below", tone: "go" },
-  { id: "WAIT", title: "Hold: fix first", sub: "PSC, Recon or a CBP error comes first", tone: "hold" },
-  { id: "NET_BILL_RISK", title: "Broker decision", sub: "May net to a bill after recalculation", tone: "decide" },
-  { id: "BLOCKED", title: "Do not include", sub: "ACE would reject these", tone: "stop" },
+  { id: "FILE_NOW", title: "Safe to claim", sub: "Customs' checks found nothing wrong. These are ready to include.", tone: "go" },
+  { id: "WAIT", title: "Fix first", sub: "A correction, an open appeal or an error has to be sorted out before these can go in.", tone: "hold" },
+  { id: "NET_BILL_RISK", title: "Your broker decides", sub: "Claiming could cost you more than it refunds. Your customs broker should make this call.", tone: "decide" },
+  { id: "BLOCKED", title: "Leave out", sub: "Customs would reject these. Don't put them in the file.", tone: "stop" },
 ];
 const laneOf = (id: Lane) => LANES.find((l) => l.id === id)!;
 const PAGE = 12;
@@ -155,7 +156,7 @@ export default function Desk() {
 
   async function onFile(f: File | null) {
     if (!f) return;
-    if (f.size > 1_000_000) { setErr("That file is over 1MB. CBP's own CAPE limit is 1MB; split it first."); return; }
+    if (f.size > 1_000_000) { setErr("That file is over 1MB, which is Customs' upload limit. Split it into smaller files first."); return; }
     setCsvText(await f.text()); setFileName(f.name); setErr("");
   }
   useEffect(() => { fetch("/api/run").then((r) => r.json()).then((j) => setLiveOk(!!j.live)).catch(() => setLiveOk(false)); }, []);
@@ -193,34 +194,34 @@ export default function Desk() {
           <Mark />
           <div>
             <h1>CAPE Refund Desk</h1>
-            <p>The pre-flight check before an irreversible CAPE upload.</p>
+            <p>Check your tariff refund file before you send it.</p>
           </div>
         </div>
-        <div className="powered">Ultra reasons, Lightning normalizes<br />Nemotron 3 on Nebius Token Factory</div>
+        <div className="powered">Nemotron AI models<br />on Nebius Token Factory</div>
       </header>
 
       <div className="irrev" role="alert">
-        <p><strong>Irreversible.</strong> {IRREVERSIBLE}</p>
-        <span className="prepared">{PREPARED_FOR}</span>
+        <p><strong>Can&apos;t be undone.</strong> {IRREVERSIBLE_PLAIN}</p>
+        <span className="prepared">{PREPARED_FOR_PLAIN}</span>
       </div>
 
       {!board && !running && (
         <section className="hero">
           <div>
-            <h2>Know what to hold before you upload.</h2>
+            <h2>Check the refund file before you send it.</h2>
             <p className="lead">
-              For importers of record (IOR) and their licensed customs brokers. Feed it an ACE ES-003 export with ES-701 liquidation dates. <b>The models never decide eligibility or touch a dollar figure.</b>
+              US importers are owed money back for tariffs that were struck down. To get it, they upload one file to Customs, and it can&apos;t be undone. One wrong shipment can turn a refund into a bill. <b>This checks the file first.</b>
             </p>
             <div className="cta">
               <button className="btn primary lg" disabled={running} onClick={replay}>{Icon.play} Run the sample <span className="sub">recorded real run</span></button>
-              <button className="btn lg" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls Token Factory now: allow up to about 3 minutes"}>Run live on Token Factory</button>
+              <button className="btn lg" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls the AI now: allow up to about 3 minutes"}>Run it live</button>
             </div>
-            <p className="fine">The sample is a recorded real run on <b>synthetic, made-up entries</b> shaped like ES-003 + ES-701, not real trade data.</p>
             <ol className="how">
-              <li><b>Code checks every entry.</b> CBP&apos;s published CAPE rules and error table, the money in cents, the filing order.</li>
-              <li><b>Lightning normalizes.</b> Messy columns and broker notes become clean fields, cross-checked against the parser.</li>
-              <li><b>Ultra explains and ranks.</b> A number guard drops any figure that is not already in the deterministic packet.</li>
+              <li><b>Plain code</b> does all the money math and sorts every shipment. The AI never makes up a number.</li>
+              <li><b>A fast AI</b> (Nemotron Lightning) cleans up messy data.</li>
+              <li><b>A reasoning AI</b> (Nemotron Ultra) explains each tricky case.</li>
             </ol>
+            <p className="fine">Sample data: made-up shipments, not real trade data. Not legal advice. We never ask for logins or bank details.</p>
           </div>
           {controls}
         </section>
@@ -228,15 +229,15 @@ export default function Desk() {
 
       {!board && !running && (
         <section className="panel" aria-label="What a run produces">
-          <div className="strip-cap"><span>Each tick is one entry. A run sorts every entry into one of four lanes.</span></div>
+          <div className="strip-cap"><span>Each tick is one shipment. A run sorts every shipment into one of four groups.</span></div>
           <Manifest verdicts={[]} ghost={64} filled={0} explained={explained} animate={false} />
-          <div className="legend"><span className="go"><i />Cleared to file</span><span className="hold"><i />Hold: fix first</span><span className="decide"><i />Broker decision</span><span className="stop"><i />Do not include</span></div>
+          <div className="legend"><span className="go"><i />Safe to claim</span><span className="hold"><i />Fix first</span><span className="decide"><i />Your broker decides</span><span className="stop"><i />Leave out</span></div>
         </section>
       )}
 
       {(board || running) && (
         <details className="panel runbar" open={false}>
-          <summary>Run another check or use your own file</summary>
+          <summary>Check another file or use your own</summary>
           {controls}
         </details>
       )}
@@ -254,23 +255,23 @@ export default function Desk() {
       {board && (
         <>
           <div className="datalabel">
-            <span className="tag">{mode === "replay" ? "Recorded run" : mode === "live" ? "Live run" : "Browser-only check"}</span> <span>{board.label}</span>
+            <span className="tag">{mode === "replay" ? "Recorded run" : mode === "live" ? "Live run" : "Browser-only check"}</span> <span>{/^SYNTHETIC SAMPLE/.test(board.label) ? `Sample data: ${verdicts.length} made-up shipments that look like real Customs exports. Not real trade data. Checked as of ${board.asOf}.` : board.label}</span>
           </div>
 
           {running && <section className="panel"><Progress prog={prog} stage={stage} /></section>}
 
           <section className="panel summary" aria-label="Board summary">
             <div className="panel-h">
-              <h2 className="headline"><b>{attention}</b> of {verdicts.length} entries should not go into the CAPE file as they are.</h2>
+              <h2 className="headline"><b>{attention}</b> of {verdicts.length} shipments shouldn&apos;t go in the refund file yet. Here&apos;s why.</h2>
             </div>
             <Manifest verdicts={verdicts} ghost={0} filled={1} explained={explained} animate={animate} active={lane} onOpen={openFirstLane} />
-            <div className="tabs" role="tablist" aria-label="Lanes">
+            <div className="tabs" role="tablist" aria-label="Groups">
               {LANES.map((l) => {
                 const t = board.portfolio.lanes[l.id];
                 return (
                   <button key={l.id} role="tab" aria-selected={lane === l.id} className={`tab ${l.tone}`} onClick={() => { setLane(l.id); setExpanded(false); }}>
                     <span className="lane-h"><span className="lane-t">{l.title}</span><span className="lane-n"><Count n={t.count} animate={animate} /></span></span>
-                    <span className="tab-m">{l.id === "NET_BILL_RISK" ? <>{money(t.refundCents)} refundable, up to {money(t.billCents)} bills</> : <>{money(t.refundCents)} IEEPA duty</>}</span>
+                    <span className="tab-m">{l.id === "NET_BILL_RISK" ? <>{money(t.refundCents)} refund, but up to {money(t.billCents)} in bills</> : <>{money(t.refundCents)} in tariffs paid</>}</span>
                   </button>
                 );
               })}
@@ -280,34 +281,34 @@ export default function Desk() {
           <section className="panel lanepanel" role="tabpanel" aria-label={laneMeta.title}>
             <div className="lanepanel-h">
               <div>
-                <h2><span className={`pill ${laneMeta.tone}`}>{laneMeta.title}</span> <span className="muted">{laneList.length} entries</span></h2>
+                <h2><span className={`pill ${laneMeta.tone}`}>{laneMeta.title}</span> <span className="muted">{laneList.length} shipments</span></h2>
                 <p>{laneMeta.sub}</p>
               </div>
-              {canInclude && laneList.length > 0 && <button className="btn sm" onClick={() => setLaneInclude(!allIn)}>{allIn ? "Clear this lane from the file" : "Add this lane to the file"}</button>}
+              {canInclude && laneList.length > 0 && <button className="btn sm" onClick={() => setLaneInclude(!allIn)}>{allIn ? "Take this group out of the file" : "Add this group to the file"}</button>}
             </div>
-            {laneList.length === 0 ? <p className="empty">No entries in this lane.</p> : (
+            {laneList.length === 0 ? <p className="empty">No shipments in this group.</p> : (
               <>
-                <div className="thead"><span /><span>Entry</span><span>IOR</span><span>CBP finding</span><span className="r">CAPE window</span><span className="r">{lane === "NET_BILL_RISK" ? "Net" : "IEEPA refund"}</span></div>
+                <div className="thead"><span /><span>Shipment</span><span>Importer</span><span>What Customs found</span><span className="r">Time left to claim</span><span className="r">{lane === "NET_BILL_RISK" ? "You&apos;d get or owe" : "Refund"}</span></div>
                 <ul className="rows" key={lane}>
                   {shown.map((v, i) => (
                     <Row key={v.id} v={v} ex={expl[v.id]} i={i} animate checked={include.has(v.id)} canInclude={canInclude} active={sel === v.id} onToggle={() => toggle(v.id)} onOpen={() => setSel(v.id)} />
                   ))}
                 </ul>
-                {laneList.length > PAGE && !expanded && <div className="more-row"><button className="btn" onClick={() => setExpanded(true)}>Show all {laneList.length} entries</button></div>}
+                {laneList.length > PAGE && !expanded && <div className="more-row"><button className="btn" onClick={() => setExpanded(true)}>Show all {laneList.length} shipments</button></div>}
               </>
             )}
           </section>
 
           {pnote && (
             <section className="panel">
-              <h2>Ultra&apos;s read of the portfolio <span className="cid">{pnote.completionId}</span></h2>
+              <h2>The reasoning AI&apos;s overview <span className="cid">{pnote.completionId}</span></h2>
               <p className="headline2" style={{ marginTop: 8 }}>{pnote.headline}</p>
               <div className="cols">
                 <div>
                   <h3>Look at these first</h3>
                   <ul className="prio">{pnote.priorities.map((p) => <li key={p.id}><button className="linkbtn" onClick={() => openFirstLane(p.id)}>{verdicts.find((v) => v.id === p.id)?.displayNumber ?? p.id}</button><span>{p.reason}</span></li>)}</ul>
                 </div>
-                <div><h3>Ask the IOR before upload</h3><ul className="q">{pnote.brokerQuestions.map((q, i) => <li key={i}>{q}</li>)}</ul></div>
+                <div><h3>Ask the importer before uploading</h3><ul className="q">{pnote.brokerQuestions.map((q, i) => <li key={i}>{q}</li>)}</ul></div>
               </div>
             </section>
           )}
@@ -316,29 +317,29 @@ export default function Desk() {
             <Export board={board} include={include} incRefund={incRefund} incBill={incBill} files={files} ack={ack} setAck={setAck} />
             <div className="stack">
               <div className="panel">
-                <h2>Filing order</h2>
-                <p className="fine" style={{ marginBottom: 12 }}>CBP&apos;s sequencing rules, applied by code. Click a row for the reason.</p>
+                <h2>What to file, in order</h2>
+                <p className="fine" style={{ marginBottom: 12 }}>Customs&apos; rules say some things must be fixed or filed before others. Code applies them. Click a row for the reason.</p>
                 <ol className="order">
                   {verdicts.filter((v) => v.lane !== "BLOCKED").map((v) => (
                     <li key={v.id} onClick={() => openFirstLane(v.id)}>
                       <span className="n">{v.order}</span>
                       <span className="e">{v.displayNumber}</span>
-                      <span className="s">{v.filingStep}</span>
+                      <span className="s">{plainStep(v.filingStep)}</span>
                       <span className={`m ${v.money.netCents < 0 ? "neg" : ""}`}>{money(v.money.netCents)}</span>
                     </li>
                   ))}
                 </ol>
-                <details className="rules"><summary>The rules behind the order (quoted from CBP)</summary>
+                <details className="rules"><summary>The rules behind the order (quoted from Customs)</summary>
                   {FILING_ORDER_RULES.map((r) => <p key={r.id}><b>{r.rule}</b><br /><i>&ldquo;{r.quote}&rdquo;</i> <a href={SOURCES[r.sourceId].url} target="_blank" rel="noreferrer">{r.sourceId}</a></p>)}
                 </details>
               </div>
               {board.portfolio.iors.length > 0 && (
                 <div className="panel">
-                  <h2>IOR debts that may absorb the refund</h2>
-                  <p className="fine" style={{ marginBottom: 8 }}>19 CFR 24.72</p>
-                  <table className="tbl num"><thead><tr><th>IOR</th><th>Open debt</th><th>Eligible refund</th><th>Likely offset</th></tr></thead>
+                  <h2>Importers who owe Customs money</h2>
+                  <p className="fine" style={{ marginBottom: 8 }}>Customs can subtract unpaid debts from a refund before paying it (19 CFR 24.72).</p>
+                  <table className="tbl num"><thead><tr><th>Importer</th><th>Owes Customs</th><th>Refund</th><th>Likely taken out</th></tr></thead>
                     <tbody>{board.portfolio.iors.map((i) => <tr key={i.ior}><td className="mono">{i.ior}</td><td>{money(i.openDebtCents)}</td><td>{money(i.eligibleRefundCents)}</td><td className="warn">{money(i.expectedDiversionCents)}</td></tr>)}</tbody></table>
-                  <p className="fine" style={{ marginTop: 10 }}>CBP checks for unpaid debts owed by the IOR before issuing a refund. Interest (19 U.S.C. 1505) is added by CBP and is not estimated here.</p>
+                  <p className="fine" style={{ marginTop: 10 }}>Customs adds interest to refunds. This tool doesn&apos;t estimate it.</p>
                 </div>
               )}
             </div>
@@ -351,9 +352,9 @@ export default function Desk() {
       {!board && <RuleWatch />}
 
       <footer className="foot">
-        <p><b>{DISCLAIMER}</b> Uses realistic sample entries unless you upload your own. Not affiliated with or endorsed by U.S. Customs and Border Protection.</p>
+        <p><b>{DISCLAIMER}</b> Uses made-up sample shipments unless you upload your own. Not affiliated with or endorsed by U.S. Customs and Border Protection (CBP).</p>
         <p>
-          Checks mirror CBP&apos;s published CAPE material:{" "}
+          Checks follow the published rules of the refund program (called CAPE):{" "}
           {Object.entries(SOURCES).map(([k, s], i) => <span key={k}>{i ? ", " : ""}<a href={s.url} target="_blank" rel="noreferrer">{k}</a></span>)}. MIT licensed.
         </p>
       </footer>
@@ -369,24 +370,24 @@ function RunControls(p: RunControlProps) {
   return (
     <div className={p.compact ? "" : "panel runbox"}>
       {!p.compact && <h3>Check your own file</h3>}
-      {!p.compact && <p className="fine">We never ask for ACE credentials, bank details or an EIN. Your broker or IOR uploads to ACE. Uploaded files are processed in memory and never stored.</p>}
+      {!p.compact && <p className="fine">We never ask for logins, bank details or tax IDs. Files are checked in memory and never stored. You or your broker do the real upload.</p>}
       <div className="field">
         <label className="file">
           <input type="file" accept=".csv,text/csv" onChange={(e) => p.onFile(e.target.files?.[0] ?? null)} />
-          <span>{Icon.file} {p.fileName ? p.fileName : "Upload your ES-003 CSV"}</span>
+          <span>{Icon.file} {p.fileName ? p.fileName : "Upload your Customs shipment export (CSV)"}</span>
         </label>
         <div className="row2">
-          <label className="in">Filer code<input placeholder="A7K" maxLength={3} value={p.filer} onChange={(e) => p.setFiler(e.target.value.toUpperCase())} aria-label="Filer code" /></label>
-          <label className="in">As-of date<input type="date" value={p.asOf} onChange={(e) => p.setAsOf(e.target.value)} aria-label="As-of date" /></label>
+          <label className="in" title="The first 3 characters of your Customs entry numbers">Filer code<input placeholder="A7K" maxLength={3} value={p.filer} onChange={(e) => p.setFiler(e.target.value.toUpperCase())} aria-label="Filer code" /></label>
+          <label className="in">Check as of<input type="date" value={p.asOf} onChange={(e) => p.setAsOf(e.target.value)} aria-label="Check as of date" /></label>
         </div>
         <div className="btnrow">
           <button className="btn" disabled={p.running || !p.csvText} onClick={p.inBrowser}>Check in this browser (no upload)</button>
-          <button className="btn" disabled={p.running || !p.csvText || p.liveOk === false} onClick={() => p.live(false)}>Check with Lightning + Ultra</button>
+          <button className="btn" disabled={p.running || !p.csvText || p.liveOk === false} onClick={() => p.live(false)}>Check with the AI</button>
         </div>
         <div className="btnrow">
           {p.compact && <button className="btn" disabled={p.running} onClick={p.replay}>{Icon.play} Replay the sample</button>}
-          {p.compact && <button className="btn" disabled={p.running || p.liveOk === false} onClick={() => p.live(true)}>Run live on Token Factory</button>}
-          <a className="link" href="/api/sample?f=csv">Download the synthetic sample CSV</a>
+          {p.compact && <button className="btn" disabled={p.running || p.liveOk === false} onClick={() => p.live(true)}>Run it live</button>}
+          <a className="link" href="/api/sample?f=csv">Download the sample CSV</a>
         </div>
         {p.err && <p className="error" role="alert">{p.err}</p>}
       </div>
@@ -398,9 +399,9 @@ function Progress({ prog, stage }: { prog: { l: number[]; u: number[] }; stage: 
   const frac = (a: number[]) => (a[1] ? Math.min(1, a[0] / a[1]) : 0);
   return (
     <div className="prog" aria-live="polite">
-      <div><div className="bar-h"><span style={{ fontFamily: "var(--sans)", fontSize: 13, color: "var(--text)" }}><b>Lightning</b> normalizes rows in parallel</span><span>{prog.l[0]} / {prog.l[1] || "…"}</span></div><div className="track"><div className="fill" style={{ transform: `scaleX(${frac(prog.l)})` }} /></div></div>
-      <div><div className="bar-h"><span style={{ fontFamily: "var(--sans)", fontSize: 13, color: "var(--text)" }}><b>Ultra</b> reasons over CBP&apos;s rules</span><span>{prog.u[1] ? `${prog.u[0]} / ${prog.u[1]}` : "queued, starts when rows are clean"}</span></div><div className="track"><div className="fill" style={{ transform: `scaleX(${frac(prog.u)})` }} /></div></div>
-      <div className="stage">{stage === "lightning" ? "Normalizing rows and tagging broker notes…" : stage === "ultra" ? "The deterministic board is ready. Ultra is explaining the entries that need a decision…" : "Done."}</div>
+      <div><div className="bar-h"><span style={{ fontFamily: "var(--sans)", fontSize: 13, color: "var(--text)" }}><b>Fast AI</b> (Lightning) cleans up the rows</span><span>{prog.l[0]} / {prog.l[1] || "…"}</span></div><div className="track"><div className="fill" style={{ transform: `scaleX(${frac(prog.l)})` }} /></div></div>
+      <div><div className="bar-h"><span style={{ fontFamily: "var(--sans)", fontSize: 13, color: "var(--text)" }}><b>Reasoning AI</b> (Ultra) explains the tricky ones</span><span>{prog.u[1] ? `${prog.u[0]} / ${prog.u[1]}` : "waits for the clean-up"}</span></div><div className="track"><div className="fill" style={{ transform: `scaleX(${frac(prog.u)})` }} /></div></div>
+      <div className="stage">{stage === "lightning" ? "Cleaning up the rows and reading the broker notes…" : stage === "ultra" ? "The checks are done and the board is ready. The reasoning AI is now explaining the tricky shipments…" : "Done."}</div>
     </div>
   );
 }
@@ -412,26 +413,26 @@ function Row({ v, ex, i, animate, checked, canInclude, active, onToggle, onOpen 
   const amtC = isNet ? v.money.netCents : v.money.ieepaRefundableCents;
   const win = d.capeDaysLeft !== null && d.capeDaysLeft >= 0 ? d.capeDaysLeft : null;
   const meta: React.ReactNode[] = [];
-  if (v.diversionRisk) meta.push(<span key="d" className="warn">IOR debt may offset</span>);
-  if (v.money.frameworkGroups.length > 0) meta.push(<span key="f">Framework {v.money.frameworkGroups.join("/")}</span>);
-  if (v.leadingZeroFix) meta.push(<span key="z">leading zero: apostrophe added</span>);
-  if (v.findings.length > 1) meta.push(<span key="m">+{v.findings.length - 1} more finding{v.findings.length > 2 ? "s" : ""}</span>);
-  if (d.reconDeadlineDaysLeft !== null && v.lane !== "BLOCKED") meta.push(<span key="r" className="warn">Recon {d.reconDeadlineDaysLeft}d</span>);
-  if (ex) meta.push(<span key="u">Ultra explained</span>);
-  if (!f) meta.unshift(<span key="s">Filing step {v.order}</span>);
+  if (v.diversionRisk) meta.push(<span key="d" className="warn">Owes Customs money, may be taken out</span>);
+  if (v.money.frameworkGroups.length > 0) meta.push(<span key="f">Trade-deal rate ({v.money.frameworkGroups.join("/")})</span>);
+  if (v.leadingZeroFix) meta.push(<span key="z">leading zero kept in the CSV</span>);
+  if (v.findings.length > 1) meta.push(<span key="m">+{v.findings.length - 1} more issue{v.findings.length > 2 ? "s" : ""}</span>);
+  if (d.reconDeadlineDaysLeft !== null && v.lane !== "BLOCKED") meta.push(<span key="r" className="warn">Related filing due in {d.reconDeadlineDaysLeft}d</span>);
+  if (ex) meta.push(<span key="u">AI explained</span>);
+  if (!f) meta.unshift(<span key="s">File #{v.order}</span>);
   return (
     <li className={`row ${active ? "sel" : ""} ${animate ? "enter" : ""}`} style={animate ? { animationDelay: `${Math.min(i, 14) * 12}ms` } : undefined} onClick={onOpen}>
       {canInclude
-        ? <label className="chk" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={checked} onChange={onToggle} aria-label={`Include ${v.displayNumber} in the CAPE file`} /></label>
+        ? <label className="chk" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={checked} onChange={onToggle} aria-label={`Include ${v.displayNumber} in the refund file`} /></label>
         : <span className="chk na" aria-hidden />}
       <button className="en" onClick={(e) => { e.stopPropagation(); onOpen(); }}>{v.displayNumber}</button>
-      <span className="ior">{v.ior}</span>
+      <span className="ior" title="Importer">{v.ior}</span>
       <span className="why">
-        <span className={`l1 ${f ? "" : "none"}`}>{f?.cbpError ? <>&ldquo;{f.cbpError}&rdquo;</> : f ? f.detail : "No CBP error found"}</span>
+        <span className={`l1 ${f ? "" : "none"}`} title={f?.cbpError ? `Customs error: "${f.cbpError}"` : undefined}>{f ? plainTitle(f.code, f.cbpError ?? f.detail) : v.lane === "NET_BILL_RISK" ? "No error, but other duties may be billed back" : "Nothing wrong found"}</span>
         <span className="l2">{meta.map((m, k) => <span key={k}>{k ? " · " : ""}{m}</span>)}{win !== null && <span className="m-only"> · {win}d left</span>}</span>
       </span>
       <span className={`win r ${win !== null && win <= 7 ? "hot" : ""}`}>{win !== null ? `${win} day${win === 1 ? "" : "s"} left` : "n/a"}</span>
-      <span className={`amt ${amtC < 0 ? "neg" : ""}`}>{money(amtC)}{isNet && <small>net</small>}</span>
+      <span className={`amt ${amtC < 0 ? "neg" : ""}`}>{money(amtC)}{isNet && <small>{amtC < 0 ? "you owe" : "net"}</small>}</span>
     </li>
   );
 }
@@ -441,24 +442,24 @@ function Export({ board, include, incRefund, incBill, files, ack, setAck }: { bo
   const heldWait = p.verdicts.filter((v) => v.lane === "WAIT" && include.has(v.id)).length;
   return (
     <div className="panel dock">
-      <h2>Export for your broker</h2>
+      <h2>Your refund file</h2>
       <div className="kpis">
-        <div className="kpi"><b>{include.size}</b><span>entries selected</span></div>
-        <div className="kpi"><b>{money(incRefund)}</b><span>est. IEEPA refund before interest</span></div>
-        <div className="kpi"><b className={incBill > 0 ? "neg" : ""}>{incBill > 0 ? money(incBill) : "$0.00"}</b><span>possible bills in selection</span></div>
+        <div className="kpi"><b>{include.size}</b><span>shipments selected</span></div>
+        <div className="kpi"><b>{money(incRefund)}</b><span>estimated refund, before interest</span></div>
+        <div className="kpi"><b className={incBill > 0 ? "neg" : ""}>{incBill > 0 ? money(incBill) : "$0.00"}</b><span>possible bills in this selection</span></div>
       </div>
-      {heldWait > 0 && <p className="error" style={{ marginBottom: 12 }}>{heldWait} selected entries are on hold.</p>}
-      <label className="ack"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /><span>I understand an accepted CAPE declaration cannot be amended or have entries removed, and a licensed customs broker will review this list before it is uploaded to ACE.</span></label>
+      {heldWait > 0 && <p className="error" style={{ marginBottom: 12 }}>{heldWait} selected shipments need fixing first.</p>}
+      <label className="ack"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /><span>I understand that once Customs accepts this file I can't edit it or remove shipments, and that my licensed customs broker will review the list before it is uploaded.</span></label>
       <div className="btns">
         {files.map((f) => (
-          <button key={f.name} className="btn primary lg" disabled={!ack || !f.count} onClick={() => download(f.name, f.content)}>{Icon.down} {f.name} <span className="sub">{f.count} entries, {f.bytes} B{f.ok ? "" : ", check this file"}</span></button>
+          <button key={f.name} className="btn primary lg" disabled={!ack || !f.count} onClick={() => download(f.name, f.content)}>{Icon.down} {f.name} <span className="sub">{f.count} shipments, {f.bytes} B{f.ok ? "" : ", check this file"}</span></button>
         ))}
         <div className="btnrow">
-          <button className="btn" onClick={() => download("cape-broker-handoff.md", handoffNote(p, board.asOf, include), "text/markdown")}>{Icon.down} Broker handoff note (.md)</button>
-          <button className="btn" onClick={() => download("cape-deadlines.csv", deadlineCsv(p))}>{Icon.down} Deadline list (.csv)</button>
+          <button className="btn" onClick={() => download("cape-broker-handoff.md", handoffNote(p, board.asOf, include), "text/markdown")}>{Icon.down} Note for your broker (.md)</button>
+          <button className="btn" onClick={() => download("cape-deadlines.csv", deadlineCsv(p))}>{Icon.down} Deadlines (.csv)</button>
         </div>
       </div>
-      <p className="fine" style={{ marginTop: 14 }}>CAPE CSV format per CBP&apos;s ACE Portal quick reference guide: one &ldquo;Entry Number&rdquo; column, 11 characters, no dashes, apostrophe before a leading zero, at most 9,999 entries and 1MB per declaration. {PREPARED_FOR}</p>
+      <p className="fine" style={{ marginTop: 14 }}>The CSV follows Customs&apos; format: a single &ldquo;Entry Number&rdquo; column, 11 characters, no dashes, at most 9,999 shipments and 1MB per file. {PREPARED_FOR_PLAIN}</p>
     </div>
   );
 }
@@ -489,74 +490,75 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
   }, [onClose]);
   return (
     <div className="drawer-wrap" onClick={onClose}>
-      <aside className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Entry ${v.displayNumber}`}>
+      <aside className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Shipment ${v.displayNumber}`}>
         <button ref={closeRef} className="x" onClick={onClose} aria-label="Close">{Icon.close}</button>
-        <div className="d-meta"><span className="mono">{v.ior}</span><span>Filing step {v.order}</span></div>
+        <div className="d-meta"><span className="mono">{v.ior}</span><span>Order to file: #{v.order}</span></div>
         <h2>{v.displayNumber}</h2>
         <span className={`pill ${meta.tone}`}>{meta.title}</span>
-        <p className="step">{v.filingStep}</p>
+        <p className="verdict">{plainVerdict(v)}</p>
+        <p className="step" title={v.filingStep}>{plainStep(v.filingStep)}</p>
 
         <div className="netbox">
-          <div className="big"><span>{m.netCents < 0 ? "Net: a possible bill" : "Net refund"}</span><b className={m.netCents < 0 ? "neg" : ""}>{money(m.netCents)}</b></div>
+          <div className="big"><span>{m.netCents < 0 ? "You'd owe Customs" : "You'd get back"}</span><b className={m.netCents < 0 ? "neg" : ""}>{money(m.netCents)}</b></div>
           <div className="parts">
-            <div><span>IEEPA duty on lines</span><span>{money(m.grossIeepaCents)}</span></div>
-            {m.frameworkCarveOutCents > 0 && <div><span>Framework carve-out ({m.frameworkGroups.join("/")})</span><span>−{money(m.frameworkCarveOutCents)}</span></div>}
-            <div><span>IEEPA refundable</span><b>{money(m.ieepaRefundableCents)}</b></div>
-            {m.underpaidOtherCents > 0 && <div><span>Underpaid 232/301/201</span><span className="neg">−{money(m.underpaidOtherCents)}</span></div>}
+            <div><span>Struck-down tariff you paid</span><span>{money(m.grossIeepaCents)}</span></div>
+            {m.frameworkCarveOutCents > 0 && <div><span>Part that stays owed under a trade deal ({m.frameworkGroups.join("/")})</span><span>−{money(m.frameworkCarveOutCents)}</span></div>}
+            <div><span>Refundable tariff</span><b>{money(m.ieepaRefundableCents)}</b></div>
+            {m.underpaidOtherCents > 0 && <div><span>Other duties you underpaid</span><span className="neg">−{money(m.underpaidOtherCents)}</span></div>}
           </div>
         </div>
-        <p className="fine">Deterministic, cents-exact. Underpaid 232/301/201 duty is what ACE may recalculate as owed against the refund.</p>
-        {v.diversionRisk && <p className="fine warn" style={{ marginTop: 6 }}>This IOR has an open non-IEEPA debt; CBP may offset it against the refund (19 CFR 24.72).</p>}
+        <p className="fine">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>
+        {v.diversionRisk && <p className="fine warn" style={{ marginTop: 6 }}>This importer owes Customs money from before. Customs may subtract it from the refund (19 CFR 24.72).</p>}
+
+        {ex && (
+          <div className="sect ultra">
+            <h3>What the reasoning AI says <span className="cid">{ex.completionId}</span></h3>
+            <p>{ex.summary}</p>
+            <p><b>Next step:</b> {ex.brokerAction}</p>
+            <p><b>Why it sits here:</b> {ex.whyThisOrder}</p>
+            {ex.citations.length > 0 && <div className="cites">{ex.citations.map((c) => <span key={c}>{c}</span>)}</div>}
+            {ex.guardStripped > 0 && <p className="fine">The number guard removed {ex.guardStripped} figure{ex.guardStripped === 1 ? "" : "s"} that didn't match the code's math.</p>}
+            {ex.reasoning && <details style={{ marginTop: 10 }}><summary>The AI&apos;s reasoning trace ({ex.ms} ms)</summary><pre>{ex.reasoning}</pre></details>}
+          </div>
+        )}
 
         <div className="sect">
-          <h3>CBP findings</h3>
-          {v.findings.length === 0 ? <p className="pos" style={{ color: "var(--go-ink)" }}>No CBP validation error found for this entry by the checks in this tool.</p> : v.findings.map((f, i) => (
+          <h3>What Customs&apos; checks found</h3>
+          {v.findings.length === 0 ? <p className="pos" style={{ color: "var(--go-ink)" }}>{v.lane === "NET_BILL_RISK" ? "No error. The risk is the money: see the math above." : "Nothing wrong found by the checks in this tool."}</p> : v.findings.map((f, i) => (
             <div className="finding" key={i}>
-              {f.cbpError ? <div className="cbpq">&ldquo;{f.cbpError}&rdquo;</div> : <div className="cbpq soft">Filing-order guidance</div>}
-              {f.cbpError && ERROR_DEFINITIONS[f.cbpError] && <p><b>CBP definition:</b> {ERROR_DEFINITIONS[f.cbpError]}</p>}
+              <p><b>{plainTitle(f.code, f.detail)}.</b> {PLAIN_FINDING[f.code]?.what}</p>
               <p>{f.detail}</p>
-              {f.fix && <p className="fix"><b>Fix:</b> {f.fix}</p>}
+              {f.fix && <p className="fix"><b>How to fix it:</b> {f.fix}</p>}
+              {f.cbpError ? <div className="cbpq">Customs&apos; exact error: &ldquo;{f.cbpError}&rdquo;{ERROR_DEFINITIONS[f.cbpError] ? <span> (means: {ERROR_DEFINITIONS[f.cbpError]})</span> : null}</div> : <div className="cbpq soft">Filing-order rule, not a Customs error</div>}
               <p><a className="src" href={SOURCES[f.sourceId]?.url} target="_blank" rel="noreferrer">{SOURCES[f.sourceId]?.label ?? f.sourceId}</a></p>
             </div>
           ))}
         </div>
 
-        {ex && (
-          <div className="sect ultra">
-            <h3>Ultra explanation <span className="cid">{ex.completionId}</span></h3>
-            <p>{ex.summary}</p>
-            <p><b>Broker next step:</b> {ex.brokerAction}</p>
-            <p><b>Why this order:</b> {ex.whyThisOrder}</p>
-            {ex.citations.length > 0 && <div className="cites">{ex.citations.map((c) => <span key={c}>{c}</span>)}</div>}
-            {ex.guardStripped > 0 && <p className="fine">Number guard replaced {ex.guardStripped} figure{ex.guardStripped === 1 ? "" : "s"} that did not match the engine.</p>}
-            {ex.reasoning && <details style={{ marginTop: 10 }}><summary>Ultra&apos;s reasoning trace ({ex.ms} ms)</summary><pre>{ex.reasoning}</pre></details>}
-          </div>
-        )}
-
         <div className="sect">
           <h3>Dates <span className="muted" style={{ fontWeight: 400 }}>as of {board.asOf}</span></h3>
-          <table className="tbl"><tbody><tr><td>Liquidation</td><td>{info?.liquidationDate ?? info?.liquidationStatus}</td></tr></tbody></table>
-          {d.capeCutoffDate && <Countdown label="CAPE Phase 1 window closes (+80d)" date={d.capeCutoffDate} left={d.capeDaysLeft} span={80} />}
-          {d.protestDeadlineDate && <Countdown label="Protest window closes (+180d)" date={d.protestDeadlineDate} left={d.protestDaysLeft} span={180} />}
+          <table className="tbl"><tbody><tr><td>Finalized by Customs</td><td>{info?.liquidationDate ?? info?.liquidationStatus}</td></tr></tbody></table>
+          {d.capeCutoffDate && <Countdown label="Last day to claim (80 days after Customs finalized it)" date={d.capeCutoffDate} left={d.capeDaysLeft} span={80} />}
+          {d.protestDeadlineDate && <Countdown label="Last day to appeal the amount (180 days after)" date={d.protestDeadlineDate} left={d.protestDaysLeft} span={180} />}
           <table className="tbl"><tbody>
-            {d.reconDeadlineDaysLeft !== null && <tr><td>Recon deadline</td><td>{d.reconDeadlineDaysLeft} days</td></tr>}
-            {d.projectedLiquidationDaysLeft !== null && <tr><td>Projected liquidation</td><td>in {d.projectedLiquidationDaysLeft} days</td></tr>}
+            {d.reconDeadlineDaysLeft !== null && <tr><td>Deadline for a related filing (&ldquo;reconciliation&rdquo;)</td><td>{d.reconDeadlineDaysLeft} days</td></tr>}
+            {d.projectedLiquidationDaysLeft !== null && <tr><td>Customs expects to finalize it</td><td>in {d.projectedLiquidationDaysLeft} days</td></tr>}
           </tbody></table>
         </div>
 
         {info && (
           <div className="sect">
-            <h3>Lines and broker note</h3>
-            <table className="tbl"><tbody>{info.lines.map((l) => <tr key={l.lineNo}><td>#{l.lineNo} <span className="mono">{l.hts}</span> {l.country}{l.framework ? ` · ${l.framework} framework` : ""}</td><td>{l.value} / IEEPA {l.ieepaDuty}</td></tr>)}</tbody></table>
+            <h3>Products and the broker&apos;s note</h3>
+            <table className="tbl"><tbody>{info.lines.map((l) => <tr key={l.lineNo}><td>#{l.lineNo} <span className="mono">{l.hts}</span> {l.country}{l.framework ? ` · ${l.framework} trade deal` : ""}</td><td>{l.value} / struck-down tariff {l.ieepaDuty}</td></tr>)}</tbody></table>
             {info.notes && <p className="note-q">&ldquo;{info.notes}&rdquo;</p>}
-            {info.noteSignals.length > 0 && <div className="sig">Lightning tags: {info.noteSignals.map((s) => <span key={s}>{s}</span>)}</div>}
-            {info.noteConflicts.map((c, i) => <p key={i} className="error" style={{ marginTop: 8 }}>Note conflicts with the data: {c.message}</p>)}
+            {info.noteSignals.length > 0 && <div className="sig">Topics the AI spotted: {info.noteSignals.map((s) => <span key={s}>{s}</span>)}</div>}
+            {info.noteConflicts.map((c, i) => <p key={i} className="error" style={{ marginTop: 8 }}>The note disagrees with the data: {c.message}</p>)}
             {info.parseNotes.map((c, i) => <p key={i} className="fine" style={{ marginTop: 6 }}>{c}</p>)}
           </div>
         )}
 
-        {(v.lane === "FILE_NOW" || v.lane === "NET_BILL_RISK") && <div style={{ marginTop: 28 }}><button className="btn primary lg" onClick={onToggle}>{included ? "Remove from the CAPE file" : "Add to the CAPE file"}</button></div>}
-        <p className="fine" style={{ marginTop: 14 }}>{PREPARED_FOR}</p>
+        {(v.lane === "FILE_NOW" || v.lane === "NET_BILL_RISK") && <div style={{ marginTop: 28 }}><button className="btn primary lg" onClick={onToggle}>{included ? "Take out of the refund file" : "Add to the refund file"}</button></div>}
+        <p className="fine" style={{ marginTop: 14 }}>{PREPARED_FOR_PLAIN}</p>
       </aside>
     </div>
   );
@@ -577,11 +579,11 @@ function focus(before: string, after: string): { b: React.ReactNode; a: React.Re
 
 type NoticeState = { kind: "credit" | "auth" | "disabled" | "cap" | "partial"; detail?: string };
 const NOTICE: Record<NoticeState["kind"], { title: string; body: string }> = {
-  credit: { title: "Live runs are paused: the model account is out of credit.", body: "Nebius Token Factory answered HTTP 402 (credit balance exhausted), so no model ran. Nothing was charged to you and your file was not stored. The recorded real run shows exactly what a live run returns, completion ids included." },
-  auth: { title: "Live runs are paused: the model key on this host was rejected.", body: "Token Factory refused the host's key (HTTP 401/403), so no model ran. Your file was not stored. The recorded real run shows what a live run returns." },
-  disabled: { title: "Live runs are switched off on this host.", body: "No Token Factory key is configured here. The recorded real run shows what a live run returns." },
-  cap: { title: "This host's live-run budget is used up.", body: "To keep the demo affordable each instance allows a fixed number of live runs. The recorded real run shows what a live run returns." },
-  partial: { title: "The models did not answer, so there are no explanations on this board.", body: "The rule checks and the money below are deterministic and complete. Only the model explanations are missing." },
+  credit: { title: "Live runs are paused: the AI account is out of credit.", body: "The AI host (Nebius Token Factory) said the credit balance is used up, so no AI ran. You weren't charged and your file wasn't stored. The recorded run shows exactly what a live run returns, with proof ids." },
+  auth: { title: "Live runs are paused: this site's AI key was rejected.", body: "The AI host refused the key, so no AI ran. Your file wasn't stored. The recorded run shows what a live run returns." },
+  disabled: { title: "Live runs are switched off here.", body: "No AI key is set up on this site. The recorded run shows what a live run returns." },
+  cap: { title: "This site's live-run budget is used up.", body: "To keep the demo affordable, each copy of the site allows a fixed number of live runs. The recorded run shows what a live run returns." },
+  partial: { title: "The AI didn't answer, so there are no explanations on this board.", body: "The checks and the money below were done by plain code and are complete. Only the AI explanations are missing." },
 };
 function Notice({ n, replay, canBrowser, inBrowser }: { n: NoticeState; replay: () => void; canBrowser: boolean; inBrowser: () => void }) {
   const t = NOTICE[n.kind];
@@ -590,15 +592,15 @@ function Notice({ n, replay, canBrowser, inBrowser }: { n: NoticeState; replay: 
       <h3>{t.title}</h3>
       <p>{t.body}</p>
       <div className="btnrow">
-        <button className="btn primary" onClick={replay}>Play the recorded real run</button>
-        {canBrowser && <button className="btn" onClick={inBrowser}>Check my file in this browser (rules only, no models)</button>}
+        <button className="btn primary" onClick={replay}>Play the recorded run</button>
+        {canBrowser && <button className="btn" onClick={inBrowser}>Check my file in this browser (no AI)</button>}
       </div>
       {n.detail && <details><summary>What the server said</summary><pre>{n.detail}</pre></details>}
     </section>
   );
 }
 
-const IMPACT: Record<number, string> = { 0: "Engine changed", 1: "Checked against the engine, unchanged", 3: "Not modeled by this tool" };
+const IMPACT: Record<number, string> = { 0: "Tool updated", 1: "Checked, no change needed", 3: "Not covered by this tool" };
 
 function ChangeCard({ c }: { c: Change }) {
   const f = focus(c.before, c.after);
@@ -613,7 +615,7 @@ function ChangeCard({ c }: { c: Change }) {
       </header>
       <div className="vs">
         <div><div className="when">July 11 capture</div><blockquote>{f.b ?? <em>(not on the page)</em>}</blockquote></div>
-        <div><div className="when">CBP page now</div><blockquote>{f.a ?? <em>(removed)</em>}</blockquote></div>
+        <div><div className="when">Customs&apos; page now</div><blockquote>{f.a ?? <em>(removed)</em>}</blockquote></div>
       </div>
       {c.engine && <p className={`impact lvl${lvl}`}><b>{IMPACT[lvl] ?? "Engine"}.</b> {c.engine.replace(/^(Engine (updated after this diff|unchanged)|Not modeled on purpose|Informational): ?/, "")}</p>}
     </article>
@@ -629,14 +631,14 @@ function RuleWatch() {
   const rest = ch.filter((c) => !c.key);
   return (
     <section className="panel watch">
-      <h2>Rule-watch: did CBP change the rules since this was built?</h2>
-      <p className="fine">Reads CBP&apos;s live IEEPA refunds page and compares it with an archived capture from 2026-07-11. Each change below is quoted from the page, July on the left and now on the right, with what it means for this tool&apos;s checks. Nothing here is generated by a model.</p>
-      <button className="btn" disabled={busy} onClick={go}>{busy ? "Reading CBP…" : "Check CBP now"}</button>
+      <h2>Did Customs change the rules since this was built?</h2>
+      <p className="fine">Customs publishes the refund rules on a web page. This reads the live page and compares it with a copy saved on 2026-07-11. Every change is quoted from the page (July on the left, now on the right). No AI is involved.</p>
+      <button className="btn" disabled={busy} onClick={go}>{busy ? "Reading the page…" : "Check Customs' page now"}</button>
       {r && (
         <div className="wr">
           <p className={r.ok ? "" : "error"}>{r.note}</p>
           {r.ok && <>
-            <p><b>{key.length}</b> change{key.length === 1 ? "" : "s"} touch checks this tool runs; {rest.length} more are informational. CBP&apos;s &quot;Last Modified&quot; stamp: {r.lastModified?.before ?? "none in the July capture"} → <b>{r.lastModified?.after ?? "none"}</b>. {r.noiseDropped} lines of layout and wording noise were filtered.</p>
+            <p><b>{key.length}</b> change{key.length === 1 ? "" : "s"} affect this tool&apos;s checks; {rest.length} more are just for information. The page&apos;s &quot;Last Modified&quot; date: {r.lastModified?.before ?? "none in the July capture"} → <b>{r.lastModified?.after ?? "none"}</b>. {r.noiseDropped} lines of layout and wording noise were filtered.</p>
             <div className="chgs">{key.map((c, i) => <ChangeCard key={i} c={c} />)}</div>
             {rest.length > 0 && <details className="more"><summary>{rest.length} more changes (informational or not modeled)</summary><div className="chgs">{rest.map((c, i) => <ChangeCard key={i} c={c} />)}</div></details>}
             <p className="fine">Snapshot {r.snapshot.capturedAt.slice(0, 10)} ({r.snapshot.sha256}) vs live {new Date(r.checkedAt).toLocaleString()} ({r.live?.sha256}).</p>
@@ -650,23 +652,23 @@ function RuleWatch() {
 function ReceiptPanel({ receipt, board, mode }: { receipt: Receipt | null; board: Board; mode: string }) {
   const n = board.normalization;
   if (mode === "browser") return null;
-  if (!receipt) return <section className="panel receipt"><h2>Token Factory receipt</h2><p className="fine">Appears when the run finishes.</p></section>;
+  if (!receipt) return <section className="panel receipt"><h2>What the AI did (receipt)</h2><p className="fine">Appears when the run finishes.</p></section>;
   const L = receipt.lightning, U = receipt.ultra;
   const total = L.costUsd + U.costUsd;
   return (
     <section className="panel receipt">
-      <h2>Token Factory receipt <span className="muted">· {receipt.mode === "replay" ? "recorded real run" : "live run"} · {new Date(receipt.ranAt).toLocaleString()}</span></h2>
+      <h2>What the AI did (receipt) <span className="muted">· {receipt.mode === "replay" ? "recorded real run" : "live run"} · {new Date(receipt.ranAt).toLocaleString()}</span></h2>
       <div className="rc">
         <div>
-          <h4>Nemotron 3.5 Lightning <small>{L.model}</small></h4>
+          <h4>Fast AI: Nemotron 3.5 Lightning <small>{L.model}</small></h4>
           <p><b>{L.calls}</b> calls in parallel · {L.promptTokens.toLocaleString()} in / {L.completionTokens.toLocaleString()} out tokens · avg {L.avgMs} ms · {L.failed} failed</p>
-          <p className="fine">Job: normalize each row and tag broker notes (JSON mode, thinking off). Cross-checked against the deterministic parser: <b>{n.agree}/{n.checked}</b> fields agree{n.disagreements.length ? `; ${n.disagreements.length} disagreement(s) overridden by code:` : "."}</p>
-          {n.disagreements.slice(0, 5).map((d, i) => <p key={i} className="fine mono">{d.entry} · {d.field}: model said {d.lightning}, parser {d.deterministic}</p>)}
+          <p className="fine">Job: cleaned up each row and tagged the broker&apos;s notes. Double-checked against plain code: <b>{n.agree}/{n.checked}</b> fields agree{n.disagreements.length ? `; code overrode ${n.disagreements.length} disagreement(s):` : "."}</p>
+          {n.disagreements.slice(0, 5).map((d, i) => <p key={i} className="fine mono">{d.entry} · {d.field}: AI said {d.lightning}, code says {d.deterministic}</p>)}
         </div>
         <div>
-          <h4>Nemotron 3 Ultra <small>{U.model}</small></h4>
+          <h4>Reasoning AI: Nemotron 3 Ultra <small>{U.model}</small></h4>
           <p><b>{U.calls}</b> calls · {U.promptTokens.toLocaleString()} in / {U.completionTokens.toLocaleString()} out tokens ({U.reasoningTokens.toLocaleString()} reasoning) · avg {U.avgMs} ms · {U.failed} failed</p>
-          <p className="fine">Job: explain and rank, with CBP&apos;s quoted rules in context. No dollar figure it writes survives unless it is already in the deterministic packet.</p>
+          <p className="fine">Job: explained each tricky case using Customs&apos; own rules. Any dollar figure it writes is deleted unless the code already calculated it.</p>
         </div>
         <div>
           <h4>Total</h4>
@@ -674,8 +676,8 @@ function ReceiptPanel({ receipt, board, mode }: { receipt: Receipt | null; board
           <p className="fine">Estimate: tokens × Nebius list price (Ultra $1.00 in / $3.00 out, Lightning $0.06 / $0.24 per 1M). Host {receipt.host}.</p>
         </div>
       </div>
-      <details><summary>{L.ids.length + U.ids.length} Token Factory completion ids</summary>
-        <pre className="ids">{[...L.ids.map((i) => `lightning ${i}`), ...U.ids.map((i) => `ultra     ${i}`)].join("\n")}</pre></details>
+      <details><summary>{L.ids.length + U.ids.length} AI call ids (proof from Token Factory)</summary>
+        <pre className="ids">{[...L.ids.map((i) => `fast AI      ${i}`), ...U.ids.map((i) => `reasoning AI ${i}`)].join("\n")}</pre></details>
     </section>
   );
 }

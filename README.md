@@ -1,30 +1,40 @@
 # CAPE Refund Desk
 
-**The pre-flight check before an irreversible CAPE upload.**
+**Check your tariff refund file before you send it.**
+
+US importers are owed money back for tariffs that were struck down. To get it, they upload one file to US Customs, and the upload can't be undone: Customs can't edit it or take shipments back out. One wrong shipment can turn a refund into a bill. This tool checks the file first. It sorts every shipment into four groups: **Safe to claim**, **Fix first**, **Your broker decides** and **Leave out**, and says why in plain English.
+
+How the AI fits in:
+
+- **Plain code does all the money math** and decides every group. The AI never makes up a number.
+- **A fast AI (Nemotron Lightning)** cleans up messy data.
+- **A reasoning AI (Nemotron Ultra)** explains each tricky case.
+
+It never asks for logins or bank details, and it files nothing. Your customs broker does the real upload.
+
+> Sample data: made-up shipments, not real trade data. **Not legal or customs advice.** Have your licensed customs broker review the list before it is uploaded. Not affiliated with or endorsed by U.S. Customs and Border Protection (CBP).
 
 | | |
 |---|---|
-| **Models** | **NVIDIA Nemotron**: `Nemotron-3-Ultra-550b-a55b` reasons, explains and ranks; `Nemotron-3_5-Lightning` normalizes messy entry rows fast |
+| **Models** | **NVIDIA Nemotron**: `Nemotron-3-Ultra-550b-a55b` reasons, explains and ranks; `Nemotron-3_5-Lightning` normalizes messy rows fast |
 | **Inference** | **Nebius Token Factory** (OpenAI-compatible API) |
 | **Hosting** | Vercel (submission URL: https://cape-refund-desk.vercel.app). A Nebius Serverless AI container (`./deploy.sh`) is prepared but not deployed |
-| **Rule-watch** | CBP's live IEEPA refunds page vs a July capture, confirmed by Tavily Extract |
+| **Rule-watch** | Customs' live refunds page vs a July capture, confirmed by Tavily Extract |
 | **Money** | Deterministic integer cents only. Models never produce a dollar figure |
 
 Built for the Nebius Global AI Hackathon, Best Apps and Agents track.
 
-> Prepared for licensed customs broker review. **Not legal or customs advice. Verify with your licensed customs broker.**
-> Uses realistic sample entries unless you upload your own. Not affiliated with or endorsed by U.S. Customs and Border Protection.
+### The jargon, once
 
-A CAPE (Consolidated Administration and Processing of Entries) declaration cannot be amended once accepted, entries cannot be removed from it, and PSCs and protests on those entries are blocked until liquidation. Large importers have brokers and software for this. The long tail of small importers files by CSV from an ACE ES-003 export and gets one shot. This tool tells an IOR and their broker which entries to hold, which to file now, which are a net-bill risk, and in what order, before anyone presses upload.
+The program is called **CAPE**. The struck-down tariffs are **IEEPA** tariffs. The customs authority is **CBP**. An **entry** is one shipment's customs filing, **IOR** is the importer of record (the importer), **liquidation** is Customs finalizing a shipment, **PSC** is a post-summary correction, a **protest** is an appeal, and **ACE** is the Customs portal. The app says "shipment", "importer", "finalized by Customs", "correction" and "appeal" instead, and keeps the exact Customs terms only as small print.
 
-It never asks for ACE credentials, bank details or an EIN. It does not file anything: your broker or IOR uploads the CAPE CSV to ACE themselves.
+## How it works (technical)
 
-## What it does
 
 1. **Parses an ES-003 export with ES-701 liquidation dates** (messy headers, dashes in entry numbers, stray notes).
 2. **Deterministic CBP checks** (`src/lib/validate.ts`, `src/lib/cbp-rules.ts`): the file-level errors (empty/not CSV, over 1 MB, over 10,000 entries, filer code not matching, duplicate entry, not 11 characters, account mismatch), the entry-level errors (drawback, recon already filed, cancelled/rejected, final liquidation, trade control, court injunction, suspension, under review, not an IEEPA HTS, HTS relationship mismatch, and the rest of CBP's table), the 80-day liquidation window, the leading-zero apostrophe rule, framework-agreement carve-outs, underpaid-other-duty netting and IOR debt diversion. Each finding carries the **exact CBP error string** and a link to the CBP source.
 3. **Money is deterministic only**, in integer cents. No model ever produces or changes a dollar figure.
-4. **Lanes**: `FILE_NOW`, `WAIT` (fix first / PSC first), `NET_BILL_RISK` (broker decision), `BLOCKED` (do not include). Rule: any block gives BLOCKED; any wait gives WAIT; net below zero or underpaid duty gives NET_BILL_RISK; otherwise FILE_NOW.
+4. **Lanes** (shown as Safe to claim, Fix first, Your broker decides, Leave out): `FILE_NOW`, `WAIT` (fix first / PSC first), `NET_BILL_RISK` (broker decision), `BLOCKED` (do not include). Rule: any block gives BLOCKED; any wait gives WAIT; net below zero or underpaid duty gives NET_BILL_RISK; otherwise FILE_NOW.
 5. **Filing order**: PSC first, Recon first, then liquidated entries by days left in the window, recon-flagged, drawback-planned, unliquidated, net-bill, hold, blocked. The rules behind the order are quoted from CBP in the UI.
 6. **Nemotron**
    - **Lightning** (`nvidia/Nemotron-3_5-Lightning`, thinking off): normalizes every entry's messy columns and broker notes. Output is cross-checked against the deterministic parser on 9 fields per entry; the deterministic value wins and disagreements are shown in the receipt.

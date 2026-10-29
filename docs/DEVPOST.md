@@ -15,42 +15,41 @@ CAPE Refund Desk
 
 ## Elevator pitch (200 characters max)
 
-A pre-flight check before an irreversible CBP tariff-refund upload: code sorts 69 sample entries into four lanes in integer cents, Nemotron Ultra and Lightning explain why.
-
+US importers are owed tariff refunds, but the one upload can't be undone. This checks the file first: code does the money math, a fast AI cleans data, a reasoning AI explains. 69 sample shipments.
 
 ## About the project
 
 ### Inspiration
 
-In 2026 CBP opened CAPE, a portal where importers file a CSV of entry numbers to get IEEPA tariff refunds. CBP's own quick reference says a declaration cannot be amended once accepted, entries cannot be removed from it, and post-summary corrections and protests on those entries are blocked until liquidation. Large importers have brokers and software for that. A small importer filing by CSV gets one attempt and a table of error strings such as "Entry Summary is in Final Liquidation Status" and "Entry Type Not Allowed".
+US importers are owed money back for tariffs that were struck down. To get it, they upload one file to US Customs (the portal is called CAPE), and it can't be undone. Customs can't edit the file after it is accepted, shipments can't be removed from it, and corrections and appeals on those shipments are blocked until Customs finalizes them. Big importers have brokers and software for that. A small importer gets one try and a table of cryptic errors such as "Entry Summary is in Final Liquidation Status" and "Entry Type Not Allowed".
 
-One of those rules is a trap we could reproduce from CBP's own material. An entry whose duty was underpaid under Section 301 can look like a refund, but when CBP recalculates the entry the refund can net to a bill. Once it is in a declaration, nobody can take it out.
+One of the traps is easy to reproduce from Customs' own material. A shipment where other duties were underpaid can look like a refund, but when Customs recalculates it, the refund can turn into a bill. Once it is in the file, nobody can take it out.
 
 We built the check that runs before the upload button.
 
 ### What it does
 
-You give it an ACE ES-003 export with ES-701 liquidation dates (or press "Run the sample"). It returns a four-lane board:
+You give it a Customs shipment export (or press "Run the sample"). It sorts every shipment into four groups and gives a headline in plain words, for example "33 of 69 shipments shouldn't go in the refund file yet. Here's why."
 
-| Lane | Meaning |
+| Group | Meaning |
 |---|---|
-| Cleared to file | No CBP validation error found by the checks the tool runs |
-| Hold: fix first | A PSC, a Recon filing or a CBP error comes first |
-| Broker decision | The entry may net to a bill after recalculation, and that cannot be undone |
-| Do not include | ACE would reject it (final liquidation, duplicate, wrong filer code, disallowed entry type) |
+| Safe to claim | Customs' checks found nothing wrong. Ready to include |
+| Fix first | A correction, an open appeal or an error has to be sorted out first |
+| Your broker decides | Claiming could cost you more than it refunds, and it can't be undone |
+| Leave out | Customs would reject it (finalized too long ago, duplicate, wrong filer, disallowed import type) |
 
-Each card has the exact CBP error string where one applies, the days left in the CAPE window, a filing step, and the money. The drawer shows the full entry: the deterministic money table (duty on lines, refundable, underpaid 232/301/201 that may be recalculated, net), the dates, the lines, and the model's explanation. Then it exports, behind an acknowledgement that the declaration is irreversible:
+Click a shipment and the first thing you see is one sentence, such as "Claiming this one would cost you $2,625, not refund you." Then the math (tariff paid, refundable part, other duties that may be billed back, net), then the AI's explanation, then Customs' exact error text in small print, the dates and the products. Exports sit behind a box you tick to confirm the upload can't be undone:
 
-- a CAPE CSV in the format CBP publishes (one `Entry Number` column, 11 characters, no dashes, an apostrophe before a leading zero, at most 9,999 entries and 1 MB per declaration)
-- a broker handoff note (.md)
+- the refund file in the format Customs publishes (one `Entry Number` column, 11 characters, no dashes, an apostrophe before a leading zero, at most 9,999 shipments and 1 MB per file)
+- a note for your broker (.md)
 - a deadline list (.csv)
 
-A rule-watch panel reads CBP's live IEEPA refunds page, diffs it against a capture from 2026-07-11, and quotes each change with what it means for these checks.
+A rule-watch panel reads Customs' live refunds page, compares it with a copy from 2026-07-11, and quotes each change with what it means for these checks.
 
 #### Honest limits
 
 - It does not file anything and never asks for ACE credentials, bank details or an EIN. The broker or importer of record uploads to ACE.
-- It is not legal or customs advice. Every screen says "Prepared for licensed customs broker review. Not legal or customs advice."
+- It is not legal or customs advice. Every screen says "Not legal or customs advice. Have your licensed customs broker review the list before it is uploaded."
 - The sample is synthetic: 69 made-up entries shaped like ES-003 + ES-701 with seeded traps. Nobody outside the team has used this, so there are no user claims here.
 - The checks mirror CBP's published FAQ, QRG, Trade User Information Notice and CSMS messages (listed in the README). CBP changes these. That is why rule-watch exists, and why the broker has the last word.
 - Interest (19 U.S.C. 1505) is added by CBP and is not estimated.

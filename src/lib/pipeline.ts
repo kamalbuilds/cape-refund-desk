@@ -125,18 +125,19 @@ function conflicts(e: Entry, signals: string[]): NoteConflict[] {
 }
 
 /* ---------- Ultra: explain + rank (never compute) ---------- */
-const ULTRA_SYSTEM = (ctx: string) => `You are the explanation layer of a pre-flight checker that helps licensed customs brokers decide which entries to include on an irreversible CAPE (IEEPA refund) declaration.
+const ULTRA_SYSTEM = (ctx: string) => `You explain results to a small business owner who has never heard of customs jargon. The tool is a pre-flight check for a one-time, irreversible tariff refund upload to US Customs (the program is called CAPE; the struck-down tariffs are called IEEPA tariffs).
 HARD RULES:
-- All eligibility decisions, dollar amounts, dates and day counts are already computed by deterministic code and given to you. Never calculate, estimate, or invent a number. Quote dollar amounts only exactly as given.
-- Use "broker" and "IOR". Never say "claim your refund". Never give legal advice; say what CBP's published rules say and what the broker should check.
-- Cite only from the rule ids / source ids in the context.
+- All eligibility decisions, dollar amounts, dates and day counts are already computed by plain code and given to you. Never calculate, estimate, or invent a number. Quote dollar amounts only exactly as given.
+- Write plain English at about an 8th-grade reading level. Short sentences. Say "shipment" (not "entry"), "importer" (not "IOR"), "finalized by Customs" (not "liquidated"), "correction" (not "PSC"), "appeal" (not "protest"). If you must use a customs term, explain it in a few words the first time. No acronyms you have not explained.
+- Say what to do and why it matters in money or risk. Say "your customs broker" for the licensed professional. Never say "claim your refund" as a promise, and never give legal advice; say what Customs' published rules say and what the broker should check.
+- Cite only from the rule ids / source ids in the context (put them in "citations", not in the prose).
 - Output ONLY JSON.
 
 ${ctx}`;
 
-const ENTRY_SCHEMA = `{"summary": "<=45 words: why this entry is in its lane, in plain broker language",
- "broker_action": "<=30 words: the one thing the broker should do next",
- "why_this_order": "<=30 words: why it sits at this point in the filing order",
+const ENTRY_SCHEMA = `{"summary": "<=45 words, plain English: why this shipment is in its group and what it means for the owner's money",
+ "broker_action": "<=30 words, plain English: the one thing to do next",
+ "why_this_order": "<=30 words, plain English: why it sits at this point in the filing order",
  "citations": ["rule ids or source ids, e.g. psc-first, FAQ, QRG"]}`;
 
 function entryPacket(v: Verdict, info: EntryInfo) {
@@ -208,7 +209,7 @@ async function portfolioNote(p: Portfolio, ctx: string, receipt: ModelReceipt): 
     const c = await chat({
       model: "ultra", thinking: true, json: true, maxTokens: 3500, timeoutMs: 150000,
       system: ULTRA_SYSTEM(ctx),
-      user: `Give the broker a short portfolio read. Return JSON exactly like:\n{"headline": "<=40 words on what to do first and what must not be uploaded blindly",\n "priorities": [{"id": "an id from candidates_in_filing_order", "reason": "<=25 words"}] (max 5),\n "broker_questions": ["3 short questions the broker should ask the IOR before upload"]}\n\nPORTFOLIO (deterministic results):\n${packet}`,
+      user: `Give the broker a short portfolio read. Return JSON exactly like:\n{"headline": "<=40 words, plain English, for a small business owner: what to do first and what must not be uploaded blindly",\n "priorities": [{"id": "an id from candidates_in_filing_order", "reason": "<=25 words, plain English"}] (max 5),\n "broker_questions": ["3 short plain-English questions to ask the importer before upload"]}\n\nPORTFOLIO (deterministic results):\n${packet}`,
     });
     track(receipt, "ultra", c);
     const j = parseJson<{ headline?: string; priorities?: { id: string; reason: string }[]; broker_questions?: string[] }>(c.content);

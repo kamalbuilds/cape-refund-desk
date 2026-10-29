@@ -9,6 +9,11 @@ export const PREPARED_FOR = "Prepared for licensed customs broker review. Not le
 export const IRREVERSIBLE =
   "A CAPE declaration cannot be amended once accepted, entries cannot be removed from it, and PSCs and protests on those entries are blocked until liquidation. Decide include vs hold BEFORE you upload.";
 
+/** Plain-English versions for the UI. The broker handoff note keeps the technical wording above. */
+export const IRREVERSIBLE_PLAIN =
+  "Once Customs accepts the file, you can't edit it or take shipments back out. Corrections and appeals on those shipments are blocked until Customs finalizes them. Decide what goes in BEFORE you upload.";
+export const PREPARED_FOR_PLAIN = "Not legal or customs advice. Have your licensed customs broker review the list before it is uploaded.";
+
 export interface CapeFile { name: string; content: string; count: number; bytes: number; ok: boolean; problems: string[] }
 
 /**

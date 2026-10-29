@@ -143,3 +143,7 @@ One big primary action (done: #2 of 9.2); a large summary bar with lane counts a
 - Round 1 reviewer fixes: header attribution shortened to one block, Ultra progress reads "queued, starts when rows are clean" until it has a total, export dock is sticky on desktop (static on mobile).
 - Round 2 fixes: drawer countdown labels no longer wrap mid-date on mobile, drawer close button stays fixed on mobile.
 - Reviewers were run through `codex exec` (read-only sandbox, screenshots attached, agent prompt files inlined). Scores stayed 6 to 7 out of 10, mostly on mobile density, receipt density and landing copy volume. Those are deferred, see the report.
+
+## 13. Plain-English pass
+
+Judges are not customs experts, so all UI copy was rewritten for a reader who has never heard of CBP, CAPE, IEEPA, IOR, PSC, liquidation or Recon. The engine, lane enums and CBP error strings are unchanged. `src/lib/plain.ts` translates findings, filing steps and the drawer's one-sentence verdict at display time. Customs' exact error text stays as small secondary text in the drawer and as a tooltip on each row. Lanes are shown as Safe to claim, Fix first, Your broker decides and Leave out. The broker handoff note keeps the technical wording because its reader is a customs broker. The Ultra prompt asks for plain English for a small business owner; the recorded run text was not regenerated.
