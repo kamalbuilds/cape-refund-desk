@@ -15,13 +15,13 @@ Probe: `scripts/smoke.mjs` (raw results in `docs/smoke-raw.json`), 14 calls per 
 ## How the app uses them
 
 - **Lightning, thinking off, JSON mode**: one call per entry to normalize messy columns (entry number, dates, amounts, IOR, HTS, flags) and broker notes. Its output is cross-checked field by field against the deterministic parser; disagreements are shown in the receipt and the deterministic value wins.
-- **Ultra, thinking on**: explains and ranks the entries that need judgment and writes the portfolio note. A guard strips any `$` amount that is not in the deterministic packet. Ultra never decides eligibility and never produces a number.
+- **Ultra, thinking on**: explains and ranks the entries that need judgment and writes the portfolio note. A number guard replaces or strips any dollar figure, day count or portfolio count that does not match the engine. Ultra never decides eligibility and never produces a number.
 
-## Recorded real run (data/sample-run.json, 67 synthetic entries, as-of 2026-10-29)
+## Recorded real run (data/sample-run.json, 69 synthetic entries, as-of 2026-10-29, host api.tokenfactory.nebius.com)
 
-| | Calls | Prompt tok | Completion tok | Est. cost | Avg latency |
-|---|---|---|---|---|---|
-| Lightning | 67 | 26,420 | 7,879 | $0.0035 | 1,018 ms |
-| Ultra | 23 | 41,741 | 13,011 (10,457 reasoning) | $0.081 | 3,345 ms |
+| | Calls | Failed | Prompt tok | Completion tok | Est. cost | Avg latency |
+|---|---|---|---|---|---|---|
+| Lightning | 69 | 1 | 26,813 | 7,996 | $0.0035 | 3,672 ms |
+| Ultra | 23 (22 entries + 1 portfolio note) | 0 | 42,017 | 17,613 (15,139 reasoning) | $0.0949 | 5,534 ms |
 
-Wall clock about 18 s with pools of 10 (Lightning) and 8 (Ultra). Normalization agreement: 600 of 603 fields. A live re-run of the same sample through `/api/run` took about 27 s.
+Wall clock for the whole run: 157 s. Normalization agreement: 609 of 612 fields (the 3 disagreements are shown in the receipt and the deterministic value won each time). Estimated cost uses list prices above.

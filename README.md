@@ -6,7 +6,7 @@
 |---|---|
 | **Models** | **NVIDIA Nemotron**: `Nemotron-3-Ultra-550b-a55b` reasons, explains and ranks; `Nemotron-3_5-Lightning` normalizes messy entry rows fast |
 | **Inference** | **Nebius Token Factory** (OpenAI-compatible API) |
-| **Hosting** | **Nebius Serverless AI** (container endpoint, `./deploy.sh`) |
+| **Hosting** | Vercel (submission URL: https://cape-refund-desk.vercel.app). A Nebius Serverless AI container (`./deploy.sh`) is prepared but not deployed |
 | **Rule-watch** | CBP's live IEEPA refunds page vs a July capture, confirmed by Tavily Extract |
 | **Money** | Deterministic integer cents only. Models never produce a dollar figure |
 
@@ -65,7 +65,7 @@ npm run smoke                   # probe the Token Factory endpoints
 
 ## Deploy
 
-Next.js standalone output in a Docker image (linux/amd64, port 8080, non-root, no secrets inside). Primary target is **Nebius Serverless AI** next to Token Factory: `./deploy.sh` pushes to Nebius Container Registry and creates a public CPU endpoint (`cpu-d3`, `4vcpu-16gb`). `NEBIUS_API_KEY` and `TAVILY_API_KEY` are passed to the endpoint at create time (or via MysteryBox secrets), never baked in. Exact steps for Nebius Serverless, Vercel, Railway, Fly, Render and Hugging Face Spaces are in [`docs/DEPLOY.md`](docs/DEPLOY.md). Endpoint findings: `docs/token-factory-findings.md`.
+Next.js standalone output in a Docker image (linux/amd64, port 8080, non-root, no secrets inside). The container path targets **Nebius Serverless AI** next to Token Factory (prepared, not deployed; the submission runs on Vercel): `./deploy.sh` pushes to Nebius Container Registry and creates a public CPU endpoint (`cpu-d3`, `4vcpu-16gb`). `NEBIUS_API_KEY` and `TAVILY_API_KEY` are passed to the endpoint at create time (or via MysteryBox secrets), never baked in. Exact steps for Nebius Serverless, Vercel, Railway, Fly, Render and Hugging Face Spaces are in [`docs/DEPLOY.md`](docs/DEPLOY.md). Endpoint findings: `docs/token-factory-findings.md`.
 
 ## Layout
 

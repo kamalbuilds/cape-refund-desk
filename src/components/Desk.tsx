@@ -159,7 +159,7 @@ export default function Desk() {
         <div className="runbox">
           <div className="runrow">
             <button className="btn primary" disabled={running} onClick={replay}>▶ Run the sample (recorded real run)</button>
-            <button className="btn" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls Token Factory now: about 20 seconds"}>⚡ Run live on Token Factory</button>
+            <button className="btn" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls Token Factory now: allow up to about 3 minutes"}>⚡ Run live on Token Factory</button>
           </div>
           <div className="uploadrow">
             <label className="file">
