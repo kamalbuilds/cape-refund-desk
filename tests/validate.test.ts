@@ -18,15 +18,15 @@ const lane = (frag: string) => byNote(frag)!;
 describe("sample dataset", () => {
   it("has ~60+ entries and every seeded trap lands in the right lane", () => {
     expect(entries.length).toBeGreaterThanOrEqual(60);
-    expect(lane("liquidated 81 days ago").lane).toBe("BLOCKED");
-    expect(lane("liquidated 81 days ago").findings[0].cbpError).toBe(ENTRY_ERRORS.FINAL_LIQ);
+    expect(lane("Liquidated early August").lane).toBe("BLOCKED");
+    expect(lane("Liquidated early August").findings[0].cbpError).toBe(ENTRY_ERRORS.FINAL_LIQ);
     expect(lane("Protest 2704-26-000123").lane).toBe("WAIT");
     expect(lane("Type 09 already filed").findings.map((f) => f.cbpError)).toContain(ENTRY_ERRORS.RECON_FILED);
     expect(lane("TIB entry type 23").findings.map((f) => f.cbpError)).toContain(ENTRY_ERRORS.TYPE_NOT_ALLOWED);
     expect(lane("301 on line 2 never declared").lane).not.toBe("FILE_NOW");
   });
   it("leading zero gets an apostrophe; csv value is 11 chars + apostrophe", () => {
-    const v = lane("leading zero");
+    const v = lane("Filer code starts with zero");
     expect(v.leadingZeroFix).toBe(true);
     expect(v.csvValue).toMatch(/^'0P2\d{8}$/);
   });
