@@ -157,4 +157,44 @@
   html body .rc h4 {
     font-weight: 500;
   }
+
+  html body .neg,
+  html body .wf-h b.neg,
+  html body .tab-m b.neg {
+    color: #b91c1c;
+  }
+
+  /* round 1 audit: pull the last off-scale sizes onto 30 / 14 / 12 */
+  html body .brand h1 { font: 500 14px/20px var(--sans); letter-spacing: 0; }
+  html body .brand p,
+  html body .twist-top .mono,
+  html body .row2 .in,
+  html body .win,
+  html body .cd-h,
+  html body .cd-h span,
+  html body .cd-h b,
+  html body .cd-h .muted,
+  html body .muted,
+  html body .warn,
+  html body .l2,
+  html body .l2 span,
+  html body .row span,
+  html body .sig span,
+  html body td,
+  html body .pos,
+  html body summary.small { font-size: 12px; }
+  html body .note-q,
+  html body .note-q *,
+  html body .q li,
+  html body .sect .pos,
+  html body .sig,
+  html body .sect td,
+  html body summary,
+  html body .analyst-h h2,
+  html body .analyst-h h3 { font-size: 14px !important; font-weight: 500; line-height: 20px; letter-spacing: 0; }
+  html body .note-q,
+  html body .q li { font-weight: 400 !important; }
+  html body .drawer .verdict { font: 500 14px/20px var(--sans); letter-spacing: 0; max-width: none; text-wrap: pretty; }
+  html body button { font-size: 14px !important; }
+  html body .prio li span, html body .prio li { font-size: 14px; }
 }

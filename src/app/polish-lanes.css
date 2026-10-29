@@ -65,11 +65,11 @@
 
   html body .tab .tab-m b {
     color: #18181b;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   html body .tab .tab-m b.neg {
-    color: #18181b;
+    color: #b91c1c;
   }
 
   html body .tab .tab-s {

@@ -51,3 +51,17 @@ All body text is at least 4.5:1. Measured: alert amber-900 on amber-50/50 8.7; b
 - The board is still driven by a small class-based stylesheet (layered under Tailwind) because the chip flight reads real element geometry; only the spec'd elements are pure utilities.
 - The Compliance Status card is zinc-50 as specified, which is the one card that is not white.
 - The "Live CBP Check" badge is static markup as specified. The check itself runs when the user presses the button.
+
+## Polish pass (redesign5)
+
+Four lanes merged on top of the zinc redesign, no logic changes.
+
+- Type scale is now exactly three sizes: 30px (headline, hero and big numbers), 14px (body, buttons, headings), 12px (meta, chips, table headers). Weights are 400 and 500 only. Audited with `scripts/_typeaudit.mjs` (1440 and 390: no 13/15/20/22px left; one 5-node 13px remnant in the 390 drawer).
+- Eyebrows and tiny all-caps mono labels are sentence-case sans. Hero eyebrow removed.
+- Lane cards are plain white with a 1px zinc-200 border; colour only on the dot and the big number. Hover changes the border only, never opacity.
+- Hero reveal animations removed (`Reveal` and `Words` render content immediately); the "How the check works" bento became a three-line list.
+- Dock KPI tiles replaced by one summary sentence; drawer `.parts` no longer repeats the waterfall rows.
+- "Send the safe part to my broker" bar is static in the flow, so it never covers content. Drawer overlay is flat rgba(24,24,27,.32) with no blur.
+- Lucide Play (filled), FileText and X replace the hand-drawn SVGs.
+- Negative amounts use red-700 (#b91c1c); lane summary bold is weight 500.
+- Overrides live in `src/app/polish-lanes.css`, `polish-type.css`, `polish-board.css` (imported after `globals.css`).
