@@ -29,6 +29,7 @@ export interface WatchResult {
   added: DiffLine[];
   removed: DiffLine[];
   unchangedLines: number;
+  noiseDropped?: number;
   relevantChanges: number;
 }
 
@@ -55,6 +56,15 @@ export function htmlToLines(html: string): string[] {
 /** Markdown / plain text (Tavily) to the same line form. */
 export function textToLines(t: string): string[] {
   return toLines(t.replace(/\|/g, "\n").replace(/[#*_`>]/g, " ").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1"));
+}
+/** Tavily returns the whole page as markdown, mega-menu and footer included. Keep only the page body:
+ * from the first exact "IEEPA - Duty Refunds" heading to the footer's CBP seal image. */
+export function cropMain(lines: string[]): string[] {
+  const start = lines.findIndex((l) => /^IEEPA - Duty Refunds$/i.test(l));
+  if (start < 0) return lines;
+  let end = lines.findIndex((l, i) => i > start && /^!?\[?Image \d+.*CBP Seal/i.test(l));
+  if (end < 0) end = lines.length;
+  return lines.slice(start, end).filter((l) => !/^!?\[?Image \d+/i.test(l));
 }
 function toLines(t: string): string[] {
   const out: string[] = [];
@@ -88,8 +98,23 @@ export function diffLines(a: string[], b: string[]): { added: DiffLine[]; remove
   return { added, removed, same };
 }
 
-export function loadSnapshot(): Snapshot {
-  return JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "cbp-snapshot.json"), "utf8")) as Snapshot;
+/** Drop presentation noise so the panel shows content changes: FAQ question headings (accordion titles render
+ * differently from one capture to the next), "Updated m/d/yyyy" stamps, nav / breadcrumb / image lines, and
+ * lines that are the same sentence reflowed (one side contains the other). */
+export function settle(d: { added: DiffLine[]; removed: DiffLine[]; same: number }): { added: DiffLine[]; removed: DiffLine[]; same: number; dropped: number } {
+  const noisy = (t: string) => /\?\s*$/.test(t) || /^updated\s+\d/i.test(t) || /^!/.test(t) || /^\d\.\s/.test(t) || /^(trade|travel|border security|newsroom|about cbp|careers|employee resources|cbp\.gov|close all|open all|menu)$/i.test(t) || /^an official website|^a lock|^lock/i.test(t) || t.length < 6;
+  const keep = (x: DiffLine) => !noisy(x.text);
+  let added = d.added.filter(keep), removed = d.removed.filter(keep);
+  const N = (t: string) => norm(t);
+  const reflowed = (a: string, b: string) => { const x = N(a), y = N(b); const [lo, hi] = x.length < y.length ? [x, y] : [y, x]; return lo.length >= 40 && hi.includes(lo.slice(0, Math.min(lo.length, 80))); };
+  const usedR = new Set<number>();
+  added = added.filter((a) => { const k = removed.findIndex((r, i) => !usedR.has(i) && reflowed(a.text, r.text)); if (k >= 0) { usedR.add(k); return false; } return true; });
+  removed = removed.filter((_, i) => !usedR.has(i));
+  return { added, removed, same: d.same, dropped: d.added.length + d.removed.length - added.length - removed.length };
+}
+
+export function loadSnapshot(kind: "html" | "tavily" = "html"): Snapshot {
+  return JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", kind === "tavily" ? "cbp-snapshot-tavily.json" : "cbp-snapshot.json"), "utf8")) as Snapshot;
 }
 
 async function viaTavily(key: string): Promise<string[] | null> {
@@ -101,7 +126,9 @@ async function viaTavily(key: string): Promise<string[] | null> {
     if (!r.ok) return null;
     const j = (await r.json()) as { results?: { raw_content?: string }[] };
     const t = j.results?.[0]?.raw_content;
-    return t && t.length > 2000 ? textToLines(t) : null;
+    if (!t || t.length < 2000) return null;
+    const lines = cropMain(textToLines(t));
+    return lines.length > 50 ? lines : null;
   } catch { return null; }
 }
 async function viaDirect(): Promise<string[] | null> {
@@ -114,19 +141,25 @@ async function viaDirect(): Promise<string[] | null> {
 }
 
 export async function runRuleWatch(): Promise<WatchResult> {
-  const snap = loadSnapshot();
   const key = process.env.TAVILY_API_KEY;
+  let snap = loadSnapshot();
+  const base0 = () => ({ snapshot: { capturedAt: snap.capturedAt, via: snap.via, lines: snap.lines.length, sha256: snap.sha256 } });
   const base = { checkedAt: new Date().toISOString(), tavilyConfigured: !!key, snapshot: { capturedAt: snap.capturedAt, via: snap.via, lines: snap.lines.length, sha256: snap.sha256 } };
   let live: string[] | null = null;
   let via: WatchResult["liveVia"] = "unavailable";
   if (key) { live = await viaTavily(key); if (live) via = "tavily"; }
   if (!live) { live = await viaDirect(); if (live) via = "direct"; }
+  // compare like with like: Tavily text against the Tavily-extracted copy of the same archived capture
+  if (via === "tavily") snap = loadSnapshot("tavily");
   if (!live) {
     return { ...base, ok: false, liveVia: "unavailable", note: key ? "Tavily and a direct fetch both failed, so no live comparison was possible. Showing the stored snapshot only." : "Live fetch failed (set TAVILY_API_KEY to fetch through Tavily). Showing the stored snapshot only.", changed: false, added: [], removed: [], unchangedLines: 0, relevantChanges: 0 };
   }
-  const d = diffLines(snap.lines, live);
-  const note = via === "tavily"
-    ? "Live text fetched with Tavily Extract (markdown), compared with the stored snapshot after normalizing. Minor formatting noise is possible."
-    : "Live page fetched directly from cbp.gov and compared with the stored snapshot.";
-  return { ...base, ok: true, liveVia: via, note, live: { lines: live.length, sha256: sha(live) }, changed: d.added.length + d.removed.length > 0, added: d.added, removed: d.removed, unchangedLines: d.same, relevantChanges: [...d.added, ...d.removed].filter((x) => x.relevant).length };
+  const d = settle(diffLines(snap.lines, live));
+  const lm = live.find((l) => /^last modified:/i.test(l));
+  const lmSnap = snap.lines.find((l) => /^last modified:/i.test(l));
+  const stamp = lm ? ` CBP's page now says "${lm}"${lmSnap ? `; the stored capture said "${lmSnap}"` : "; the stored capture carries no modified stamp"}.` : "";
+  const note = (via === "tavily"
+    ? "Live page fetched with Tavily Extract and compared with a Tavily Extract of the archived 2026-07-11 capture (same extractor on both sides, page body only)."
+    : "Live page fetched directly from cbp.gov and compared with the stored snapshot.") + stamp;
+  return { ...base, ...base0(), ok: true, liveVia: via, note, live: { lines: live.length, sha256: sha(live) }, changed: d.added.length + d.removed.length > 0, added: d.added, removed: d.removed, unchangedLines: d.same, noiseDropped: d.dropped, relevantChanges: [...d.added, ...d.removed].filter((x) => x.relevant).length };
 }

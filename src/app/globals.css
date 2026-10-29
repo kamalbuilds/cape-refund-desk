@@ -1,5 +1,5 @@
 :root{--bg:#0e1013;--panel:#161a1f;--panel2:#1c2128;--line:#2a313a;--ink:#ece8df;--dim:#9aa3ad;--go:#3ddc97;--hold:#ffb020;--bill:#b79cff;--stop:#ff6b6b;--accent:#f0c36a;
---mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+--mono:var(--f-mono),ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--serif:var(--f-serif),"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:var(--f-sans),-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 *{box-sizing:border-box}html{background:var(--bg)}
 body{margin:0;background:radial-gradient(1200px 500px at 85% -10%,#1d2430 0,transparent 60%),var(--bg);color:var(--ink);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
 a{color:var(--accent)}b{font-weight:650}
