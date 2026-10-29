@@ -26,6 +26,7 @@ export default function Waterfall({ m }: { m: Money }) {
           </div>
         );
       })}
+      <div className="wf-axis" style={{ left: `clamp(14px, ${zero}%, calc(100% - 14px))` }} aria-hidden>$0</div>
     </div>
   );
 }

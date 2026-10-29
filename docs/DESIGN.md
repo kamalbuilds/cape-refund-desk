@@ -1,60 +1,53 @@
-# CAPE Refund Desk: design direction (v3, "Warm Ink")
+# CAPE Refund Desk: design system (light fintech, pass 4)
 
-Replaces the "achromatic ledger" direction (gray admin table), which read as blunt and unfinished. This pass is visual only. The plain-English copy, the trust lines, every function and every test stay.
+Direction (from the owner): a light, senior fintech and customs look in the family of Stripe and Mercury. It replaces the earlier dark "Warm Ink" pass. Copy, board, drawer, waterfall, count-ups and the lane animation are kept and restyled. No logic changed.
 
-Skills used at build time: `design-taste-frontend`, `ui-craft` (incl. `design-from-the-start.md`, `resources-2026-10.md`), `hallmark`, `motion-doctrine`, `kinetic-typography`, `anti-ai-slop-frontend`, `premium-frontend-libraries`.
+## 1. Principles
 
-## 1. Verbs (who, how often, the loop)
+- One clear primary action per screen. Action hierarchy is strict: primary, secondary, tertiary, never equal weight.
+- Colour goes on data, not decoration. Neutrals come only from the zinc scale. Lane colours are semantic: emerald safe, amber fix first, blue broker decides, red leave out, shown as subtle tints on white cards.
+- Data you might copy (entry numbers, importer ids, HTS codes, dollar figures in tables and inline) is set in mono inside a chip, so it reads as data.
+- Plain English first. The trust wording (disclaimer, synthetic-sample label, "no CBP seal / not affiliated") is unchanged.
+- No nested cards, no gradients as decoration, no glass, no side-tab accent borders, no overshoot easing.
 
-An importer or their customs broker opens this once per filing run, under a deadline. The loop: **see what you'd get back, fix the risky ones, send the safe part to the broker.** The page is the place where that happens, not a report about it: the answer sentence first, the money large, the risky lane beside the safe one, one pinned primary action ("Send the safe part to my broker").
+## 2. Stack
 
-## 2. Visual thesis
+Tailwind v4 (`@tailwindcss/postcss`, `@import "tailwindcss"`) with Next 16. Spec elements are literal utility classes in JSX. The chip-fly board engine, drawer and animations still use a small legacy stylesheet, kept in `@layer components` so utilities always win, and re-themed to zinc through CSS variables. Icons: `lucide-react`. Fonts: Geist (text) and Geist Mono (data), via `next/font`.
 
-A warm-ink ledger with serif money numbers, one orchestrated moment (the 69 shipments sort themselves into four lanes), and a refund that flips into a bill.
+## 3. Spec mapping
 
-## 3. References and the steal list (`ref -> thing -> where it lands`)
-
-Opened and read: the six sites from the reel plus Mercury and Ramp (live product pages and design write-ups). grokweb and gemini returned nothing usable; Google AI search returned an empty page.
-
-| Reference | Thing stolen | Where it lands |
-|---|---|---|
-| motionin.design, Filament | stat tabs that glow in their own colour | the four lane cards: tone-tinted gradient, corner glow on hover/select |
-| motionin.design, Benchmark | giant numbers, gradient-clipped | lane counts (56 to 92px serif), footer wordmark fade |
-| motionin.design, Revolver / Cardwall | cards that lift and catch light on hover; growing shadow | lane card hover, selected ring + coloured shadow, buttons |
-| motionin.design, Cipher | pieces scatter and re-coalesce | the sort: 69 chips arrive in a grid, then fly into their lane cards |
-| motionin.design | grain on an overlay blend, reduced-motion fallback per section | `body::before` static SVG noise (5%); reduced-motion collapses every animation |
-| landdding.com (Lightspark) | floating tiles with colour glow, hairline stat grid, huge faded footer wordmark | hero twist card glow, bento cards, footer `.wordmark` |
-| footer.design | footer as a brand sign-off | disclaimer + sources on top, oversized "CAPE Refund Desk" below |
-| 60fps.design (Finance) | counter ticks; a result that resolves, not appears | `CountMoney` / `CountInt` count-ups (rAF, ease-out quart); lane totals; drawer net number |
-| Mercury | serif display at hero scale, warm surfaces, calm money type, tabular numerals | Fraunces + tabular figures; colour only for meaning |
-| Ramp | bento product proof, one accent, queue thinking | landing bento (plain code / fast AI / reasoning AI), lane cards as queues |
-| recent.design, modulify.ai | not read in depth (modulify is a site builder, not a gallery) | nothing taken |
-| dprvda/not-vibe-coded, `design-from-the-start.md` | verbs, answer first, number needs unit, ban gray table, waterfall, pinned action | answer sentence under the board headline, table only after a lane click, drawer waterfall, pinned bar |
+| Spec item | Where |
+|---|---|
+| Irreversible alert | `Desk.tsx` top: amber-50/50 alert, `AlertTriangle`, bold lead "Can't be undone." |
+| Headline and subheadline | hero `h2` and board `h2.headline`: `text-3xl font-semibold tracking-tight text-zinc-900`; subhead `text-base text-zinc-600 max-w-2xl leading-relaxed mt-2` |
+| Data chips | `components/ui.tsx` `Id` uses the exact chip classes. Used in shipment rows, filing order, importer table, drawer parts and lines, ledger |
+| Hero numbers | mono + tabular-nums (twist card, lane counts, drawer net, KPI) |
+| Buttons | `BTN_PRIMARY`, `BTN_SECONDARY`, `BTN_TERTIARY` in `ui.tsx`. Primary = main run ("Run the sample", "Check in this browser (no upload)", CAPE file download, "Add to the refund file", "Send the safe part to my broker"). Secondary = live / AI / broker note. Tertiary = download ("Download the sample CSV" and the deadlines CSV, both with the lucide Download icon) |
+| Rule watch | "Compliance Status" card: zinc-50, zinc-200, rounded-xl, p-5, mt-8, with the "Live CBP Check" badge |
+| Global cleanup | cards are white with a zinc-200 border and `shadow-sm`; spacing on an 8pt grid (gap 16, pad 24, mt-8) |
 
 ## 4. Tokens
 
-- Surfaces: ground `#0d0c0a`, surface `#16140f`, raised `#1d1b15`/`#27241c`; text bone `#f3eee2`, muted `#aaa496`, faint `#878171`; hairline `rgba(243,238,226,.1)`. A bone "paper" `#efe8d6` is reserved for the AI analyst cards.
-- Lane colours (data only): safe `#9be28f`, fix first `#f4b550`, broker decides `#8db4ff`, leave out `#ff7b68`. Bill red `#ff5a47` is the only colour that means "you pay".
-- Type: **Fraunces** (display, `--f-display`, SOFT and opsz axes, roman) for the statement, numbers and card titles; **Geist** for text; **Geist Mono** for entry numbers and micro-labels only. Hero 44 to 92px, lane count 56 to 92px, body 15px/24, micro-labels 11 to 12px with .1em tracking. Money uses `tabular-nums`.
-- Radius 20 cards, 12 controls, pills for buttons. Spacing 14 gap, 28 pad.
-- Motion: 120/220/420ms UI, 0.8 to 1.1s hero count-ups, ease `cubic-bezier(.16,1,.3,1)`. Transform and opacity only (plus colour on one text node). Chip stagger 14ms per chip and 70ms per lane. Reduced motion: no keyframes, counters show the final value, chips just appear.
+- Surfaces: page `#fafafa` (zinc-50), cards `#fff`, hairlines zinc-200 `#e4e4e7`, text zinc-900 `#18181b`, body copy zinc-600 `#52525b`.
+- Lane ink on a 5% white tint: safe `#047857`, fix first `#b45309`, broker `#1d4ed8`, leave out `#b91c1c`. Fills (dots, chips, bars) use the 500-level tone.
+- Radius 12 on cards, 8 on controls. One shadow: `0 1px 2px 0 rgb(0 0 0 / .05)`.
+- Motion: ease `cubic-bezier(.16,1,.3,1)` (no overshoot), transform and opacity only, count-ups 0.8 to 1.1s, reduced motion respected.
 
-## 5. The moments
+## 5. Contrast (WCAG, text on its surface)
 
-1. **Hero twist card.** A real sample shipment (A7K-7344990-0): the refund counts up to $10,500.00 (0.8s), the other-duties row slides in, the number rolls to -$2,625.00 and the card glow turns red. The bars animate in sequence. Loops every 9s.
-2. **Run the sample (money shot).** 69 chips stream into an intake grid while the fast AI works. When the board lands they fly into the four lane cards, the counts and dollar totals count up, and the headline plus the answer sentence settle. Chips that the reasoning AI has explained get a ring. Click a chip to open its drawer.
-3. **Board.** Four bento lane cards (7/5 then 5/7 columns) with a big number, dollars, one plain sentence and the chips. No table until a lane is clicked, then it slides in below and scrolls into view.
-4. **Drawer.** Big net number, a three-bar waterfall (refundable tariff, other duties underpaid, net), then the AI analyst as a bone paper card with an "AI analyst" tag. Dates use animated countdown bars.
-5. **Footer.** Disclaimer, sources, giant faded wordmark.
+All body text is at least 4.5:1. Measured: alert amber-900 on amber-50/50 8.7; badge emerald-700 on emerald-50 5.2; chip zinc-600 on zinc-100 7.0; chip red on zinc-100 5.9; primary white on zinc-900 17.7; subtext zinc-300 on zinc-900 12.0; zinc-600 on white 7.7; zinc-600 on page 7.4; table header `#71717a` on page 4.6; lane inks on their tints 4.8 to 6.3; zinc-700 sub copy on tints 9.8 to 10.0; pills 4.8 to 6.2. The raw tone colours (2.1 to 3.5) are used only as dots, bars and chip fills, never as text.
 
-## 6. Layers (what is hidden until asked)
+## 6. The moments
 
-At rest: answer, four lane cards, pinned action. On hover: card glow and chip scale. On click: the lane's shipment table, then the drawer. On demand: the AI reasoning trace, the filing-order rules, the receipt.
+1. Hero twist card: a real sample shipment, refund counts up, other duties come off, the number rolls to a bill.
+2. Run the sample: 69 chips stream in, then fly into four lane cards; counts and dollars count up.
+3. Board: four tinted lane cards. Clicking one opens its table (sortable by filing order, amount, time left; empty state included).
+4. Drawer: net number, waterfall with a dollar label on every bar, a total row and a $0 axis marker, then the AI analyst and dates.
+5. Compliance Status: reads the live Customs page on request and quotes every change.
 
-## 7. Deviations from the research notes
+## 7. Deviations and notes
 
-- Palette is dark and warm with an amber hero accent, not paper-white with ink-green: the brief for this pass asked for the crafted, expressive look of the reel galleries, and dark is allowed. Green stays meaning-only ("safe").
-- Three families (display serif, sans, mono for ids). The mono is limited to entry numbers and micro-labels.
-- No `motion/react` or framer-motion: CSS transitions on transform/opacity plus rAF counters, no new dependency.
-- The first screen does not auto-run the sample (the upload field must stay visible); the hero twist card is the zero-click demo of the answer. The answer sentence appears once the check has run.
-- Tests, copy and trust lines are unchanged.
+- The hero headline is 30px, per the spec, so the landing is calmer than the old 92px display.
+- The board is still driven by a small class-based stylesheet (layered under Tailwind) because the chip flight reads real element geometry; only the spec'd elements are pure utilities.
+- The Compliance Status card is zinc-50 as specified, which is the one card that is not white.
+- The "Live CBP Check" badge is static markup as specified. The check itself runs when the user presses the button.

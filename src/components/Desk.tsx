@@ -12,6 +12,8 @@ import { LANES, laneOf } from "@/lib/lanes-ui";
 import Stage from "./Stage";
 import { CountInt, CountMoney, Reveal, TwistCard, Words } from "./motion";
 import Waterfall from "./Waterfall";
+import { AlertTriangle, Download } from "lucide-react";
+import { BTN_PRIMARY, BTN_SECONDARY, BTN_TERTIARY, Id } from "./ui";
 
 type Board = Omit<RunResult, "receipt" | "explanations" | "portfolioNote">;
 const PAGE = 12;
@@ -26,7 +28,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 /* ---------- small pieces ---------- */
 const Icon = {
   play: <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><path d="M3 1.5v11l9-5.5z" fill="currentColor" /></svg>,
-  down: <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><path d="M7 1.5v8M3.5 6.5L7 10l3.5-3.5M2 12.5h10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  down: <Download size={16} aria-hidden />,
   file: <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><path d="M3.5 1.5h5l2.5 2.5v8.5h-7.5z M8.5 1.5V4H11" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>,
   close: <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
 };
@@ -50,6 +52,7 @@ export default function Desk() {
   const [sel, setSel] = useState<string | null>(null);
   const [lane, setLane] = useState<Lane | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [sortBy, setSortBy] = useState<"order" | "amount" | "time">("order");
   const [include, setInclude] = useState<Set<string>>(new Set());
   const [ack, setAck] = useState(false);
   const [csvText, setCsvText] = useState("");
@@ -149,7 +152,10 @@ export default function Desk() {
   const canInclude = lane === "FILE_NOW" || lane === "NET_BILL_RISK";
   const allIn = laneList.length > 0 && laneList.every((v) => include.has(v.id));
   const setLaneInclude = (on: boolean) => setInclude((s) => { const n = new Set(s); laneList.forEach((v) => (on ? n.add(v.id) : n.delete(v.id))); return n; });
-  const shown = expanded ? laneList : laneList.slice(0, PAGE);
+  const sortedLane = sortBy === "order" ? laneList : [...laneList].sort((a, b) => sortBy === "amount"
+    ? Math.abs(b.lane === "NET_BILL_RISK" ? b.money.netCents : b.money.ieepaRefundableCents) - Math.abs(a.lane === "NET_BILL_RISK" ? a.money.netCents : a.money.ieepaRefundableCents)
+    : (a.deadlines.capeDaysLeft ?? 1e9) - (b.deadlines.capeDaysLeft ?? 1e9));
+  const shown = expanded ? sortedLane : sortedLane.slice(0, PAGE);
   const openFirstLane = (id: string) => { const v = verdicts.find((x) => x.id === id); if (v) setLane(v.lane); setSel(id); };
   const panelRef = useRef<HTMLElement | null>(null);
   const pickLane = (l: Lane) => {
@@ -165,9 +171,9 @@ export default function Desk() {
 
   const zone = board ? (
     <div className="zone-in">
-      <h2 className="headline"><b><CountInt n={attention} animate={animate} dur={1000} delay={500} /></b> of {verdicts.length} shipments shouldn&apos;t go in the refund file yet. Here&apos;s why.</h2>
+      <h2 className="headline text-3xl font-semibold tracking-tight text-zinc-900"><b><CountInt n={attention} animate={animate} dur={1000} delay={500} /></b> of {verdicts.length} shipments shouldn&apos;t go in the refund file yet. Here&apos;s why.</h2>
       {laneTotals && (
-        <p className="answer">
+        <p className="answer text-base text-zinc-600 max-w-2xl leading-relaxed mt-2">
           You could get back <b><CountMoney cents={laneTotals.FILE_NOW.refundCents} animate={animate} dur={800} delay={300} /></b> on {laneTotals.FILE_NOW.count} safe shipments.{" "}
           {laneTotals.NET_BILL_RISK.count} {laneTotals.NET_BILL_RISK.count === 1 ? "shipment" : "shipments"} could turn a refund into a bill.
         </p>
@@ -176,7 +182,7 @@ export default function Desk() {
   ) : (
     <div className="zone-in">
       <p className="eyebrow"><span className="dot" />Checking the file</p>
-      <h2 className="headline">Sorting {total || 69} shipments into four groups.</h2>
+      <h2 className="headline text-3xl font-semibold tracking-tight text-zinc-900">Sorting {total || 69} shipments into four groups.</h2>
       <Progress prog={prog} stage={stage} />
     </div>
   );
@@ -194,10 +200,12 @@ export default function Desk() {
         <div className="powered"><i className="live-dot" aria-hidden />Nemotron AI models<br />on Nebius Token Factory</div>
       </header>
 
-      <div className="irrev" role="alert">
-        <span className="lock" aria-hidden><svg width="16" height="16" viewBox="0 0 16 16"><path d="M4.5 7V5a3.5 3.5 0 017 0v2M3.5 7h9v6.5h-9z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /></svg></span>
-        <p><strong>Can&apos;t be undone.</strong> {IRREVERSIBLE_PLAIN}</p>
-        <span className="prepared">{PREPARED_FOR_PLAIN}</span>
+      <div className="bg-amber-50/50 border border-amber-200 text-amber-900 rounded-lg p-4 flex gap-3 items-start text-sm leading-6 mb-6" role="alert">
+        <AlertTriangle className="size-5 shrink-0 mt-0.5 text-amber-600" aria-hidden />
+        <div>
+          <p><strong className="font-semibold">Can&apos;t be undone.</strong> {IRREVERSIBLE_PLAIN}</p>
+          <p className="mt-1 text-xs text-amber-900 font-mono">{PREPARED_FOR_PLAIN}</p>
+        </div>
       </div>
 
       {!board && !running && (
@@ -205,16 +213,16 @@ export default function Desk() {
           <section className="hero">
             <div className="hero-copy">
               <p className="eyebrow"><span className="dot" />For small importers and their customs brokers</p>
-              <h2 className="display" aria-label="Check the refund file before you send it.">
+              <h2 className="display text-3xl font-semibold tracking-tight text-zinc-900" aria-label="Check the refund file before you send it.">
                 <span className="ln"><Words text="Check the refund file" /></span>
                 <span className="ln"><Words text="before you send it." base={260} /></span>
               </h2>
-              <p className="lead">
-                US importers are owed money back for tariffs that were struck down. To get it, they upload one file to Customs, and it can&apos;t be undone. One wrong shipment can turn a refund into a bill. <b>This checks the file first.</b>
+              <p className="text-base text-zinc-600 max-w-2xl leading-relaxed mt-2">
+                US importers are owed money back for tariffs that were struck down. To get it, they upload one file to Customs, and it can&apos;t be undone. One wrong shipment can turn a refund into a bill. <b className="font-semibold text-zinc-900">This checks the file first.</b>
               </p>
-              <div className="cta">
-                <button className="btn primary lg" disabled={running} onClick={replay}>{Icon.play} Run the sample <span className="sub">recorded real run</span></button>
-                <button className="btn lg" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls the AI now: allow up to about 3 minutes"}>Run it live</button>
+              <div className="cta mt-6">
+                <button className={BTN_PRIMARY} disabled={running} onClick={replay}>{Icon.play} Run the sample <span className="text-xs font-normal text-zinc-300">recorded real run</span></button>
+                <button className={BTN_SECONDARY} disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls the AI now: allow up to about 3 minutes"}>Run it live</button>
               </div>
               <p className="fine">Sample data: made-up shipments, not real trade data. Not legal advice. We never ask for logins or bank details.</p>
             </div>
@@ -228,9 +236,9 @@ export default function Desk() {
                 <h3>Plain code</h3>
                 <p><b>Plain code</b> does all the money math and sorts every shipment. The AI never makes up a number.</p>
                 <ul className="ledger" aria-hidden>
-                  <li><span>Refundable tariff</span><b>$10,500.00</b></li>
-                  <li><span>Other duties underpaid</span><b className="neg">-$13,125.00</b></li>
-                  <li className="sum"><span>You&apos;d owe Customs</span><b className="neg">-$2,625.00</b></li>
+                  <li><span>Refundable tariff</span><Id>$10,500.00</Id></li>
+                  <li><span>Other duties underpaid</span><Id className="text-red-700!">-$13,125.00</Id></li>
+                  <li className="sum"><span>You&apos;d owe Customs</span><Id className="text-red-700!">-$2,625.00</Id></li>
                 </ul>
               </article>
               <article className="bn bn-b">
@@ -279,7 +287,11 @@ export default function Desk() {
                   <h2><span className={`pill ${laneMeta.tone}`}>{laneMeta.title}</span> <span className="muted">{laneList.length} shipments</span></h2>
                   <p>{laneMeta.sub}</p>
                 </div>
-                {canInclude && laneList.length > 0 && <button className="btn sm" onClick={() => setLaneInclude(!allIn)}>{allIn ? "Take this group out of the file" : "Add this group to the file"}</button>}
+                {laneList.length > 1 && <label className="flex items-center gap-2 text-sm text-zinc-600">Sort by
+                  <select className="bg-white border border-zinc-300 text-zinc-900 rounded-lg px-2 py-1.5 text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as "order" | "amount" | "time")} aria-label="Sort shipments">
+                    <option value="order">Filing order</option><option value="amount">Largest amount</option><option value="time">Least time left</option>
+                  </select></label>}
+                {canInclude && laneList.length > 0 && <button className={`${BTN_SECONDARY} !py-1.5 text-sm`} onClick={() => setLaneInclude(!allIn)}>{allIn ? "Take this group out of the file" : "Add this group to the file"}</button>}
               </div>
               {laneList.length === 0 ? <p className="empty">No shipments in this group.</p> : (
                 <>
@@ -289,7 +301,7 @@ export default function Desk() {
                       <Row key={v.id} v={v} ex={expl[v.id]} i={i} animate checked={include.has(v.id)} canInclude={canInclude} active={sel === v.id} onToggle={() => toggle(v.id)} onOpen={() => setSel(v.id)} />
                     ))}
                   </ul>
-                  {laneList.length > PAGE && !expanded && <div className="more-row"><button className="btn" onClick={() => setExpanded(true)}>Show all {laneList.length} shipments</button></div>}
+                  {laneList.length > PAGE && !expanded && <div className="more-row"><button className={BTN_SECONDARY} onClick={() => setExpanded(true)}>Show all {laneList.length} shipments</button></div>}
                 </>
               )}
             </section>
@@ -306,7 +318,7 @@ export default function Desk() {
               <div className="cols">
                 <div>
                   <h3>Look at these first</h3>
-                  <ul className="prio">{pnote.priorities.map((p) => <li key={p.id}><button className="linkbtn" onClick={() => openFirstLane(p.id)}>{verdicts.find((v) => v.id === p.id)?.displayNumber ?? p.id}</button><span>{p.reason}</span></li>)}</ul>
+                  <ul className="prio">{pnote.priorities.map((p) => <li key={p.id}><button className="linkbtn" onClick={() => openFirstLane(p.id)}><Id>{verdicts.find((v) => v.id === p.id)?.displayNumber ?? p.id}</Id></button><span>{p.reason}</span></li>)}</ul>
                 </div>
                 <div><h3>Ask the importer before uploading</h3><ul className="q">{pnote.brokerQuestions.map((q, i) => <li key={i}>{q}</li>)}</ul></div>
               </div>
@@ -323,9 +335,9 @@ export default function Desk() {
                   {verdicts.filter((v) => v.lane !== "BLOCKED").map((v) => (
                     <li key={v.id} onClick={() => openFirstLane(v.id)}>
                       <span className="n">{v.order}</span>
-                      <span className="e">{v.displayNumber}</span>
+                      <span className="e"><Id>{v.displayNumber}</Id></span>
                       <span className="s">{plainStep(v.filingStep)}</span>
-                      <span className={`m ${v.money.netCents < 0 ? "neg" : ""}`}>{money(v.money.netCents)}</span>
+                      <span className="m"><Id className={v.money.netCents < 0 ? "text-red-700!" : undefined}>{money(v.money.netCents)}</Id></span>
                     </li>
                   ))}
                 </ol>
@@ -338,7 +350,7 @@ export default function Desk() {
                   <h2>Importers who owe Customs money</h2>
                   <p className="fine" style={{ marginBottom: 8 }}>Customs can subtract unpaid debts from a refund before paying it (19 CFR 24.72).</p>
                   <table className="tbl num"><thead><tr><th>Importer</th><th>Owes Customs</th><th>Refund</th><th>Likely taken out</th></tr></thead>
-                    <tbody>{board.portfolio.iors.map((i) => <tr key={i.ior}><td className="mono">{i.ior}</td><td>{money(i.openDebtCents)}</td><td>{money(i.eligibleRefundCents)}</td><td className="warn">{money(i.expectedDiversionCents)}</td></tr>)}</tbody></table>
+                    <tbody>{board.portfolio.iors.map((i) => <tr key={i.ior}><td><Id>{i.ior}</Id></td><td><Id>{money(i.openDebtCents)}</Id></td><td><Id>{money(i.eligibleRefundCents)}</Id></td><td className="warn"><Id>{money(i.expectedDiversionCents)}</Id></td></tr>)}</tbody></table>
                   <p className="fine" style={{ marginTop: 10 }}>Customs adds interest to refunds. This tool doesn&apos;t estimate it.</p>
                 </div>
               )}
@@ -363,7 +375,7 @@ export default function Desk() {
       </footer>
 
       {board && !selV && (
-        <div className="pinbar"><button className="btn primary lg" onClick={() => document.querySelector(".dock")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" })}>Send the safe part to my broker</button></div>
+        <div className="pinbar"><button className={BTN_PRIMARY} onClick={() => document.querySelector(".dock")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" })}>Send the safe part to my broker</button></div>
       )}
 
       {selV && board && <Drawer v={selV} board={board} ex={expl[selV.id]} onClose={() => setSel(null)} included={include.has(selV.id)} onToggle={() => toggle(selV.id)} />}
@@ -388,13 +400,13 @@ function RunControls(p: RunControlProps) {
           <label className="in">Check as of<input type="date" value={p.asOf} onChange={(e) => p.setAsOf(e.target.value)} aria-label="Check as of date" /></label>
         </div>
         <div className="btnrow">
-          <button className="btn" disabled={p.running || !p.csvText} onClick={p.inBrowser}>Check in this browser (no upload)</button>
-          <button className="btn" disabled={p.running || !p.csvText || p.liveOk === false} onClick={() => p.live(false)}>Check with the AI</button>
+          <button className={BTN_PRIMARY} disabled={p.running || !p.csvText} onClick={p.inBrowser}>Check in this browser (no upload)</button>
+          <button className={BTN_SECONDARY} disabled={p.running || !p.csvText || p.liveOk === false} onClick={() => p.live(false)}>Check with the AI</button>
         </div>
         <div className="btnrow">
-          {p.compact && <button className="btn" disabled={p.running} onClick={p.replay}>{Icon.play} Replay the sample</button>}
-          {p.compact && <button className="btn" disabled={p.running || p.liveOk === false} onClick={() => p.live(true)}>Run it live</button>}
-          <a className="link" href="/api/sample?f=csv">Download the sample CSV</a>
+          {p.compact && <button className={BTN_SECONDARY} disabled={p.running} onClick={p.replay}>{Icon.play} Replay the sample</button>}
+          {p.compact && <button className={BTN_SECONDARY} disabled={p.running || p.liveOk === false} onClick={() => p.live(true)}>Run it live</button>}
+          <a className={BTN_TERTIARY} href="/api/sample?f=csv"><Download size={16} aria-hidden /> Download the sample CSV</a>
         </div>
         {p.err && <p className="error" role="alert">{p.err}</p>}
       </div>
@@ -432,14 +444,14 @@ function Row({ v, ex, i, animate, checked, canInclude, active, onToggle, onOpen 
       {canInclude
         ? <label className="chk" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={checked} onChange={onToggle} aria-label={`Include ${v.displayNumber} in the refund file`} /></label>
         : <span className="chk na" aria-hidden />}
-      <button className="en" onClick={(e) => { e.stopPropagation(); onOpen(); }}>{v.displayNumber}</button>
-      <span className="ior" title="Importer">{v.ior}</span>
+      <button className="en" onClick={(e) => { e.stopPropagation(); onOpen(); }}><Id>{v.displayNumber}</Id></button>
+      <span className="ior" title="Importer"><Id>{v.ior}</Id></span>
       <span className="why">
         <span className={`l1 ${f ? "" : "none"}`} title={f?.cbpError ? `Customs error: "${f.cbpError}"` : undefined}>{f ? plainTitle(f.code, f.cbpError ?? f.detail) : v.lane === "NET_BILL_RISK" ? "No error, but other duties may be billed back" : "Nothing wrong found"}</span>
         <span className="l2">{meta.map((m, k) => <span key={k}>{k ? " · " : ""}{m}</span>)}{win !== null && <span className="m-only"> · {win}d left</span>}</span>
       </span>
       <span className={`win r ${win !== null && win <= 7 ? "hot" : ""}`}>{win !== null ? `${win} day${win === 1 ? "" : "s"} left` : "n/a"}</span>
-      <span className={`amt ${amtC < 0 ? "neg" : ""}`}>{money(amtC)}{isNet && <small>{amtC < 0 ? "you owe" : "net"}</small>}</span>
+      <span className={`amt ${amtC < 0 ? "neg" : ""}`}><Id className={amtC < 0 ? "text-red-700!" : undefined}>{money(amtC)}</Id>{isNet && <small>{amtC < 0 ? "you owe" : "net"}</small>}</span>
     </li>
   );
 }
@@ -459,11 +471,11 @@ function Export({ board, include, incRefund, incBill, files, ack, setAck }: { bo
       <label className="ack"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /><span>I understand that once Customs accepts this file I can't edit it or remove shipments, and that my licensed customs broker will review the list before it is uploaded.</span></label>
       <div className="btns">
         {files.map((f) => (
-          <button key={f.name} className="btn primary lg" disabled={!ack || !f.count} onClick={() => download(f.name, f.content)}>{Icon.down} {f.name} <span className="sub">{f.count} shipments, {f.bytes} B{f.ok ? "" : ", check this file"}</span></button>
+          <button key={f.name} className={BTN_PRIMARY} disabled={!ack || !f.count} onClick={() => download(f.name, f.content)}>{Icon.down} {f.name} <span className="text-xs font-normal text-zinc-300">{f.count} shipments, {f.bytes} B{f.ok ? "" : ", check this file"}</span></button>
         ))}
         <div className="btnrow">
-          <button className="btn" onClick={() => download("cape-broker-handoff.md", handoffNote(p, board.asOf, include), "text/markdown")}>{Icon.down} Note for your broker (.md)</button>
-          <button className="btn" onClick={() => download("cape-deadlines.csv", deadlineCsv(p))}>{Icon.down} Deadlines (.csv)</button>
+          <button className={BTN_SECONDARY} onClick={() => download("cape-broker-handoff.md", handoffNote(p, board.asOf, include), "text/markdown")}>{Icon.down} Note for your broker (.md)</button>
+          <button className={BTN_TERTIARY} onClick={() => download("cape-deadlines.csv", deadlineCsv(p))}>{Icon.down} Deadlines (.csv)</button>
         </div>
       </div>
       <p className="fine" style={{ marginTop: 14 }}>The CSV follows Customs&apos; format: a single &ldquo;Entry Number&rdquo; column, 11 characters, no dashes, at most 9,999 shipments and 1MB per file. {PREPARED_FOR_PLAIN}</p>
@@ -499,8 +511,8 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
     <div className="drawer-wrap" onClick={onClose}>
       <aside className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Shipment ${v.displayNumber}`}>
         <button ref={closeRef} className="x" onClick={onClose} aria-label="Close">{Icon.close}</button>
-        <div className="d-meta"><span>Importer <span className="mono">{v.ior}</span></span><span>Number {v.order} in your filing order</span></div>
-        <h2>{v.displayNumber}</h2>
+        <div className="d-meta"><span>Importer <Id>{v.ior}</Id></span><span>Number {v.order} in your filing order</span></div>
+        <h2><Id className="text-sm!">{v.displayNumber}</Id></h2>
         <span className={`pill ${meta.tone}`}>{meta.title}</span>
         <p className="verdict">{plainVerdict(v)}</p>
         <p className="step" title={v.filingStep}>{plainStep(v.filingStep)}</p>
@@ -510,10 +522,10 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
           <b className="story-n"><CountMoney cents={m.netCents} animate dur={1000} delay={150} /></b>
           <Waterfall m={m} />
           <div className="parts">
-            <div><span>Struck-down tariff you paid</span><span>{money(m.grossIeepaCents)}</span></div>
-            {m.frameworkCarveOutCents > 0 && <div><span>Part that stays owed under a trade deal ({m.frameworkGroups.join("/")})</span><span>-{money(m.frameworkCarveOutCents)}</span></div>}
-            <div><span>Refundable tariff</span><b>{money(m.ieepaRefundableCents)}</b></div>
-            {m.underpaidOtherCents > 0 && <div><span>Other duties you underpaid</span><span className="neg">-{money(m.underpaidOtherCents)}</span></div>}
+            <div><span>Struck-down tariff you paid</span><Id>{money(m.grossIeepaCents)}</Id></div>
+            {m.frameworkCarveOutCents > 0 && <div><span>Part that stays owed under a trade deal ({m.frameworkGroups.join("/")})</span><Id>-{money(m.frameworkCarveOutCents)}</Id></div>}
+            <div><span>Refundable tariff</span><Id className="text-zinc-900!">{money(m.ieepaRefundableCents)}</Id></div>
+            {m.underpaidOtherCents > 0 && <div><span>Other duties you underpaid</span><Id className="text-red-700!">-{money(m.underpaidOtherCents)}</Id></div>}
           </div>
         </div>
         <p className="fine">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>
@@ -559,7 +571,7 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
         {info && (
           <div className="sect">
             <h3>Products and the broker&apos;s note</h3>
-            <table className="tbl"><tbody>{info.lines.map((l) => <tr key={l.lineNo}><td>#{l.lineNo} <span className="mono">{l.hts}</span> {l.country}{l.framework ? ` · ${l.framework} trade deal` : ""}</td><td>{l.value} / struck-down tariff {l.ieepaDuty}</td></tr>)}</tbody></table>
+            <table className="tbl"><tbody>{info.lines.map((l) => <tr key={l.lineNo}><td>#{l.lineNo} <Id>{l.hts}</Id> {l.country}{l.framework ? ` · ${l.framework} trade deal` : ""}</td><td>{l.value} / struck-down tariff {l.ieepaDuty}</td></tr>)}</tbody></table>
             {info.notes && <p className="note-q">&ldquo;{info.notes}&rdquo;</p>}
             {info.noteSignals.length > 0 && <div className="sig">Topics the AI spotted: {info.noteSignals.map((s) => <span key={s}>{s}</span>)}</div>}
             {info.noteConflicts.map((c, i) => <p key={i} className="error" style={{ marginTop: 8 }}>The note disagrees with the data: {c.message}</p>)}
@@ -567,7 +579,7 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
           </div>
         )}
 
-        {(v.lane === "FILE_NOW" || v.lane === "NET_BILL_RISK") && <div style={{ marginTop: 28 }}><button className="btn primary lg" onClick={onToggle}>{included ? "Take out of the refund file" : "Add to the refund file"}</button></div>}
+        {(v.lane === "FILE_NOW" || v.lane === "NET_BILL_RISK") && <div style={{ marginTop: 28 }}><button className={BTN_PRIMARY} onClick={onToggle}>{included ? "Take out of the refund file" : "Add to the refund file"}</button></div>}
         <p className="fine" style={{ marginTop: 14 }}>{PREPARED_FOR_PLAIN}</p>
       </aside>
     </div>
@@ -602,8 +614,8 @@ function Notice({ n, replay, canBrowser, inBrowser }: { n: NoticeState; replay: 
       <h3>{t.title}</h3>
       <p>{t.body}</p>
       <div className="btnrow">
-        <button className="btn primary" onClick={replay}>Play the recorded run</button>
-        {canBrowser && <button className="btn" onClick={inBrowser}>Check my file in this browser (no AI)</button>}
+        <button className={BTN_PRIMARY} onClick={replay}>Play the recorded run</button>
+        {canBrowser && <button className={BTN_SECONDARY} onClick={inBrowser}>Check my file in this browser (no AI)</button>}
       </div>
       {n.detail && <details><summary>What the server said</summary><pre>{n.detail}</pre></details>}
     </section>
@@ -640,10 +652,12 @@ function RuleWatch() {
   const key = ch.filter((c) => c.key);
   const rest = ch.filter((c) => !c.key);
   return (
-    <section className="panel watch">
-      <h2>Did Customs change the rules since this was built?</h2>
+    <section className="watch bg-zinc-50 border border-zinc-200 rounded-xl p-5 mt-8" aria-label="Compliance Status">
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Live CBP Check</span>
+      <h2 className="mt-3 text-base font-semibold tracking-tight text-zinc-900">Compliance Status</h2>
+      <p className="mt-1 text-sm font-medium text-zinc-900">Did Customs change the rules since this was built?</p>
       <p className="fine">Customs publishes the refund rules on a web page. This reads the live page and compares it with a copy saved on 2026-07-11. Every change is quoted from the page (July on the left, now on the right). No AI is involved.</p>
-      <button className="btn" disabled={busy} onClick={go}>{busy ? "Reading the page…" : "Check Customs' page now"}</button>
+      <div className="mt-3"><button className={BTN_SECONDARY} disabled={busy} onClick={go}>{busy ? "Reading the page…" : "Check Customs' page now"}</button></div>
       {r && (
         <div className="wr">
           <p className={r.ok ? "" : "error"}>{r.note}</p>
