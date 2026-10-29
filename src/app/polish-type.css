@@ -1,2 +1,160 @@
 @layer components {
+  html body .eyebrow,
+  html body .twist-tag,
+  html body .bn-n,
+  html body .tag,
+  html body .thead,
+  html body .ai-tag,
+  html body .story-l,
+  html body .datalabel,
+  html body .cid {
+    font-family: var(--sans);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+  }
+  html body .thead,
+  html body .tag,
+  html body .twist-tag,
+  html body .ai-tag,
+  html body .cid,
+  html body .bn-n {
+    font-size: 12px;
+  }
+  html body .story-l,
+  html body .eyebrow,
+  html body .datalabel {
+    font-size: 14px;
+  }
+
+  html body .headline {
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-family: var(--sans);
+  }
+  html body .display {
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  html body .twist-num b {
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  html body .story-n {
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  html body .kpi b {
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  html body .lead,
+  html body .answer,
+  html body .headline2,
+  html body .tab-m,
+  html body .twist-lbl,
+  html body .twist-step,
+  html body .wf-h,
+  html body .parts,
+  html body .ledger,
+  html body .notice p,
+  html body .panel p,
+  html body .step,
+  html body .finding p,
+  html body .cbpq,
+  html body .next,
+  html body .fix,
+  html body .watch p,
+  html body .row,
+  html body .order li,
+  html body .foot p,
+  html body .ack,
+  html body .lane-u {
+    font-size: 14px;
+    font-weight: 400;
+  }
+  html body .verdict {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  html body .fine,
+  html body .twist-cap,
+  html body .d-meta,
+  html body .tab-s,
+  html body .cites span,
+  html body .wf-axis,
+  html body .src,
+  html body .prog .stage,
+  html body .datalabel .tag {
+    font-size: 12px;
+    font-weight: 400;
+  }
+  html body .pill {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  html body .panel h2:not(.headline):not(.display),
+  html body .panel h3:not(.headline):not(.display),
+  html body .panel h4:not(.headline):not(.display),
+  html body .notice h2:not(.headline):not(.display),
+  html body .notice h3:not(.headline):not(.display),
+  html body .notice h4:not(.headline):not(.display),
+  html body .drawer h2:not(.headline):not(.display),
+  html body .drawer h3:not(.headline):not(.display),
+  html body .drawer h4:not(.headline):not(.display),
+  html body .sect h2:not(.headline):not(.display),
+  html body .sect h3:not(.headline):not(.display),
+  html body .sect h4:not(.headline):not(.display),
+  html body .watch h2:not(.headline):not(.display),
+  html body .watch h3:not(.headline):not(.display),
+  html body .watch h4:not(.headline):not(.display),
+  html body .analyst h2:not(.headline):not(.display),
+  html body .analyst h3:not(.headline):not(.display),
+  html body .analyst h4:not(.headline):not(.display),
+  html body .ultra h2:not(.headline):not(.display),
+  html body .ultra h3:not(.headline):not(.display),
+  html body .ultra h4:not(.headline):not(.display) {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    letter-spacing: 0;
+  }
+
+  html body .text-base { font-size: 14px !important; }
+  html body .text-3xl { font-size: 30px !important; }
+  html body .font-semibold,
+  html body .font-bold,
+  html body .font-medium,
+  html body b,
+  html body strong {
+    font-weight: 500 !important;
+  }
+
+  /* remaining 600 weights -> 500 */
+  html body .bn h3,
+  html body .win.hot,
+  html body .amt,
+  html body .order .m,
+  html body .rc h4 {
+    font-weight: 500;
+  }
 }
