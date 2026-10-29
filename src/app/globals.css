@@ -81,3 +81,4 @@ pre{white-space:pre-wrap;font:11.5px/1.45 var(--mono);color:#b9c2cc;background:#
 .step{color:#cfd6dd}.finding{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0}.finding p{margin:6px 0;font-size:14px}.def{color:#cfd6dd}.fix{color:#a8f0cc}.src{font-size:12px}
 .ultra{background:#1a1810;border:1px solid #5b4a1e;border-radius:8px;padding:12px;margin:14px 0}.ultra p{margin:6px 0;font-size:14px}
 .money{margin:16px 0}.note-q{font-style:italic;color:#d9d3c4;border-left:2px solid #4a5663;padding-left:10px}.ok{color:#a8f0cc}
+html,body{overflow-x:clip;max-width:100vw}
