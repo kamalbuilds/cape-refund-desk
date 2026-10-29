@@ -100,7 +100,7 @@ mk({ liqAgo: 55, lines: [{ good: 5 }] });
 mk({ liqAgo: 70, lines: [{ good: 1 }], liqDateText: "08/20/2026" });
 mk({ liqAgo: 78, lines: [{ good: 7 }], note: "Liquidated per ES-701 courtesy notice; broker flagged as urgent." });
 mk({ liqAgo: 80, lines: [{ good: 9 }] });
-mk({ liqAgo: 81, lines: [{ good: 10 }, { good: 12 }], note: "TRAP: liquidated 81 days ago, one day past the CAPE window." });
+mk({ liqAgo: 81, lines: [{ good: 10 }, { good: 12 }], note: "Liquidated early August per ES-701; client asking about the refund." });
 mk({ liqAgo: 95, lines: [{ good: 13 }] });
 mk({ liqAgo: 130, lines: [{ good: 14 }] });
 // ---- C. Liquidation status variants ----
@@ -117,23 +117,23 @@ mk({ protest: "Granted", lines: [{ good: 2 }] });
 mk({ recon: "Y", reconDeadline: ahead(120), lines: [{ good: 3 }], note: "Flagged for Recon; Type 09 not filed yet." });
 mk({ recon: "Y", reconDeadline: ahead(95), lines: [{ good: 8 }, { good: 9 }] });
 mk({ recon: "Y", reconDeadline: ahead(21), lines: [{ good: 10 }], note: "Recon due in 3 weeks; importer asked to file Recon first." });
-mk({ recon: "Y", reconFiled: "Y", reconDeadline: ahead(-10), lines: [{ good: 7 }], note: "TRAP: Type 09 already filed for this flagged entry." });
+mk({ recon: "Y", reconFiled: "Y", reconDeadline: ahead(-10), lines: [{ good: 7 }], note: "Recon entry already filed for this one last month." });
 mk({ type: "09", lines: [{ good: 4 }], note: "Reconciliation summary entry." });
 // ---- F. Entry types / drawback ----
-mk({ type: "23", lines: [{ good: 15 }], note: "TRAP: TIB entry type 23." });
+mk({ type: "23", lines: [{ good: 15 }], note: "Temporary import under bond, TIB." });
 mk({ type: "08", lines: [{ good: 15 }] });
 mk({ type: "47", lines: [{ good: 13 }] });
 mk({ drawback: "Y", lines: [{ good: 2 }], note: "Designated on drawback claim DBK-3321." });
 mk({ drawbackPlanned: "Y", lines: [{ good: 12 }], note: "Importer plans a drawback claim in Q1; file CAPE first." });
 mk({ drawbackPlanned: "Y", lines: [{ good: 6 }, { good: 1 }] });
 // ---- G. Leading-zero entry numbers ----
-mk({ prefix: "0P2", lines: [{ good: 1 }], note: "TRAP: leading zero; needs apostrophe in the CSV." });
+mk({ prefix: "0P2", lines: [{ good: 1 }], note: "Filer code starts with zero, careful in Excel." });
 mk({ prefix: "0P2", lines: [{ good: 3 }], raw: undefined });
 mk({ prefix: "0P2", liqAgo: 33, lines: [{ good: 5 }] });
 // ---- H. File-level and status errors ----
 const dupN = num7();
 mk({ n: dupN, lines: [{ good: 2 }] });
-mk({ n: dupN, raw: `A7K-${dupN}-${Number(dupN) % 10}`, lines: [{ good: 2 }], note: "TRAP: same entry pasted again with dashes." });
+mk({ n: dupN, raw: `A7K-${dupN}-${Number(dupN) % 10}`, lines: [{ good: 2 }], note: "Pasted from the broker portal." });
 mk({ full: "A7K12345678", raw: "A7K1234567", lines: [{ good: 4 }] }); // 10 chars
 mk({ prefix: "Z3M", lines: [{ good: 6 }], note: "Filed by a different broker (Z3M)." });
 mk({ status: "Cancelled", lines: [{ good: 7 }] });
@@ -153,7 +153,7 @@ mk({ liqAgo: 18, lines: [{ good: 14, fw: "JP", col1: 0, country: "JP" }], note: 
 mk({ lines: [{ good: 16, fw: "KR", col1: 8, country: "KR" }] });
 mk({ lines: [{ good: 15, fw: "CH", col1: 4.5, country: "CH" }] });
 // ---- J. Net-bill cases: underpaid 232/301/201, diversion (under = share of the IEEPA duty ACE will recalculate as owed) ----
-mk({ iorIdx: 4, debt: "9500.00", lines: [{ good: 1, s301: 25 }, { good: 7, underFrac: 0.62 }], note: "TRAP: 301 on line 2 never declared; ACE recalculation will assess it." });
+mk({ iorIdx: 4, debt: "9500.00", lines: [{ good: 1, s301: 25 }, { good: 7, underFrac: 0.62 }], note: "Importer says 301 was declared on both lines." });
 mk({ iorIdx: 4, debt: "9500.00", lines: [{ good: 17, value: 30000, underFrac: 1.5 }], note: "232 underpaid; may net to a bill." });
 mk({ iorIdx: 4, lines: [{ good: 2, value: 40000, underFrac: 0.7 }], note: "301 underdeclared on this line." });
 mk({ iorIdx: 7, debt: "4200.00", lines: [{ good: 3, value: 61000 }] });
