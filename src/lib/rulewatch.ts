@@ -25,6 +25,8 @@ export interface Change {
   stampBefore?: string; stampAfter?: string; // CBP's own "Updated m/d/yyyy" stamps for that section
   relevant: boolean;
   engineLevel?: 0 | 1 | 2 | 3; // 0 engine changed because of this, 1 checked and unchanged, 3 not modeled / informational
+  key?: boolean; // one of the few changes that touch a check this tool runs (shown first); the rest are informational
+  confirmedByTreg?: boolean; // a third, independent extractor (treg web.extract), run offline by scripts/treg-crosscheck.mjs
   confirmedByTavily?: boolean; // an independent extractor (Tavily) also sees this difference
   engine?: string; // what this means for the checks in this app, when we know
 }
@@ -153,7 +155,9 @@ export function toChanges(a: string[], b: string[]): { changes: Change[]; same: 
     const probe = before + " " + after;
     const hits = ENGINE.filter((e) => e.re.test(probe));
     const eng = [...new Set(hits.map((e) => e.note))].join(" ");
-    changes.push({ kind, before, after, stampBefore: stampB, stampAfter: stampA, relevant: RELEVANT.test(probe), engine: eng || undefined, engineLevel: hits.length ? (Math.min(...hits.map((h) => h.level)) as 0 | 1 | 2 | 3) : undefined });
+    changes.push({ kind, before, after, stampBefore: stampB, stampAfter: stampA, relevant: RELEVANT.test(probe), engine: eng || undefined, engineLevel: hits.length ? (Math.min(...hits.map((h) => h.level)) as 0 | 1 | 2 | 3) : undefined,
+      // key: the engine changed because of it, or it matches two or more rule checks (a single stray match like a repeated FAQ answer is not enough)
+      key: hits.some((h) => h.level === 0) || (hits.length >= 2 && hits.every((h) => h.level <= 1)) });
   }
   return { changes, same, dropped };
 }

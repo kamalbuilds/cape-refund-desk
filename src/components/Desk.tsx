@@ -428,7 +428,8 @@ function ChangeCard({ c }: { c: Change }) {
       <header>
         <span className="tag">{c.kind === "added" ? "New on the page" : c.kind === "removed" ? "Removed" : "Reworded"}</span>
         {(c.stampBefore || c.stampAfter) && <span className="fine">{c.stampBefore ? c.stampBefore : "no stamp"} → {c.stampAfter ?? "no stamp"}</span>}
-        {c.confirmedByTavily && <span className="fine ok">second reader (Tavily) agrees</span>}
+        {c.confirmedByTavily && <span className="fine ok">Tavily agrees</span>}
+        {c.confirmedByTreg && <span className="fine ok">treg agrees</span>}
       </header>
       <div className="vs">
         <div><div className="when">July 11 capture</div><blockquote>{f.b ?? <em>(not on the page)</em>}</blockquote></div>
@@ -444,8 +445,8 @@ function RuleWatch() {
   const [busy, setBusy] = useState(false);
   async function go() { setBusy(true); try { setR((await (await fetch("/api/rulewatch")).json()) as WatchResult); } finally { setBusy(false); } }
   const ch = r?.changes ?? [];
-  const key = ch.filter((c) => c.engineLevel === 0 || c.engineLevel === 1);
-  const rest = ch.filter((c) => !(c.engineLevel === 0 || c.engineLevel === 1));
+  const key = ch.filter((c) => c.key);
+  const rest = ch.filter((c) => !c.key);
   return (
     <section className="panel watch">
       <div className="eyebrow">Rule-watch: did CBP change the rules since this was built?</div>
@@ -455,9 +456,9 @@ function RuleWatch() {
         <div className="wr">
           <p className={r.ok ? "" : "error"}>{r.note}</p>
           {r.ok && <>
-            <p><b>{ch.length}</b> rule-relevant changes; {key.length} touch checks this tool runs. CBP&apos;s &quot;Last Modified&quot; stamp: {r.lastModified?.before ?? "none in the July capture"} → <b>{r.lastModified?.after ?? "none"}</b>. {r.noiseDropped} lines of layout and wording noise were filtered.</p>
+            <p><b>{key.length}</b> change{key.length === 1 ? "" : "s"} touch checks this tool runs; {rest.length} more are informational. CBP&apos;s &quot;Last Modified&quot; stamp: {r.lastModified?.before ?? "none in the July capture"} → <b>{r.lastModified?.after ?? "none"}</b>. {r.noiseDropped} lines of layout and wording noise were filtered.</p>
             <div className="chgs">{key.map((c, i) => <ChangeCard key={i} c={c} />)}</div>
-            {rest.length > 0 && <details className="more"><summary>{rest.length} more changes (not modeled or informational)</summary><div className="chgs">{rest.map((c, i) => <ChangeCard key={i} c={c} />)}</div></details>}
+            {rest.length > 0 && <details className="more"><summary>{rest.length} more changes (informational or not modeled)</summary><div className="chgs">{rest.map((c, i) => <ChangeCard key={i} c={c} />)}</div></details>}
             <p className="fine">Snapshot {r.snapshot.capturedAt.slice(0, 10)} ({r.snapshot.sha256}) vs live {new Date(r.checkedAt).toLocaleString()} ({r.live?.sha256}).</p>
           </>}
         </div>
