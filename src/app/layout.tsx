@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./polish-lanes.css";
+import "./polish-type.css";
+import "./polish-board.css";
 
 const sans = Geist({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--f-sans", display: "swap" });
 const mono = Geist_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--f-mono", display: "swap" });
