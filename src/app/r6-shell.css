@@ -238,3 +238,18 @@
     }
   }
 }
+
+/* round 2: tighten the first screen (alert to hero, board gaps) */
+@layer components {
+  html body .r6-alert { padding: 16px 20px; margin-top: 16px; }
+  html body .r6-alert-body { max-width: 760px; }
+  html body .shell > .hero { margin-top: 48px; padding: 0; }
+  html body .shell > .runbar { margin-top: 24px; }
+  html body .shell > .stage-wrap, html body .shell > .stage { margin-top: 32px; }
+  html body .zone { padding-top: 0; }
+  html body .zone .headline { max-width: 760px; }
+  @media (max-width: 640px) {
+    html body .shell > .hero { margin-top: 32px; }
+    html body .r6-alert { padding: 16px; }
+  }
+}
