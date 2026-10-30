@@ -407,3 +407,43 @@ html body .r6-receipt details summary{font-size:13px;line-height:20px;color:var(
   html body .r6-dock .r6-secondary-row button{justify-content:flex-start}
 }
 }
+
+/* feature panels (Audience, Why an AI model, Re-score, Stage receipt, Sources): flat hairline sections like the rest */
+@layer components {
+  html body [data-testid="audience"],
+  html body [data-testid="why-llm"],
+  html body [data-testid="rescore"],
+  html body [data-testid="stage-receipt"],
+  html body [data-testid="sources"] {
+    background: transparent;
+    border: 0;
+    border-top: 1px solid #e4e4e7;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 32px 0 0;
+    margin-top: 80px;
+  }
+  html body [data-testid="audience"] h2, html body [data-testid="audience"] h3,
+  html body [data-testid="why-llm"] h2, html body [data-testid="why-llm"] h3,
+  html body [data-testid="rescore"] h2, html body [data-testid="rescore"] h3,
+  html body [data-testid="stage-receipt"] h2, html body [data-testid="stage-receipt"] h3,
+  html body [data-testid="sources"] h2, html body [data-testid="sources"] h3 {
+    font: 500 16px/24px var(--sans);
+    color: #18181b;
+    margin: 0 0 8px;
+  }
+  html body [data-testid="audience"] p,
+  html body [data-testid="why-llm"] p, html body [data-testid="why-llm"] li,
+  html body [data-testid="sources"] li { font-size: 16px; line-height: 24px; color: #52525b; }
+  html body [data-testid="audience"] .grid > div { border-radius: 16px; padding: 16px; }
+  html body [data-testid="audience"] .grid > div > div { font-size: 13px; line-height: 20px; }
+  html body [data-testid="audience"] .grid > div > div:nth-child(2) { font: 500 16px/24px var(--mono); font-variant-numeric: tabular-nums; color: #18181b; }
+  @media (max-width: 640px) {
+    html body [data-testid="audience"], html body [data-testid="why-llm"], html body [data-testid="rescore"],
+    html body [data-testid="stage-receipt"], html body [data-testid="sources"] { margin-top: 48px; }
+  }
+  html body [data-testid="stage-receipt"] table { width: 100%; border-collapse: collapse; }
+  html body [data-testid="stage-receipt"] th, html body [data-testid="stage-receipt"] td { white-space: nowrap; padding: 12px 12px 12px 0; text-align: right; font-variant-numeric: tabular-nums; }
+  html body [data-testid="stage-receipt"] th:first-child, html body [data-testid="stage-receipt"] td:first-child { text-align: left; white-space: normal; }
+  html body [data-testid="stage-receipt"] { overflow-x: auto; }
+}
