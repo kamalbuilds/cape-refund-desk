@@ -22,7 +22,7 @@ const total = off;
 const caps = [], auds = [];
 for (const g of segs) for (const x of g.tl.sentences) { caps.push({ text: x.cap, a: g.off + x.start - 0.05, b: g.off + x.start + x.dur + 0.2 }); auds.push({ wav: x.wav, at: g.off + x.start }); }
 fs.writeFileSync(path.join(work, "captions.json"), JSON.stringify(caps));
-execFileSync("python3", [path.join(HERE, "make_captions.py"), path.join(work, "captions.json"), path.join(work, "caps")], { stdio: "inherit" });
+execFileSync(process.env.PYTHON || "/usr/bin/python3", [path.join(HERE, "make_captions.py"), path.join(work, "captions.json"), path.join(work, "caps")], { stdio: "inherit" });
 // SRT + teleprompter alongside
 const ts = (t) => { const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = (t % 60).toFixed(3).replace(".", ","); return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${s.padStart(6, "0")}`; };
 const outName = EL.out || "demo.mp4"; const outPath = path.join(V, outName);

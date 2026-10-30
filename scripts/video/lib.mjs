@@ -1,7 +1,9 @@
-// Shared capture helpers: Chrome + CDP screencast, injected cursor / ring / tag overlays.
+// Shared capture helpers: attach to the already-running Brave (deepsurge profile) over CDP, open ONE own window,
+// CDP screencast, injected cursor / ring / tag overlays.
+// Never launches a browser and never creates a profile. Only the window this module creates is ever closed.
 import fs from "node:fs";
 import path from "node:path";
-import { chromium } from "playwright-core";
+import * as pw from "playwright-core";
 import { execFileSync } from "node:child_process";
 export const BASE = process.env.CAPE_URL || "https://cape-refund-desk.vercel.app";
 export const V = process.env.V || "/Volumes/PortableSSD/nvdia/apps/cape-video";
@@ -40,26 +42,55 @@ const INIT = () => {
     document.addEventListener("mousemove", (e) => { cur.style.opacity = 1; cur.style.transform = `translate(${e.clientX}px,${e.clientY}px)`; }, true);
     const add = (cls, html, st) => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html || ""; Object.assign(d.style, st); root.appendChild(d); return d; };
     window.__ov = {
-      ring(r, label, color = "", pad = 8) {
+      ring(r, label, color = "", pad = 8, pos = "auto") {
         add("__ring " + color, "", { left: r.x - pad + "px", top: r.y - pad + "px", width: r.w + pad * 2 + "px", height: r.h + pad * 2 + "px" });
-        if (label) { const top = r.y - pad - 36 > 4 ? r.y - pad - 36 : r.y + r.h + pad + 8; add("__lab", label, { left: Math.max(8, r.x - pad) + "px", top: top + "px" }); }
+        if (!label) return;
+        if (pos === "right") { add("__lab", label, { left: r.x + r.w + pad + 12 + "px", top: r.y + r.h / 2 - 15 + "px" }); return; }
+        const above = r.y - pad - 36 > 4;
+        const top = pos === "below" || !above ? r.y + r.h + pad + 8 : r.y - pad - 36;
+        add("__lab", label, { left: Math.max(8, r.x - pad) + "px", top: top + "px" });
       },
-      card(html, st) { add("__card", html, st); },
+      card(html, st, keep) { const d = add("__card", html, st); if (keep) d.setAttribute("data-keep", "1"); },
       ripple(x, y) { add("__rip", "", { left: x + "px", top: y + "px" }); setTimeout(() => root.querySelectorAll(".__rip").forEach((e) => e.remove()), 700); },
       end(html) { add("__end", html, {}); },
-      clear() { root.querySelectorAll(".__ring,.__lab,.__card").forEach((e) => e.remove()); },
+      clear() { root.querySelectorAll(".__ring,.__lab,.__card:not([data-keep])").forEach((e) => e.remove()); },
     };
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", install); else install();
   install();
 };
 
+async function cdpUrl() {
+  const cands = process.env.CDP_URL ? [process.env.CDP_URL] : ["http://127.0.0.1:9222", "http://127.0.0.1:9396"];
+  for (const u of cands) {
+    try { const r = await fetch(u + "/json/version", { signal: AbortSignal.timeout(1500) }); if (r.ok) return u; } catch { /* try next */ }
+  }
+  throw new Error("no running Brave on CDP (tried " + cands.join(", ") + "). Start the deepsurge profile: bhn deepsurge");
+}
+
+// Attach to the running Brave and open this script's OWN window, so other recorders' tabs keep painting.
 export async function launch() {
-  const browser = await chromium.launch({ channel: "chrome", headless: true });
-  const ctx = await browser.newContext({ viewport: { width: 1372, height: 772 }, deviceScaleFactor: 1.4, acceptDownloads: true });
-  await ctx.addInitScript(INIT);
-  const page = await ctx.newPage();
-  return { browser, ctx, page };
+  const browser = await pw.chromium.connectOverCDP(await cdpUrl());
+  const ctx = browser.contexts()[0];
+  const fresh = ctx.waitForEvent("page", { timeout: 15000 });
+  const bs = await browser.newBrowserCDPSession();
+  const { targetId } = await bs.send("Target.createTarget", { url: "about:blank", newWindow: true, width: 1440, height: 900 });
+  const page = await fresh;
+  await page.addInitScript(INIT);
+  await page.setViewportSize({ width: 1372, height: 772 });
+  const cs = await ctx.newCDPSession(page);
+  await cs.send("Emulation.setDeviceMetricsOverride", { width: 1372, height: 772, deviceScaleFactor: 1.4, mobile: false });
+  await cs.send("Emulation.setFocusEmulationEnabled", { enabled: true }).catch(() => {});
+  await page.bringToFront();
+  return { browser, ctx, page, targetId, bs };
+}
+
+// Close only the window this script opened, then drop the connection (the browser keeps running).
+export async function release({ browser, page, targetId, bs }) {
+  if (bs && targetId) await bs.send("Target.closeTarget", { targetId }).catch(() => {});
+  else await page.close().catch(() => {});
+  await sleep(300);
+  browser.close().catch(() => {});
 }
 
 export class Rig {
@@ -70,20 +101,26 @@ export class Rig {
     this.cdp.on("Page.screencastFrame", (ev) => {
       const recv = Date.now(); const ts = ev.metadata.timestamp * 1000;
       this.lat = Math.min(this.lat, recv - ts);
+      if (this.stopped) return;
       const f = path.join(dir, `f${String(this.n++).padStart(6, "0")}.jpg`);
-      fs.writeFileSync(f, Buffer.from(ev.data, "base64"));
+      try { fs.writeFileSync(f, Buffer.from(ev.data, "base64")); } catch { return; }
       this.frames.push({ ts, f }); this.cdp.send("Page.screencastFrameAck", { sessionId: ev.sessionId }).catch(() => {});
     });
     await this.cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: 1920, maxHeight: 1080, everyNthFrame: 1 });
   }
+  async abort() { this.stopped = true; await this.cdp?.send("Page.stopScreencast").catch(() => {}); }
   mark() { this.t0 = Date.now(); }
   at(sec) { const d = this.t0 + sec * 1000 - Date.now(); if (-d > (this.late || 0)) this.late = -d; return sleep(Math.max(0, d)); }
   now() { return (Date.now() - this.t0) / 1000; }
-  async stop(D, out) {
-    await this.at(D); await sleep(250);
+  // anchors (optional): [[realSec, videoSec], ...] piecewise-linear time map for time-lapsed live runs; the last anchor must be [realEnd, D].
+  async stop(D, out, anchors = null) {
+    const A = anchors ? (anchors[0][0] === 0 ? anchors : [[0, 0], ...anchors]) : null;
+    if (A) for (let i = 1; i < A.length; i++) if (!(A[i][0] > A[i - 1][0] && A[i][1] > A[i - 1][1])) throw new Error("anchors must increase in real and video time: " + JSON.stringify(A));
+    await this.at(A ? A[A.length - 1][0] : D); await sleep(250);
     await this.cdp.send("Page.stopScreencast").catch(() => {});
+    const fwd = (t) => { if (!A) return t; for (let i = 1; i < A.length; i++) if (t <= A[i][0]) return A[i - 1][1] + (t - A[i - 1][0]) * (A[i][1] - A[i - 1][1]) / (A[i][0] - A[i - 1][0]); return A[A.length - 1][1]; };
     const t0 = this.t0 - this.lat; // frame ts in capture-clock terms
-    const fr = this.frames.map((x) => ({ t: (x.ts - t0) / 1000, f: x.f })).sort((a, b) => a.t - b.t);
+    const fr = this.frames.map((x) => ({ t: fwd((x.ts - t0) / 1000), f: x.f })).sort((a, b) => a.t - b.t);
     let i0 = 0; fr.forEach((x, i) => { if (x.t <= 0) i0 = i; });
     const use = fr.slice(i0).map((x, i) => (i === 0 ? { ...x, t: 0 } : x)).filter((x) => x.t < D);
     const lines = ["ffconcat version 1.0"];
@@ -113,13 +150,13 @@ export class Rig {
     await this.p.evaluate(([x, y]) => window.__ov.ripple(x, y), [this.mx, this.my]);
     await this.p.mouse.down(); await sleep(70); await this.p.mouse.up(); return b;
   }
-  async ring(loc, label, color = "", pad = 8) {
+  async ring(loc, label, color = "", pad = 8, pos = "auto") {
     const b = await loc.boundingBox(); if (!b) throw new Error("ring: no box " + loc);
-    const x0 = Math.max(10, b.x), y0 = Math.max(44, b.y), x1 = Math.min(1372 - 10, b.x + b.width), y1 = Math.min(772 - 80, b.y + b.height);
-    await this.p.evaluate(([r, l, c, pd]) => window.__ov.ring(r, l, c, pd), [{ x: x0, y: y0, w: x1 - x0, h: y1 - y0 }, label, color, pad]); return b;
+    const x0 = Math.max(10, b.x), y0 = Math.max(6, b.y), x1 = Math.min(1372 - 10, b.x + b.width), y1 = Math.min(772 - 80, b.y + b.height);
+    await this.p.evaluate(([r, l, c, pd, ps]) => window.__ov.ring(r, l, c, pd, ps), [{ x: x0, y: y0, w: x1 - x0, h: y1 - y0 }, label, color, pad, pos]); return b;
   }
   clear() { return this.p.evaluate(() => window.__ov.clear()); }
-  card(html, st) { return this.p.evaluate(([h, s]) => window.__ov.card(h, s), [html, st]); }
+  card(html, st, keep = false) { return this.p.evaluate(([h, s, k]) => window.__ov.card(h, s, k), [html, st, keep]); }
   async scrollTo(y, ms = 900) {
     await this.p.evaluate(([y, ms]) => new Promise((res) => { const s = window.scrollY, t0 = performance.now(); const f = (t) => { const k = Math.min(1, (t - t0) / ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; window.scrollTo(0, s + (y - s) * e); k < 1 ? requestAnimationFrame(f) : res(); }; requestAnimationFrame(f); }), [y, ms]);
   }
@@ -134,8 +171,9 @@ export class Rig {
 export async function openDesk(page, replay) {
   await page.goto(BASE + (replay ? "/?demo=replay" : "/"), { waitUntil: "networkidle" });
   if (replay) {
-    await page.waitForSelector(".receipt .rc", { timeout: 60000 });
-    await sleep(1500);
+    await page.waitForSelector(".claimcard", { timeout: 60000 });
+    await page.waitForSelector(".receipt", { state: "attached", timeout: 60000 });
+    await sleep(3200); // let the count-up and lane animations settle before recording starts
   }
   await page.evaluate(() => window.scrollTo(0, 0));
   await sleep(300);

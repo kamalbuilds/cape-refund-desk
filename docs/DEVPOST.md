@@ -121,31 +121,27 @@ Next.js, React, TypeScript, NVIDIA Nemotron 3 Ultra, NVIDIA Nemotron 3.5 Lightni
 
 ---
 
-## Demo video script (2:45 total, built around the replay)
+## Demo video script (2:45 total, narrated in the author's own voice)
 
-Use the hosted URL, not localhost. Record at 1440x900. Do not click "Run live" on camera unless the Token Factory account has credit again (see the optional shot).
-Voiceover is first person plural, plain, no hype. Times are cumulative.
+Rendered by `scripts/video/` (README there). B03 is a live run of the hosted site against Nebius Token Factory, time-mapped onto the narration, and the second half of B06 is a live ten-shipment run. Every other beat replays the recorded real run of 2026-10-30. Each cut-in card quotes a committed file.
 
 | # | Time | Shot | On screen | Voiceover |
 |---|---|---|---|---|
-| 1 | 0:00 to 0:15 | Landing, top of page | Header, the red "Irreversible." banner, the broker-review line | "CBP's CAPE portal refunds IEEPA tariffs from a CSV. Once the declaration is accepted you cannot amend it or remove an entry. Small importers get one attempt. This is the check that runs before they press upload." |
-| 2 | 0:15 to 0:30 | Pan to the intro panel | "The models never decide eligibility or touch a dollar figure." and the "synthetic sample" line | "Deterministic code checks each entry against CBP's published rules and computes the money in cents. Nemotron Lightning normalizes the messy columns. Nemotron Ultra explains and ranks. The sample is synthetic. We never ask for ACE credentials or bank details." |
-| 3 | 0:30 to 0:45 | Click "Run the sample (recorded real run)" | Progress counter, then the four lane totals | "This replays a real run we recorded on Nebius Token Factory on October 30: 69 entries, 69 Lightning calls and 23 Ultra calls, none failed, 29 seconds end to end. The receipt at the bottom has the completion ids." |
-| 4 | 0:45 to 1:15 | Hold on the four lane totals, scroll the board slowly | Lane counts (39 / 13 / 2 / 15) and dollars per lane | "Thirty-nine cleared to file, thirteen to hold, two that need a broker decision, fifteen that ACE would reject. Each card shows the exact CBP error string, days left in the window and the filing step. The urgent one is at the top: zero days left." |
-| 5 | 1:15 to 1:55 | Click the broker-decision card A7K-7344990-0 | Drawer: Ultra explanation, then the money table ($10,500 refundable, $13,125 underpaid, -$2,625 net), then the lines and the broker note | "This is the trap. The line shows ten and a half thousand dollars of refundable IEEPA duty, but thirteen thousand of other duties that Customs may bill back wipe it out, so the real net is a $2,625 bill, and the importer has open debt CBP may offset. Ultra explains why this one needs a broker before it goes in. Notice what Ultra did not write: every dollar figure here comes from the engine." |
-| 6 | 1:55 to 2:15 | Expand "Ultra's reasoning trace", then close the drawer | The reasoning trace, the guard line under the explanation | "The reasoning trace is the real one. A guard checks every figure and day count in the model's text against the engine. In this recording it found nothing to strip. In an earlier recording Ultra wrote 'file 7 entries expiring today'. The engine says one. The guard corrects it, and there is a test for that sentence." |
-| 7 | 2:15 to 2:30 | Scroll to the Export panel, tick the acknowledgement, click the CAPE CSV download | The acknowledgement text, the downloaded filename, the CSV in the OS preview (one `Entry Number` column, apostrophes on leading zeros) | "Export sits behind an acknowledgement that the declaration is irreversible. The CSV follows CBP's published format. Your broker uploads it. We do not." |
-| 8 | 2:30 to 2:42 | Scroll to Rule-watch, click "Check CBP now" | "4 changes touch checks this tool runs; 7 more are informational", the warehouse 21/22 change with July and October quotes, the "Tavily agrees" badge | "Rule-watch reads CBP's live page, compares it to a July capture and quotes four changes that touch our checks, such as warehouse entries now being rejected. Tavily Extract reads the page independently and agrees." |
-| 9 | 2:42 to 2:45 | Back to the top | Title and URL | "CAPE Refund Desk. A free pre-flight check before an irreversible upload." |
-
-Optional shot (the account has credit again as of 2026-10-30), replace the second half of shot 3: click "Run live on Token Factory" and let the Lightning and Ultra progress run for about 15 seconds, then cut to the board. The last full live run (2026-10-30) took 29.5 seconds end to end, so it fits on camera.
+| 1 | 0:00 to 0:25 | Landing page, then the example card | The card 'You'd owe Customs -$2,625.00' (refundable tariff $10,500, other duties underpaid -$13,125), then the 'Can't be undone' banner | "Maya, a tiny importer, is owed tariff refunds. But one shipment in her file would leave her owing Customs twenty-six hundred twenty-five. Cape Refund Desk checks that file before the upload nobody can undo. Her customs broker uploads it to Customs' portal, CAPE, and once it's accepted, nothing comes back out." |
+| 2 | 0:25 to 0:34 | Header, then How the check works | Plain code, Nemotron Lightning and Nemotron Ultra rows; 'Nemotron AI models on Nebius Token Factory' | "Plain code does every dollar. Nemotron models, on Nebius Token Factory, tidy the messy data and explain." |
+| 3 | 0:34 to 0:59 | Click 'Run it live' (real calls, sped up) | A live timer, the Lightning and Ultra progress bars, then the four groups 39 / 13 / 2 / 15 and this run's receipt (92 calls, none failed) | "Maya runs her sixty-nine shipments live. The fast model, Lightning, tidies every row. The thinking model, Ultra, reads the hard ones. Four groups. Thirty-nine ready to file, thirteen to fix first, two for her broker, fifteen Customs would reject. Ninety-two calls, none failed, in under a minute." |
+| 4 | 0:59 to 1:11 | Recorded run: open a 'Leave out' shipment | Customs' exact error 'Entry Summary is in Final Liquidation Status' and 'Liquidated 130 days ago' | "Open one Customs would reject, and you get its exact error. Customs finalized it a hundred thirty days ago, and claims close after eighty." |
+| 5 | 1:11 to 1:34 | Open the broker-decision shipment A7K-7344990-0 | Tariff paid $10,500, other duties underpaid -$13,125, net -$2,625; Ultra's explanation and its reasoning trace | "Now the shipment from the start. She paid ten and a half thousand dollars in tariff on it. But she underpaid over thirteen thousand in other duties, so claiming it may cost her twenty-six hundred twenty-five. Ultra explains why her broker decides first, and shows its reasoning." |
+| 6 | 1:34 to 1:54 | Number-guard card, then a live ten-shipment run | 'File 7 entries expiring today' against the engine's 1; three rows flagged 'AI caught a note that disagrees'; the mini receipt (3 of 3 caught, 4 made-up tags removed) | "AI slips. One model wrote that seven entries expire today. The code counted one, and a check corrected it. In a ten-shipment test with three deliberately wrong notes, it caught all three, and code threw out four tags the AI invented." |
+| 7 | 1:54 to 2:09 | Export panel | '39 shipments selected', the acknowledgement box, the CAPE CSV with its Entry Number rows, the note that the -$2,625 shipment is not in the file | "She confirms it can't be undone, and exports the thirty-nine ready shipments in Customs' own format. The two that could cost her stay out. Her broker uploads it. We never ask for a login." |
+| 8 | 2:09 to 2:23 | Rule-watch, click 'Check Customs' page now' | Live cbp.gov page versus the July copy, '4 changes affect this tool's checks', the 'Tavily agrees' badge | "Customs changes its rules, so the desk compares its live refund page with our July copy. Four changes touch these checks, and Tavily, a second reader, confirms them." |
+| 9 | 2:23 to 2:35 | Receipt, then Scored test | '~$0.120 at list price, wall 29.5 s' and 'Rules engine 100.0% (69 of 69)' | "Every run leaves a receipt, about twelve cents. Against answers we labelled by hand, the rules engine scores sixty-nine of sixty-nine." |
+| 10 | 2:35 to 2:45 | End card | Title, URL and repository | "Cape Refund Desk checks the file before the upload nobody can undo. It's live, open source, and built for broker review." |
 
 Recording checklist:
 
-- [ ] Hosted URL loads and shows the board within a few seconds of clicking Run the sample
-- [ ] Browser zoom 100 percent, window 1440x900, no bookmarks bar, no personal tabs
-- [ ] Captions on, English
-- [ ] Final length at or under 2:45, public link, pasted into the Devpost form
+- [ ] Public YouTube link under 3 minutes, pasted into the Devpost form
+- [ ] Captions burned in (they are in the file) and an .srt next to the video
 - [ ] No API key, token or dashboard visible at any point
 
 ---

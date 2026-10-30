@@ -5,7 +5,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 export const V = process.env.V || "/Volumes/PortableSSD/nvdia/apps/cape-video";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-export const LEAD = 0.45, GAP = 0.35, TAIL = 0.7;
+export const LEAD = 0.35, GAP = 0.3, TAIL = 0.45;
 export const dur = (f) => parseFloat(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", f]).toString());
 export function buildTimeline(script = JSON.parse(fs.readFileSync(path.join(HERE, "script.json"), "utf8")), voDir = path.join(V, "vo")) {
   const beats = Array.isArray(script) ? script : script.beats;

@@ -1,24 +1,21 @@
 {
+ "_about": "Narration for the demo film. Every figure traces to a file: lanes 39/13/2/15, 92 calls, 0 failed, 29.5 s, about $0.12 (docs/receipts/tokenfactory-full.json, data/sample-run.json); 3 of 3 planted conflicts and 4 removed tags (docs/receipts/tokenfactory-mini.json); the 7-versus-1 guard case (tests/fixtures/sample-run.2026-10-29.json, tests/numberguard.test.ts); -$2,625 on $10,500 (the drawer for A7K-7344990-0); 69 of 69 (the Scored test panel). 'say' is what the voice reads, 'cap' the burned-in caption.",
  "beats": [
   {
    "id": "B01",
    "title": "Problem",
    "sentences": [
     {
-     "say": "Maya runs a tiny import business, and she is owed tariff refunds by U.S. customs.",
-     "cap": "Maya runs a tiny import business, and she is owed tariff refunds by U.S. customs."
+     "say": "Maya, a tiny importer, is owed tariff refunds. But one shipment in her file would leave her owing Customs twenty-six hundred twenty-five.",
+     "cap": "Maya, a tiny importer, is owed tariff refunds. But one shipment in her file would leave her owing Customs $2,625."
     },
     {
-     "say": "To collect, she uploads one file to a customs portal called CAPE.",
-     "cap": "To collect, she uploads one file to a customs portal called CAPE."
+     "say": "Cape Refund Desk checks that file before the upload nobody can undo.",
+     "cap": "CAPE Refund Desk checks that file before the upload nobody can undo."
     },
     {
-     "say": "Once it's accepted, she can't edit it, or pull an entry out.",
-     "cap": "Once it's accepted, she can't edit it or pull an entry out."
-    },
-    {
-     "say": "One wrong line stays.",
-     "cap": "One wrong line stays."
+     "say": "Her customs broker uploads it to Customs' portal, CAPE, and once it's accepted, nothing comes back out.",
+     "cap": "Her customs broker uploads it to Customs' portal, CAPE, and once it's accepted, nothing comes back out."
     }
    ]
   },
@@ -27,44 +24,44 @@
    "title": "Product",
    "sentences": [
     {
-     "say": "Cape Refund Desk checks that file before the upload nobody can undo.",
-     "cap": "CAPE Refund Desk checks that file before the upload nobody can undo."
-    },
-    {
-     "say": "Plain code makes every call. Nemotron models explain them. No model ever touches the money.",
-     "cap": "Plain code makes every call. Nemotron models explain them. No model ever touches the money."
+     "say": "Plain code does every dollar. Nemotron models, on Nebius Token Factory, tidy the messy data and explain.",
+     "cap": "Plain code does every dollar. Nemotron models, on Nebius Token Factory, tidy the messy data and explain."
     }
    ]
   },
   {
    "id": "B03",
-   "title": "Board",
+   "title": "Live run",
    "sentences": [
     {
-     "say": "Maya drops in her entries. Here, a synthetic sample of sixty-nine.",
-     "cap": "Maya drops in her entries. Here, a synthetic sample of 69."
+     "say": "Maya runs her sixty-nine shipments live.",
+     "cap": "Maya runs her 69 shipments live."
     },
     {
-     "say": "Nemotron Lightning cleans the messy columns. Nemotron Ultra reads the hard ones.",
-     "cap": "Nemotron Lightning cleans the messy columns. Nemotron Ultra reads the hard ones."
+     "say": "The fast model, Lightning, tidies every row. The thinking model, Ultra, reads the hard ones.",
+     "cap": "The fast model, Lightning, tidies every row. The thinking model, Ultra, reads the hard ones."
     },
     {
-     "say": "Four lanes. Thirty-nine clear to file, thirteen to fix first, two for her broker, and fifteen customs would reject.",
-     "cap": "Four lanes: 39 clear to file, 13 to fix first, 2 for her broker, 15 customs would reject."
+     "say": "Four groups. Thirty-nine ready to file, thirteen to fix first, two for her broker, fifteen Customs would reject.",
+     "cap": "Four groups: 39 ready to file, 13 to fix first, 2 for her broker, 15 Customs would reject."
+    },
+    {
+     "say": "Ninety-two calls, none failed, in under a minute.",
+     "cap": "92 calls, none failed, in under a minute."
     }
    ]
   },
   {
    "id": "B04",
-   "title": "Blocked entry",
+   "title": "Blocked shipment",
    "sentences": [
     {
-     "say": "Open one of the fifteen, and you get the exact error customs would return.",
-     "cap": "Open one of the 15 and you get the exact error customs would return."
+     "say": "Open one Customs would reject, and you get its exact error.",
+     "cap": "Open one Customs would reject and you get its exact error."
     },
     {
-     "say": "Liquidated a hundred thirty days ago, past the eighty-day window.",
-     "cap": "Liquidated 130 days ago, past the 80-day window."
+     "say": "Customs finalized it a hundred thirty days ago, and claims close after eighty.",
+     "cap": "Customs finalized it 130 days ago, and claims close after 80."
     }
    ]
   },
@@ -73,30 +70,30 @@
    "title": "The trap",
    "sentences": [
     {
-     "say": "Now the trap. This entry looks like ten and a half thousand dollars.",
-     "cap": "Now the trap. This entry looks like $10,500."
+     "say": "Now the shipment from the start. She paid ten and a half thousand dollars in tariff on it.",
+     "cap": "Now the shipment from the start. She paid $10,500 in tariff on it."
     },
     {
-     "say": "But thirteen thousand one hundred twenty-five of underpaid duty gets netted against it, so claiming would cost her twenty-six hundred twenty-five.",
-     "cap": "But $13,125 of underpaid duty gets netted against it. Claiming would cost her $2,625."
+     "say": "But she underpaid over thirteen thousand in other duties, so claiming it may cost her twenty-six hundred twenty-five.",
+     "cap": "But she underpaid over $13,000 in other duties, so claiming it may cost her $2,625."
     },
     {
-     "say": "Ultra explains why her broker must decide first, and shows its reasoning.",
-     "cap": "Ultra explains why her broker must decide first, and shows its reasoning."
+     "say": "Ultra explains why her broker decides first, and shows its reasoning.",
+     "cap": "Ultra explains why her broker decides first, and shows its reasoning."
     }
    ]
   },
   {
    "id": "B06",
-   "title": "Number guard",
+   "title": "Guards",
    "sentences": [
     {
-     "say": "Models slip. In an earlier recording, Ultra wrote that seven entries expire today.",
-     "cap": "Models slip. In an earlier recording, Ultra wrote that 7 entries expire today."
+     "say": "AI slips. One model wrote that seven entries expire today. The code counted one, and a check corrected it.",
+     "cap": "AI slips. One model wrote that 7 entries expire today. The code counted 1, and a check corrected it."
     },
     {
-     "say": "The engine counted one. A number guard corrected it before Maya saw it.",
-     "cap": "The engine counted 1. A number guard corrected it before Maya saw it."
+     "say": "In a ten-shipment test with three deliberately wrong notes, it caught all three, and code threw out four tags the AI invented.",
+     "cap": "In a 10-shipment test with 3 deliberately wrong notes, it caught all 3, and code threw out 4 tags the AI invented."
     }
    ]
   },
@@ -105,8 +102,8 @@
    "title": "Export",
    "sentences": [
     {
-     "say": "She confirms the upload can't be undone, and exports only the safe entries, in the format customs publishes.",
-     "cap": "She confirms the upload can't be undone, and exports only the safe entries in the format customs publishes."
+     "say": "She confirms it can't be undone, and exports the thirty-nine ready shipments in Customs' own format. The two that could cost her stay out.",
+     "cap": "She confirms it can't be undone and exports the 39 ready shipments in Customs' own format. The two that could cost her stay out."
     },
     {
      "say": "Her broker uploads it. We never ask for a login.",
@@ -119,12 +116,12 @@
    "title": "Rule-watch",
    "sentences": [
     {
-     "say": "Customs changes its rules, so the desk checks the live page against a July copy.",
-     "cap": "Customs changes its rules, so the desk checks the live page against a July copy."
+     "say": "Customs changes its rules, so the desk compares its live refund page with our July copy.",
+     "cap": "Customs changes its rules, so the desk compares its live refund page with our July copy."
     },
     {
-     "say": "Four changes touch these checks, like warehouse entries now being rejected. A second search service confirms them independently.",
-     "cap": "Four changes touch these checks, like warehouse entries now being rejected. A second search service confirms them independently."
+     "say": "Four changes touch these checks, and Tavily, a second reader, confirms them.",
+     "cap": "Four changes touch these checks, and Tavily, a second reader, confirms them."
     }
    ]
   },
@@ -133,12 +130,8 @@
    "title": "Receipt",
    "sentences": [
     {
-     "say": "Each run leaves a Token Factory receipt.",
-     "cap": "Each run leaves a Token Factory receipt."
-    },
-    {
-     "say": "Lightning did all sixty-nine entries for about half a cent. Ultra's reasoning cost about eleven cents.",
-     "cap": "Lightning did all 69 entries for about half a cent. Ultra's reasoning cost about 11 cents."
+     "say": "Every run leaves a receipt, about twelve cents. Against answers we labelled by hand, the rules engine scores sixty-nine of sixty-nine.",
+     "cap": "Every run leaves a receipt, about 12 cents. Against answers we labelled by hand, the rules engine scores 69 of 69."
     }
    ]
   },
@@ -147,12 +140,12 @@
    "title": "Close",
    "sentences": [
     {
-     "say": "Cape Refund Desk. Check the file before the upload nobody can undo.",
-     "cap": "CAPE Refund Desk. Check the file before the upload nobody can undo."
+     "say": "Cape Refund Desk checks the file before the upload nobody can undo.",
+     "cap": "CAPE Refund Desk checks the file before the upload nobody can undo."
     },
     {
-     "say": "It's live, and open source. Prepared for broker review, not legal advice.",
-     "cap": "It's live, and open source. Prepared for broker review. Not legal advice."
+     "say": "It's live, open source, and built for broker review.",
+     "cap": "It's live, open source, and built for broker review."
     }
    ]
   }
