@@ -172,3 +172,22 @@ export function parseEs003(csvText: string): ParseResult {
   }
   return { entries, issues, headers };
 }
+
+export type UploadCheck = { ok: true; entries: number } | { ok: false; error: string };
+/** Reject files that are not in the layout this tool reads, with a message a business owner can act on. */
+export function checkUpload(csvText: string): UploadCheck {
+  const t = csvText.replace(/^\uFEFF/, "");
+  if (!t.trim()) return { ok: false, error: "That file is empty." };
+  const table = parseCsv(t);
+  const headers = (table[0] ?? []).map((h) => h.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""));
+  const shown = (table[0] ?? []).slice(0, 6).map((h) => h.trim()).filter(Boolean).join(", ");
+  if (!headers.includes("entry_number")) {
+    return { ok: false, error: `This doesn't look like an entry-summary export: there is no "entry_number" column${shown ? ` (the first columns are: ${shown})` : ""}. Use "Download the sample CSV" to see the layout this tool reads.` };
+  }
+  if (!headers.some((h) => ["ieepa_duty", "entered_value", "hts_number"].includes(h))) {
+    return { ok: false, error: "The file has an entry_number column but none of the duty columns (ieepa_duty, entered_value, hts_number), so there is nothing to check. Use \"Download the sample CSV\" to see the layout." };
+  }
+  const { entries } = parseEs003(t);
+  if (entries.length === 0) return { ok: false, error: "No shipments could be read from that file. Check that the rows have an entry_number." };
+  return { ok: true, entries: entries.length };
+}

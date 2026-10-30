@@ -1,4 +1,6 @@
 import { ModelUnavailableError, hasKey } from "@/lib/nebius";
+import { checkUpload } from "@/lib/parse";
+import { probeLive } from "@/lib/health";
 import { runPipeline, type RunEvent } from "@/lib/pipeline";
 import fs from "node:fs";
 import path from "node:path";
@@ -14,7 +16,7 @@ const MAX_RUNS = Number(process.env.LIVE_RUNS_MAX ?? 40);
 let runs = 0;
 
 export async function POST(req: Request) {
-  let body: { csv?: string; sample?: boolean; asOf?: string; filerCodes?: string[] };
+  let body: { csv?: string; sample?: boolean; mini?: boolean; asOf?: string; filerCodes?: string[] };
   try { body = await req.json(); } catch { return Response.json({ error: "Invalid JSON body." }, { status: 400 }); }
   if (!hasKey()) return Response.json({ error: "Live runs are disabled on this host (no NEBIUS_API_KEY). Use the recorded run.", code: "disabled" }, { status: 503 });
   if (runs >= MAX_RUNS) return Response.json({ error: "Live-run budget for this instance is used up. Use the recorded run.", code: "cap" }, { status: 429 });
@@ -29,7 +31,18 @@ export async function POST(req: Request) {
     const meta = JSON.parse(fs.readFileSync(path.join(dir, "sample-meta.json"), "utf8"));
     asOf = meta.asOf; filerCodes = meta.filerCodes; label = meta.label;
   }
+  let ultraMax: number | undefined;
+  if (body.mini) {
+    const dir = path.join(process.cwd(), "data");
+    csv = fs.readFileSync(path.join(dir, "sample-mini.csv"), "utf8");
+    const meta = JSON.parse(fs.readFileSync(path.join(dir, "sample-meta.json"), "utf8"));
+    asOf = meta.asOf; filerCodes = meta.filerCodes;
+    label = "SYNTHETIC MINI-RUN: 10 made-up shipments, 3 of them with a broker note that contradicts the data. Not real trade data.";
+    ultraMax = 4;
+  }
   if (!csv.trim()) return Response.json({ error: "No CSV provided." }, { status: 400 });
+  const chk = body.sample || body.mini ? { ok: true as const } : checkUpload(csv);
+  if (!chk.ok) return Response.json({ error: chk.error }, { status: 422 });
   if (Buffer.byteLength(csv) > MAX_BYTES) return Response.json({ error: "File is over 1MB. CBP's own CAPE limit is 1MB; split it first." }, { status: 413 });
   if (!filerCodes.length) {
     const counts = new Map<string, number>();
@@ -45,7 +58,7 @@ export async function POST(req: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       const send = (e: RunEvent) => controller.enqueue(enc.encode(JSON.stringify(e) + "\n"));
-      try { await runPipeline(csv, { asOf, filerCodes, label }, send); }
+      try { await runPipeline(csv, { asOf, filerCodes, label, ultraMax }, send); }
       catch (err) {
         if (err instanceof ModelUnavailableError) send({ type: "error", message: err.message, code: err.kind });
         else send({ type: "error", message: err instanceof Error ? err.message : "Run failed" });
@@ -57,5 +70,6 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  return Response.json({ live: hasKey(), runsUsed: runs, runsMax: MAX_RUNS });
+  const h = await probeLive();
+  return Response.json({ live: h.live && runs < MAX_RUNS, reason: runs >= MAX_RUNS ? "cap" : h.reason, note: runs >= MAX_RUNS ? "This instance's live-run budget is used up. The recorded real run still works." : h.note, checkedAt: h.checkedAt, runsUsed: runs, runsMax: MAX_RUNS });
 }

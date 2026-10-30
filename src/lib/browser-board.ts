@@ -1,10 +1,12 @@
 import { fmtUsd } from "./money";
-import { parseEs003 } from "./parse";
+import { checkUpload, parseEs003 } from "./parse";
 import { validateEntries } from "./validate";
 import type { EntryInfo, RunResult } from "./pipeline";
 
 /** Deterministic board only. Runs entirely in the browser; the CSV never leaves the machine. */
 export function browserBoard(csv: string, asOf: string, filerCodes: string[], label: string): Omit<RunResult, "receipt" | "explanations" | "portfolioNote"> {
+  const chk = checkUpload(csv);
+  if (!chk.ok) throw new Error(chk.error);
   const { entries, issues } = parseEs003(csv);
   const portfolio = validateEntries(entries, { asOf, filerCodes });
   const entryInfo: Record<string, EntryInfo> = {};

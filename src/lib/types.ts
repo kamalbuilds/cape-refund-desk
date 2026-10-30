@@ -105,7 +105,15 @@ export interface Verdict {
   diversionRisk: boolean; // IOR has an open non-IEEPA debt CBP may offset (19 CFR 24.72)
 }
 
+/** Rule overrides used by rule-watch re-scoring. Omitted = the rules as CBP publishes them today. */
+export interface RuleOverrides {
+  /** CAPE Phase 1 liquidation window in days (published: 80). */
+  windowDays?: number;
+  /** Warehouse entry types 21/22 rejected (CSMS 69127837, effective 2026-07-07). Default true. */
+  warehouseBlocked?: boolean;
+}
 export interface ValidationOptions {
   asOf: string; // ISO date
   filerCodes: string[]; // first 3 chars of entry number must match
+  rules?: RuleOverrides;
 }

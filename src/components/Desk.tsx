@@ -4,6 +4,8 @@ import { ERROR_DEFINITIONS, FILING_ORDER_RULES, SOURCES } from "@/lib/cbp-rules"
 import { browserBoard } from "@/lib/browser-board";
 import { buildCapeFiles, deadlineCsv, defaultInclude, DISCLAIMER, handoffNote, IRREVERSIBLE_PLAIN, PREPARED_FOR_PLAIN } from "@/lib/export";
 import { fmtUsd } from "@/lib/money";
+import { checkUpload } from "@/lib/parse";
+import { vetoStats } from "@/lib/signals";
 import type { Explanation, PortfolioNote, Receipt, RunEvent, RunResult } from "@/lib/pipeline";
 import type { WatchResult, Change } from "@/lib/rulewatch";
 import type { Lane, Verdict } from "@/lib/types";
@@ -14,6 +16,12 @@ import { CountInt, CountMoney, Reveal, TwistCard, Words } from "./motion";
 import Waterfall from "./Waterfall";
 import { AlertTriangle, ChevronDown, Download, FileText, Play, X } from "lucide-react";
 import { BTN_PRIMARY, BTN_SECONDARY, BTN_TERTIARY, Id } from "./ui";
+import Audience from "./Audience";
+import ExportExtras from "./ExportExtras";
+import RuleRescore from "./RuleRescore";
+import Sources from "./Sources";
+import StageReceipt from "./StageReceipt";
+import WhyLlm from "./WhyLlm";
 
 type Board = Omit<RunResult, "receipt" | "explanations" | "portfolioNote">;
 const PAGE = 12;
@@ -60,6 +68,7 @@ export default function Desk() {
   const [filer, setFiler] = useState("");
   const [asOf, setAsOf] = useState(today());
   const [liveOk, setLiveOk] = useState<boolean | null>(null);
+  const [liveNote, setLiveNote] = useState("");
   const t0 = useRef(0);
 
   const reset = () => { setBoard(null); setExpl({}); setPnote(null); setReceipt(null); setProg({ l: [0, 0], u: [0, 0] }); setTotal(0); setSel(null); setAck(false); setErr(""); setNotice(null); setLane(null); setExpanded(false); };
@@ -98,10 +107,10 @@ export default function Desk() {
     apply({ type: "done", result: { ...r, receipt: { ...r.receipt, mode: "replay" } } });
   }
 
-  async function live(useSample: boolean) {
+  async function live(useSample: boolean | "mini") {
     reset(); setMode("live"); t0.current = Date.now();
     try {
-      const res = await fetch("/api/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(useSample ? { sample: true } : { csv: csvText, asOf, filerCodes: filer ? [filer] : [] }) });
+      const res = await fetch("/api/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(useSample === "mini" ? { mini: true } : useSample ? { sample: true } : { csv: csvText, asOf, filerCodes: filer ? [filer] : [] }) });
       if (!res.ok || !res.body) {
         const j = await res.json().catch(() => ({}));
         if (j.code) setNotice({ kind: j.code, detail: j.error }); else setErr(j.error ?? `Request failed (${res.status})`);
@@ -129,9 +138,12 @@ export default function Desk() {
   async function onFile(f: File | null) {
     if (!f) return;
     if (f.size > 1_000_000) { setErr("That file is over 1MB, which is Customs' upload limit. Split it into smaller files first."); return; }
-    setCsvText(await f.text()); setFileName(f.name); setErr("");
+    const text = await f.text();
+    const chk = checkUpload(text);
+    if (!chk.ok) { setCsvText(""); setFileName(""); setErr(chk.error); return; }
+    setCsvText(text); setFileName(f.name); setErr("");
   }
-  useEffect(() => { fetch("/api/run").then((r) => r.json()).then((j) => setLiveOk(!!j.live)).catch(() => setLiveOk(false)); }, []);
+  useEffect(() => { fetch("/api/run").then((r) => r.json()).then((j) => { setLiveOk(!!j.live); setLiveNote(j.live ? "" : String(j.note ?? "Live AI is not available right now.")); }).catch(() => setLiveOk(false)); }, []);
 
   useEffect(() => { const q = new URLSearchParams(window.location.search); if (q.get("demo") === "replay") void replay(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
@@ -166,7 +178,7 @@ export default function Desk() {
   const laneTotals = board ? board.portfolio.lanes : null;
 
   const controls = (
-    <RunControls {...{ running, liveOk, csvText, fileName, filer, setFiler, asOf, setAsOf, err, onFile, replay, live, inBrowser }} compact={!!board || running} />
+    <RunControls {...{ running, liveOk, liveNote, csvText, fileName, filer, setFiler, asOf, setAsOf, err, onFile, replay, live, inBrowser }} compact={!!board || running} />
   );
 
   const zone = board ? (
@@ -189,6 +201,7 @@ export default function Desk() {
         <span>{mode === "replay" ? "Recorded run" : mode === "live" ? "Live run" : "Browser-only check"}</span>
         <span>{/^SYNTHETIC SAMPLE/.test(board.label) ? `Sample data: ${verdicts.length} made-up shipments. Not real trade data.` : board.label}</span>
         <span>Checked as of <span className="mono">{board.asOf}</span></span>
+        {board.asOf !== today() && <span data-testid="asof-note">Day counts run from {board.asOf}, the date in this data, not from today ({today()}).</span>}
       </p>
     </div>
   ) : (
@@ -230,12 +243,15 @@ export default function Desk() {
               </p>
               <div className="cta mt-6 flex flex-wrap items-center gap-3">
                 <button className="hero-btn-primary" disabled={running} onClick={replay}>{Icon.play} Run the sample</button>
-                <button className="hero-btn-secondary" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls the AI now: allow up to about 3 minutes"}>Run it live</button>
+                <button className="hero-btn-secondary" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? liveNote : "Calls the AI now: allow up to about 3 minutes"}>Run it live</button>
               </div>
+              {liveOk === false && <p className="hero-disclosure" data-testid="live-note" role="status">{liveNote}</p>}
               <p className="hero-disclosure">Sample data: made-up shipments, not real trade data. Not legal advice. We never ask for logins or bank details.</p>
             </div>
             <TwistCard />
           </section>
+
+          <Audience />
 
           <section aria-label="How it works" className="how-it-works max-w-2xl">
             <h3 className="how-title">How the check works</h3>
@@ -254,6 +270,8 @@ export default function Desk() {
               </div>
             </div>
           </section>
+
+          <WhyLlm />
 
           <Reveal>{controls}</Reveal>
         </>
@@ -293,7 +311,7 @@ export default function Desk() {
                   <div className="thead"><span /><span>Shipment</span><span>Importer</span><span>What Customs found</span><span className="r">Time left to claim</span><span className="r">{lane === "NET_BILL_RISK" ? "You'd get or owe" : "Refund"}</span></div>
                   <ul className="rows" key={lane}>
                     {shown.map((v, i) => (
-                      <Row key={v.id} v={v} ex={expl[v.id]} i={i} animate checked={include.has(v.id)} canInclude={canInclude} active={sel === v.id} onToggle={() => toggle(v.id)} onOpen={() => setSel(v.id)} />
+                      <Row key={v.id} caught={(board.entryInfo[v.id]?.noteConflicts.length ?? 0) > 0} v={v} ex={expl[v.id]} i={i} animate checked={include.has(v.id)} canInclude={canInclude} active={sel === v.id} onToggle={() => toggle(v.id)} onOpen={() => setSel(v.id)} />
                     ))}
                   </ul>
                   {laneList.length > PAGE && !expanded && <div className="more-row"><button className={BTN_SECONDARY} onClick={() => setExpanded(true)}>Show all {laneList.length} shipments</button></div>}
@@ -322,7 +340,7 @@ export default function Desk() {
           )}
 
           <section className="two r6-two">
-            <Export board={board} include={include} incRefund={incRefund} incBill={incBill} files={files} ack={ack} setAck={setAck} />
+            <Export board={board} include={include} incRefund={incRefund} incBill={incBill} files={files} ack={ack} setAck={setAck} extras={<ExportExtras board={board} include={include} explanations={expl} portfolioNote={pnote} receipt={receipt} mode={mode} ack={ack} />} />
             <div className="stack">
               <div className="r6-detail r6-filing">
                 <h2 className="r6-title">What to file, in order</h2>
@@ -332,7 +350,7 @@ export default function Desk() {
                     <li key={v.id} onClick={() => openFirstLane(v.id)}>
                       <span className="n">{v.order}</span>
                       <span className="e"><Id>{v.displayNumber}</Id></span>
-                      <span className="s">{plainStep(v.filingStep)}</span>
+                      <span className="s">{plainStep(v.filingStep, board.asOf)}</span>
                       <span className={`m r6-money${v.money.netCents < 0 ? " r6-owe" : ""}`}>{money(v.money.netCents)}</span>
                     </li>
                   ))}
@@ -354,10 +372,14 @@ export default function Desk() {
           </section>
 
           <RuleWatch />
+          <RuleRescore csvText={csvText} asOf={board.asOf} filerCodes={board.filerCodes} isSample={!csvText} />
           <ReceiptPanel receipt={receipt} board={board} mode={mode} />
+          <StageReceipt receipt={receipt} explanations={expl} portfolioNote={pnote} mode={mode} />
         </>
       )}
       {!board && <RuleWatch />}
+
+      <Sources />
 
       <footer className="foot">
         <div className="foot-grid">
@@ -379,7 +401,7 @@ export default function Desk() {
 }
 
 /* ---------- pieces ---------- */
-type RunControlProps = { running: boolean; liveOk: boolean | null; csvText: string; fileName: string; filer: string; setFiler: (s: string) => void; asOf: string; setAsOf: (s: string) => void; err: string; onFile: (f: File | null) => void; replay: () => void; live: (sample: boolean) => void; inBrowser: () => void; compact: boolean };
+type RunControlProps = { running: boolean; liveOk: boolean | null; liveNote: string; csvText: string; fileName: string; filer: string; setFiler: (s: string) => void; asOf: string; setAsOf: (s: string) => void; err: string; onFile: (f: File | null) => void; replay: () => void; live: (sample: boolean | "mini") => void; inBrowser: () => void; compact: boolean };
 function RunControls(p: RunControlProps) {
   return (
     <div className={p.compact ? "" : "panel runbox"}>
@@ -400,9 +422,12 @@ function RunControls(p: RunControlProps) {
         </div>
         <div className="btnrow">
           {p.compact && <button className={BTN_SECONDARY} disabled={p.running} onClick={p.replay}>{Icon.play} Replay the sample</button>}
-          {p.compact && <button className={BTN_SECONDARY} disabled={p.running || p.liveOk === false} onClick={() => p.live(true)}>Run it live</button>}
+          {p.compact && <button className={BTN_SECONDARY} disabled={p.running || p.liveOk === false} onClick={() => p.live(true)} title={p.liveOk === false ? p.liveNote : undefined}>Run it live</button>}
+          <button className={BTN_TERTIARY} disabled={p.running || p.liveOk === false} onClick={() => p.live("mini")} title={p.liveOk === false ? p.liveNote : "10 shipments, 3 with notes that contradict the data. About 20 seconds."} data-testid="live-mini">Live mini-run (10 shipments)</button>
           <a className={BTN_TERTIARY} href="/api/sample?f=csv"><Download size={16} aria-hidden /> Download the sample CSV</a>
         </div>
+        <p className="fine" data-testid="schema-note">Upload format: a derived schema. It follows CBP&apos;s ES-003 report (entry, lines, IEEPA duty) plus ES-701 dates, and adds columns of our own (hts_valid, framework_group, non_ieepa_underpaid_usd, broker_note) that you fill in or leave blank. The file you send to CBP is different: one column, &ldquo;Entry Number&rdquo;.</p>
+        {p.liveOk === false && p.liveNote && <p className="fine" data-testid="live-note-controls">{p.liveNote}</p>}
         {p.err && <p className="error" role="alert">{p.err}</p>}
       </div>
     </div>
@@ -420,7 +445,7 @@ function Progress({ prog, stage }: { prog: { l: number[]; u: number[] }; stage: 
   );
 }
 
-function Row({ v, ex, i, animate, checked, canInclude, active, onToggle, onOpen }: { v: Verdict; ex?: Explanation; i: number; animate: boolean; checked: boolean; canInclude: boolean; active: boolean; onToggle: () => void; onOpen: () => void }) {
+function Row({ caught: board_caught, v, ex, i, animate, checked, canInclude, active, onToggle, onOpen }: { caught?: boolean; v: Verdict; ex?: Explanation; i: number; animate: boolean; checked: boolean; canInclude: boolean; active: boolean; onToggle: () => void; onOpen: () => void }) {
   const f = v.findings[0];
   const d = v.deadlines;
   const isNet = v.lane === "NET_BILL_RISK";
@@ -432,6 +457,7 @@ function Row({ v, ex, i, animate, checked, canInclude, active, onToggle, onOpen 
   if (v.leadingZeroFix) meta.push(<span key="z">leading zero kept in the CSV</span>);
   if (v.findings.length > 1) meta.push(<span key="m">+{v.findings.length - 1} more issue{v.findings.length > 2 ? "s" : ""}</span>);
   if (d.reconDeadlineDaysLeft !== null && v.lane !== "BLOCKED") meta.push(<span key="r" className="warn">Related filing due in {d.reconDeadlineDaysLeft}d</span>);
+  if (board_caught) meta.push(<span key="c" className="warn" data-testid="ai-caught-row">AI caught a note that disagrees</span>);
   if (ex) meta.push(<span key="u">AI explained</span>);
   if (!f) meta.unshift(<span key="s">File #{v.order}</span>);
   return (
@@ -451,7 +477,7 @@ function Row({ v, ex, i, animate, checked, canInclude, active, onToggle, onOpen 
   );
 }
 
-function Export({ board, include, incRefund, incBill, files, ack, setAck }: { board: Board; include: Set<string>; incRefund: number; incBill: number; files: ReturnType<typeof buildCapeFiles>; ack: boolean; setAck: (b: boolean) => void }) {
+function Export({ board, include, incRefund, incBill, files, ack, setAck, extras }: { extras?: React.ReactNode; board: Board; include: Set<string>; incRefund: number; incBill: number; files: ReturnType<typeof buildCapeFiles>; ack: boolean; setAck: (b: boolean) => void }) {
   const p = board.portfolio;
   const heldWait = p.verdicts.filter((v) => v.lane === "WAIT" && include.has(v.id)).length;
   return (
@@ -467,9 +493,10 @@ function Export({ board, include, incRefund, incBill, files, ack, setAck }: { bo
           ))}
         </div>
         <div className="r6-secondary-row">
-          <button className={BTN_SECONDARY} onClick={() => download("cape-broker-handoff.md", handoffNote(p, board.asOf, include), "text/markdown")}>{Icon.down} Note for your broker (.md)</button>
-          <button className={BTN_TERTIARY} onClick={() => download("cape-deadlines.csv", deadlineCsv(p))}>{Icon.down} Deadlines (.csv)</button>
+          <button className={BTN_SECONDARY} disabled={!ack} title={ack ? undefined : "Tick the box above first"} onClick={() => download("cape-broker-handoff.md", handoffNote(p, board.asOf, include), "text/markdown")}>{Icon.down} Note for your broker (.md)</button>
+          <button className={BTN_TERTIARY} disabled={!ack} title={ack ? undefined : "Tick the box above first"} onClick={() => download("cape-deadlines.csv", deadlineCsv(p))}>{Icon.down} Deadlines (.csv)</button>
         </div>
+        {extras}
       </div>
       <p className="r6-fine">The CSV follows Customs&apos; format: a single &ldquo;Entry Number&rdquo; column, 11 characters, no dashes, at most 9,999 shipments and 1MB per file. {PREPARED_FOR_PLAIN}</p>
     </div>
@@ -514,17 +541,25 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
         <p className="d-answer">{plainVerdict(v)}</p>
         <p className="d-step" title={v.filingStep}>{plainStep(v.filingStep)}</p>
 
+        {v.lane === "BLOCKED" ? (
+          <div className="d-money">
+            <p className="d-money-l">Not claimable</p>
+            <p className="d-figure" aria-label="No refund">{"\u2014"}</p>
+            <p className="d-note" data-testid="not-claimable">Customs would reject this shipment, so nothing is refunded. For reference only, the struck-down tariff paid on it was {money(m.grossIeepaCents)}.</p>
+          </div>
+        ) : (
         <div className="d-money">
-          <p className="d-money-l">{m.netCents < 0 ? "You'd owe Customs" : "Refund"}</p>
-          <p className={`d-figure ${m.netCents < 0 ? "bill" : "ok"}`}><CountMoney cents={m.netCents} animate dur={1000} delay={150} /></p>
-          <dl className="d-break">
-            <div className="d-brk"><dt>Struck-down tariff you paid</dt><dd>{money(m.grossIeepaCents)}</dd></div>
-            {m.frameworkCarveOutCents > 0 && <div className="d-brk d-brk-sub"><dt>Part kept under a trade deal ({m.frameworkGroups.join("/")})</dt><dd>-{money(m.frameworkCarveOutCents)}</dd></div>}
-            <div className="d-brk"><dt>Other duties you underpaid</dt><dd className={m.underpaidOtherCents > 0 ? "bill" : ""}>{m.underpaidOtherCents > 0 ? `-${money(m.underpaidOtherCents)}` : money(0)}</dd></div>
-            <div className="d-brk d-brk-net"><dt>Net</dt><dd className={m.netCents < 0 ? "bill" : ""}>{money(m.netCents)}</dd></div>
-          </dl>
-          <Waterfall m={m} />
-        </div>
+            <p className="d-money-l">{m.netCents < 0 ? "You'd owe Customs" : "Refund"}</p>
+            <p className={`d-figure ${m.netCents < 0 ? "bill" : "ok"}`}><CountMoney cents={m.netCents} animate dur={1000} delay={150} /></p>
+            <dl className="d-break">
+              <div className="d-brk"><dt>Struck-down tariff you paid</dt><dd>{money(m.grossIeepaCents)}</dd></div>
+              {m.frameworkCarveOutCents > 0 && <div className="d-brk d-brk-sub"><dt>Part kept under a trade deal ({m.frameworkGroups.join("/")})</dt><dd>-{money(m.frameworkCarveOutCents)}</dd></div>}
+              <div className="d-brk"><dt>Other duties you underpaid</dt><dd className={m.underpaidOtherCents > 0 ? "bill" : ""}>{m.underpaidOtherCents > 0 ? `-${money(m.underpaidOtherCents)}` : money(0)}</dd></div>
+              <div className="d-brk d-brk-net"><dt>Net</dt><dd className={m.netCents < 0 ? "bill" : ""}>{money(m.netCents)}</dd></div>
+            </dl>
+            <Waterfall m={m} />
+          </div>
+        )}
         <p className="d-note">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>
         {v.diversionRisk && <p className="d-alert"><AlertTriangle size={16} aria-hidden /><span>This importer owes Customs money from before. Customs may subtract it from the refund (19 CFR 24.72).</span></p>}
 
@@ -552,6 +587,7 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
               <p>{f.detail}</p>
               {f.fix && <p className="d-fix"><b>How to fix it:</b> {f.fix}</p>}
               {f.cbpError ? <p className="d-quote">Customs&apos; exact error: &ldquo;{f.cbpError}&rdquo;{ERROR_DEFINITIONS[f.cbpError] ? <span> (means: {ERROR_DEFINITIONS[f.cbpError]})</span> : null}</p> : <p className="d-quote d-quote-soft">Filing-order rule, not a Customs error</p>}
+              {f.code === "SUSPENSION" && <p className="d-small" data-testid="suspension-note" title="CBP's CAPE FAQ allows suspended entries, but its error table rejects 'Has Suspension Record'. We follow the error table (the stricter reading) and say so.">Sources disagree: CBP&apos;s FAQ allows suspended entries, but its error table rejects &ldquo;Has Suspension Record&rdquo;. We hold the shipment, the safer reading.</p>}
               <p className="d-src"><a href={SOURCES[f.sourceId]?.url} target="_blank" rel="noreferrer">{SOURCES[f.sourceId]?.label ?? f.sourceId}</a></p>
             </div>
           ))}
@@ -574,7 +610,8 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
             <table className="tbl"><tbody>{info.lines.map((l) => <tr key={l.lineNo}><td>#{l.lineNo} <Id>{l.hts}</Id> {l.country}{l.framework ? ` · ${l.framework} trade deal` : ""}</td><td>{l.value} / struck-down tariff {l.ieepaDuty}</td></tr>)}</tbody></table>
             {info.notes && <p className="d-quote">&ldquo;{info.notes}&rdquo;</p>}
             {info.noteSignals.length > 0 && <p className="d-small d-sig">Topics the AI spotted: {info.noteSignals.map((s) => <span key={s}>{s}</span>)}</p>}
-            {info.noteConflicts.map((c, i) => <p key={i} className="d-fix bill">The note disagrees with the data: {c.message}</p>)}
+            {info.noteConflicts.map((c, i) => <p key={i} className="d-fix bill" data-testid="ai-caught"><b>AI caught: </b>The note disagrees with the data: {c.message} Check this before filing.</p>)}
+            {(info.noteVetoed ?? []).map((x, i) => <p key={i} className="d-small" data-testid="code-veto">Code vetoed the AI&apos;s &ldquo;{x.signal}&rdquo; tag: {x.why}</p>)}
             {info.parseNotes.map((c, i) => <p key={i} className="d-small">{c}</p>)}
           </section>
         )}
@@ -687,6 +724,7 @@ function ReceiptPanel({ receipt, board, mode }: { receipt: Receipt | null; board
   if (mode === "browser") return null;
   if (!receipt) return <section className="receipt r6-detail r6-receipt"><h2 className="r6-title">What the AI did (receipt)</h2><p className="r6-fine">Appears when the run finishes.</p></section>;
   const L = receipt.lightning, U = receipt.ultra;
+  const vs = vetoStats(Object.values(board.entryInfo));
   const total = L.costUsd + U.costUsd;
   return (
     <section className="receipt r6-detail r6-receipt">
@@ -697,6 +735,7 @@ function ReceiptPanel({ receipt, board, mode }: { receipt: Receipt | null; board
           <p><b>{L.calls}</b> calls in parallel · {L.promptTokens.toLocaleString()} in / {L.completionTokens.toLocaleString()} out tokens · avg {L.avgMs} ms · {L.failed} failed</p>
           <p className="r6-fine">Job: cleaned up each row and tagged the broker&apos;s notes. Double-checked against plain code: <b>{n.agree}/{n.checked}</b> fields agree{n.disagreements.length ? `; code overrode ${n.disagreements.length} disagreement(s):` : "."}</p>
           {n.disagreements.slice(0, 5).map((d, i) => <p key={i} className="r6-fine r6-mono">{d.entry} · {d.field}: AI said {d.lightning}, code says {d.deterministic}</p>)}
+          {vs.tagged > 0 && <p className="r6-fine" data-testid="veto-receipt">Code veto on note tags: the AI tagged {vs.tagged} topics, code removed {vs.vetoed} the note text did not support. Note-versus-data conflicts: {vs.conflictsBefore} before the veto, {vs.conflictsAfter} after, in {vs.entriesTouched} entries.</p>}
         </div>
         <div>
           <h4 className="r6-sub">Reasoning AI: Nemotron 3 Ultra <small>{U.model}</small></h4>
