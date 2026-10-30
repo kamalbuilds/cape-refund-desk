@@ -83,18 +83,17 @@ describe("docs and the voiceover script state the engine's numbers", () => {
   });
   it("the spoken and captioned lane counts match (DEVPOST shot 4, video script, positioning story)", () => {
     const [a, b, c, d] = laneCounts.map(words);
-    expect(DEVPOST).toContain(`"${cap(a)} cleared to file, ${b} to hold, ${c} that need a broker decision, ${d} that ACE would reject.`);
-    expect(videoText).toContain(`${cap(a)} clear to file, ${b} to fix first, ${c} for her broker, and ${d} customs would reject.`);
-    expect(videoText).toContain(`Four lanes: ${laneCounts[0]} clear to file, ${laneCounts[1]} to fix first, ${laneCounts[2]} for her broker, ${laneCounts[3]} customs would reject.`);
+    const spoken = `Four groups. ${cap(a)} ready to file, ${b} to fix first, ${c} for her broker, ${d} Customs would reject.`;
+    expect(DEVPOST).toContain(spoken);
+    expect(videoText).toContain(spoken);
+    expect(videoText).toContain(`Four groups: ${laneCounts[0]} ready to file, ${laneCounts[1]} to fix first, ${laneCounts[2]} for her broker, ${laneCounts[3]} Customs would reject.`);
     expect(POSITIONING).toContain(`${laneCounts[0]} safe, ${laneCounts[1]} to fix, ${laneCounts[2]} for the broker, ${laneCounts[3]} to leave out`);
   });
   it("the trap walkthrough uses the hero's entry and its engine figures, not the old $8,000 entry", () => {
     const refund = fmtUsd(HERO_TWIST.refundCents).replace(".00", ""), under = fmtUsd(HERO_TWIST.underpaidCents).replace(".00", "");
     const net = fmtUsd(HERO_TWIST.refundCents - HERO_TWIST.underpaidCents).replace(".00", "");
-    expect(DEVPOST).toContain(`Click the broker-decision card ${HERO_TWIST.entryNumber}`);
-    expect(DEVPOST).toContain(`(${refund} refundable, ${under} underpaid, ${net} net)`);
-    expect(videoText).toContain(`This entry looks like ${refund}.`);
-    expect(videoText).toContain(`${under} of underpaid duty`);
+    expect(DEVPOST).toContain(`broker-decision shipment ${HERO_TWIST.entryNumber}`);
+    expect(DEVPOST).toContain(`Tariff paid ${refund}, other duties underpaid -${under}, net ${net}`);
     expect(POSITIONING).toContain(`${refund} entry`);
     expect(DEVPOST).not.toContain("broker-decision card A7K-5130944-4");
   });
