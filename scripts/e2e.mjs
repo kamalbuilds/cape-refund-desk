@@ -116,7 +116,7 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
 
   // --- warehouse entry 21 is blocked with the CSMS cite
   const wh = await findRow(/A7K-?9828170/);
-  if (await wh.count()) { await wh.locator(".en").click(); const t = await page.locator(".drawer").innerText(); ok(/69127837/.test(t), "warehouse entry 21 cites CSMS 69127837"); await page.locator(".drawer .x").click(); }
+  if (await wh.count()) { await wh.locator(".en").click(); const t = await page.locator(".drawer").innerText(); ok(/69127837/.test(t), "warehouse entry 21 cites CSMS 69127837"); await page.locator(".drawer button.x").click(); }
   else ok(false, "warehouse entry 21 card is on the board");
 
   // --- refund phase chip + remedy lock-out warning (customs lane)
@@ -145,7 +145,7 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   await page.locator(".drawer .cu-more summary").first().click();
   const p3t = await page.locator(".drawer").innerText();
   ok(/Phase 3/.test(p3t) && /Court has ordered reliquidation/.test(p3t) && /not describe Phase 3|does not describe Phase 3/.test(p3t), "final-liquidation entry shows Phase 3 and says CBP's page does not describe it");
-  await page.locator(".drawer .x").click();
+  await page.locator(".drawer button.x").click();
   const covLine = page.getByTestId("coverage-line");
   ok(await covLine.count() === 1 && /Catches \d+ of \d+ published CAPE rejection causes/.test(await covLine.innerText()), `coverage line is on the page: ${await covLine.innerText()}`);
 
@@ -199,7 +199,7 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   const drt = await drr.innerText();
   ok(/CAPE declaration window/.test(drt) && /days? left|closes today|closed/.test(drt), "drawer shows days left for the CAPE route");
   ok(/Form 19 protest/.test(drt) && await drr.locator('a[href*="1514"], a[href*="174.12"]').count() >= 1, "drawer shows the protest route with a citation link");
-  await page.locator(".drawer .x").click();
+  await page.locator(".drawer button.x").click();
 
   // --- rule-watch re-score shows a visible diff
   const rs = page.getByTestId("rescore");

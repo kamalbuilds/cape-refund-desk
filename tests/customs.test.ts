@@ -75,7 +75,8 @@ describe("on the sample file", () => {
   });
   it("lock-outs appear for every PSC, protest, and drawback case in the file", () => {
     for (const e of entries) {
-      const v = pf.verdicts.find((x) => x.entryNumberRaw === e.entryNumberRaw && x.seq === e.seq) ?? undefined;
+      const v = pf.verdicts.find((x) => entries[x.entryIdx] === e) ?? undefined;
+      expect(v, "verdict for entry").toBeTruthy();
       if (!v) continue;
       const got = v.customs!.lockouts.map((l) => l.id);
       if (e.pscNeededNonIeepa) expect(got).toContain("psc");
