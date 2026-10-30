@@ -22,15 +22,15 @@ function find(code: string, cbpError: string | null, sourceId: string, dispositi
   return { code, cbpError, sourceId, disposition, detail, fix };
 }
 
-export function computeDeadlines(entry: Entry, asOf: string): Deadlines {
+export function computeDeadlines(entry: Entry, asOf: string, windowDays: number = LIMITS.liquidationWindowDays): Deadlines {
   const d: Deadlines = {
     daysSinceLiquidation: null, capeCutoffDate: null, capeDaysLeft: null, reliquidationLimitDate: null,
     protestDeadlineDate: null, protestDaysLeft: null, reconDeadlineDaysLeft: null, projectedLiquidationDaysLeft: null,
   };
   if (entry.liquidationDate) {
     d.daysSinceLiquidation = diffDays(asOf, entry.liquidationDate);
-    d.capeCutoffDate = addDays(entry.liquidationDate, LIMITS.liquidationWindowDays);
-    d.capeDaysLeft = LIMITS.liquidationWindowDays - d.daysSinceLiquidation;
+    d.capeCutoffDate = addDays(entry.liquidationDate, windowDays);
+    d.capeDaysLeft = windowDays - d.daysSinceLiquidation;
     d.reliquidationLimitDate = addDays(entry.liquidationDate, LIMITS.reliquidationLimitDays);
     d.protestDeadlineDate = addDays(entry.liquidationDate, LIMITS.protestDays);
     d.protestDaysLeft = LIMITS.protestDays - d.daysSinceLiquidation;
@@ -64,7 +64,8 @@ export function findingsFor(entry: Entry, key: string, opts: ValidationOptions, 
   } else if (entry.summaryStatus !== "Accepted") {
     f.push(find("CANCELLED", ENTRY_ERRORS.CANCELLED, "FAQ", "block", `Entry summary status is ${entry.summaryStatus}; it must be "Accepted".`));
   }
-  if (LIMITS.excludedEntryTypes.includes(entry.entryType as never)) {
+  const whOff = opts.rules?.warehouseBlocked === false && (entry.entryType === "21" || entry.entryType === "22");
+  if (LIMITS.excludedEntryTypes.includes(entry.entryType as never) && !whOff) {
     const label = { "08": "Duty Deferral (08)", "09": "Reconciliation (09)", "21": "Warehouse (21)", "22": "Warehouse (22)", "23": "TIB (23)", "47": "Drawback (047)" }[entry.entryType] ?? entry.entryType;
     const wh = entry.entryType === "21" || entry.entryType === "22";
     f.push(find("TYPE_NOT_ALLOWED", ENTRY_ERRORS.TYPE_NOT_ALLOWED, wh ? "CSMS-69127837" : "FAQ", "block", `Entry type ${label} is excluded from CAPE.`,
@@ -77,9 +78,9 @@ export function findingsFor(entry: Entry, key: string, opts: ValidationOptions, 
     f.push(find("RECON_FILED", ENTRY_ERRORS.RECON_FILED, "FAQ", "block",
       "Flagged for reconciliation and the Type 09 is already on file. CBP: not included until a future phase."));
   }
-  if (deadlines.daysSinceLiquidation !== null && deadlines.daysSinceLiquidation > LIMITS.liquidationWindowDays) {
+  if (deadlines.daysSinceLiquidation !== null && deadlines.daysSinceLiquidation > (opts.rules?.windowDays ?? LIMITS.liquidationWindowDays)) {
     f.push(find("FINAL_LIQ", ENTRY_ERRORS.FINAL_LIQ, "FAQ", "block",
-      `Liquidated ${deadlines.daysSinceLiquidation} days ago (${entry.liquidationDate}); CAPE Phase 1 accepts entries liquidated within the preceding 80 days. Cutoff was ${deadlines.capeCutoffDate}.`,
+      `Liquidated ${deadlines.daysSinceLiquidation} days ago (${entry.liquidationDate}); CAPE Phase 1 accepts entries liquidated within the preceding ${opts.rules?.windowDays ?? LIMITS.liquidationWindowDays} days. Cutoff was ${deadlines.capeCutoffDate}.`,
       `CBP gives no guidance for final-liquidation entries on the CIT question. Protest window under 19 U.S.C. 1514 is 180 days from liquidation (${deadlines.protestDeadlineDate}): ask the broker.`));
   }
   if (entry.controlStatus !== "CBP") {
@@ -132,7 +133,7 @@ export function findingsFor(entry: Entry, key: string, opts: ValidationOptions, 
   if (entry.reconFlag && !entry.reconEntryFiled && deadlines.reconDeadlineDaysLeft !== null && deadlines.reconDeadlineDaysLeft < LIMITS.reconPriorityDays) {
     f.push(find("RECON_FIRST", null, "FAQ", "wait",
       `Reconciliation filing deadline is ${deadlines.reconDeadlineDaysLeft} days away (< ${LIMITS.reconPriorityDays}).`,
-      "CBP: prioritize filing the reconciliation; deposit duties without the increased IEEPA duties. Once the Type 09 is filed this entry leaves CAPE Phase 1."));
+      "Your broker decides, two valid paths. (1) File the reconciliation first (CBP's priority guidance); once the Type 09 is filed this entry leaves CAPE Phase 1. (2) Claim now: CBP's CAPE FAQ accepts Recon-flagged entries even when no Type 09 has been filed yet. Pick (2) if the refund matters more than the reconciliation."));
   }
   return f;
 }
@@ -143,7 +144,7 @@ export function validateEntries(entries: Entry[], opts: ValidationOptions): Port
     const key = normalizeEntryNumber(entry.entryNumberRaw);
     const n = seen.get(key) ?? 0;
     seen.set(key, n + 1);
-    const deadlines = computeDeadlines(entry, opts.asOf);
+    const deadlines = computeDeadlines(entry, opts.asOf, opts.rules?.windowDays);
     const findings = findingsFor(entry, key, opts, n > 0, deadlines);
     const money = computeMoney(entry);
     let lane: Lane;

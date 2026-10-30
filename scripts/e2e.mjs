@@ -36,6 +36,21 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   ok(overflow <= 1, `landing: no horizontal overflow (${overflow}px)`);
   await page.screenshot({ path: `${OUT}/landing-${label}.png` });
+  ok(await page.getByTestId("audience").count() === 1 && /\$441,345\.20/.test(await page.getByTestId("sample-safe-total").innerText()), "landing leads with the audience and the sample's safe-to-file dollars");
+  const probe = await (await fetch(`${BASE}/api/run`)).json();
+  if (probe.live === false) ok(await page.getByTestId("live-note").count() === 1 && /paused|key|unavailable|credit/i.test(await page.getByTestId("live-note").innerText()), `live AI is down (${probe.reason}), so the page says so and does not offer a dead button`);
+  else ok(await page.getByTestId("live-note").count() === 0, "live AI is up, no pause note");
+  ok(await page.getByTestId("why-llm").count() === 1, "landing explains why an AI model beats a spreadsheet");
+  ok(await page.getByTestId("source-link").count() >= 8, "sources panel lists the CBP links");
+  ok(/derived schema/.test(await page.getByTestId("schema-note").innerText()), "upload format is labelled as a derived schema");
+
+  // --- a file that is not an ES-003 export gives a clear error, not a silent 0 of 0
+  fs.writeFileSync(`${OUT}/not-es003.csv`, "name,age\nbob,3\n");
+  await page.locator('input[type=file]').setInputFiles(`${OUT}/not-es003.csv`);
+  await page.locator("p.error").waitFor({ timeout: 5000 });
+  ok(await page.locator(".tabs .tab").count() === 0 && await page.getByRole("button", { name: /Check in this browser/ }).isDisabled(), "wrong CSV shows no board and the check buttons stay disabled");
+  const alertText = await page.locator("p.error").innerText(); console.log("  alert text:", alertText.slice(0, 200));
+  ok(/entry_number/.test(alertText), "wrong CSV shows a plain parse error naming entry_number");
 
   // --- in-browser check (no upload): network must stay quiet
   const posts = [];
@@ -73,6 +88,7 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   const dtext = await dr.innerText();
   ok(/Entry Type Not Allowed/.test(dtext), "drawer shows the exact CBP error string");
   ok(/FAQ|QRG|CSMS|Pub\./.test(dtext), "drawer cites its source");
+  ok(/Not claimable/.test(dtext) && !/You.d get back/.test(dtext) && await dr.getByTestId("not-claimable").count() === 1, "excluded entry drawer says Not claimable, not 'You'd get back'");
   await page.screenshot({ path: `${OUT}/drawer-${label}.png` });
   await dr.locator(".x").click();
   await dr.waitFor({ state: "detached", timeout: 3000 });
@@ -87,6 +103,7 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   const capeBtn = page.getByRole("button", { name: /^cape-declaration/ }).first();
   await capeBtn.scrollIntoViewIfNeeded();
   ok(await capeBtn.isDisabled(), "refund CSV download is disabled until the can't-be-undone box is ticked");
+  ok(await page.getByRole("button", { name: /Note for your broker/ }).isDisabled() && await page.getByRole("button", { name: /Deadlines \(\.csv\)/ }).isDisabled() && await page.getByTestId("dl-ics").isDisabled(), "broker note, deadlines and extra downloads are gated by the acknowledgement too");
   await page.getByLabel(/I understand that once Customs accepts/).check();
   ok(await capeBtn.isEnabled(), "CAPE CSV download enables after the box is ticked");
   await page.screenshot({ path: `${OUT}/export-${label}.png` });
@@ -98,6 +115,21 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(!/claim your refund|ACE login|password/i.test(ht), "handoff note avoids 'claim your refund' / credential asks");
   const [dn, dt] = await grab(page.getByRole("button", { name: /^.*Deadlines \(\.csv\)/ }));
   const dl = dt.trim().split("\n"); ok(dn.endsWith(".csv") && dl.length > 5, `deadline CSV ${dn} has ${dl.length - 1} rows; header: ${dl[0]}`);
+  const [icn, ict] = await grab(page.getByTestId("dl-ics"));
+  ok(icn.endsWith(".ics") && ict.startsWith("BEGIN:VCALENDAR") && /BEGIN:VEVENT/.test(ict), `calendar file ${icn} is a valid .ics with events`);
+  const [pmn, pmt] = await grab(page.getByTestId("dl-packet-md"));
+  ok(pmn.endsWith(".md") && pmt.length > 500, `broker packet ${pmn} (${pmt.length} chars)`);
+  const [ppn, ppt] = await grab(page.getByTestId("dl-packet-pdf"));
+  ok(ppn.endsWith(".pdf") && fs.readFileSync(`${OUT}/${label}-${ppn}`).subarray(0, 5).toString() === "%PDF-", `broker packet ${ppn} is a PDF`);
+  // --- rule-watch re-score shows a visible diff
+  const rs = page.getByTestId("rescore");
+  await rs.scrollIntoViewIfNeeded();
+  await page.getByTestId("rescore-headline").waitFor({ timeout: 10000 });
+  const h1 = await page.getByTestId("rescore-headline").innerText();
+  ok(/Safe to file changes|No shipment changes/.test(h1) && await page.getByTestId("rescore-move").count() >= 1, `real CBP change re-scores entries with a visible diff: ${h1}`);
+  await page.getByTestId("rescore-scenario-window-60").click();
+  ok(/Simulation/.test(await rs.innerText()), "what-if scenario is labelled Simulation");
+  ok(await page.getByTestId("stage-receipt").count() === 0, "in-browser check shows no AI stage receipt (no AI ran)");
   ok(errs.length === 0, `no console/page errors ${errs.slice(0, 6).join(" | ")}`);
   await ctx.close();
 }

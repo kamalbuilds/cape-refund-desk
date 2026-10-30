@@ -40,9 +40,27 @@ The program is called **CAPE**. The struck-down tariffs are **IEEPA** tariffs. T
    - **Lightning** (`nvidia/Nemotron-3_5-Lightning`, thinking off): normalizes every entry's messy columns and broker notes. Output is cross-checked against the deterministic parser on 9 fields per entry; the deterministic value wins and disagreements are shown in the receipt.
    - **Ultra** (`nvidia/Nemotron-3-Ultra-550b-a55b`, reasoning on): explains and ranks the entries that need judgment and writes the portfolio note. A number guard (`src/lib/numberguard.ts`, tested in `tests/numberguard.test.ts`) checks every dollar figure against the engine's cents for that entry and for its stated label (net, refundable, gross, underpaid, carve-out, bill), checks day counts and their direction, and corrects portfolio counts such as "7 entries expiring today" to the engine's number. Anything that does not match is replaced with the engine figure or stripped, and the drawer says how many were. Recorded runs are re-guarded when served. Citations are filtered to valid ids.
    - **If Token Factory is out of credit or the key is rejected** (HTTP 402/401/403) the run stops after the first wave of calls, shows a plain notice, and offers the recorded real run. It never shows a board that looks complete but has no model output.
-7. **Export**: CAPE CSV (one column of 11-character entry numbers, apostrophe for leading zeros, split at 9,999 entries per declaration), a broker handoff note (.md) and a deadline CSV. Downloads sit behind an acknowledgement that the declaration is irreversible.
+7. **Export**: CAPE CSV (one column of 11-character entry numbers, apostrophe for leading zeros, split at 9,999 entries per declaration), a broker handoff note (.md), a broker packet (.md and PDF), a deadline CSV and a deadline calendar (.ics). Downloads sit behind an acknowledgement that the declaration is irreversible.
 8. **Rule-watch**: fetches CBP's IEEPA refunds page directly and diffs it, paragraph by paragraph, against a stored capture of the same page from 2026-07-11. Tavily Extract (`TAVILY_API_KEY`) reads the live page independently and the panel reports how many changes it confirms. The list is trimmed to the changes that touch a check this tool runs (4 at the last recording: warehouse entries 21/22 rejected, recon-flagged Phase 1/2 wording, the 80-day liquidation wording, the protest basis); other wording changes are listed as informational. `scripts/treg-crosscheck.mjs` re-reads both the live page and the July capture through treg web extract and marks each quoted change that a third extractor also sees (11 of 11 at the last recording, with a negative control). If the direct fetch fails, Tavily alone is compared against a Tavily capture; if both fail, the last recorded real check is shown and labelled as recorded. Each change is quoted, with a note on whether it touches the engine. Nothing is simulated.
 9. **Receipt**: models, call counts, tokens, estimated cost, latency, normalization agreement and the Token Factory completion ids for the run.
+
+## How it meets the four judging criteria
+
+**Technical quality.** Lightning classifies, Ultra writes the rationale and the portfolio memo, and code decides every group and every dollar. Three guards sit between the models and the board: the number guard (every figure the AI writes is re-checked against the engine's cents), the cross-check of Lightning's normalization against the deterministic parser, and a **code veto of the AI's note tags** (`src/lib/signals.ts`). Lightning reads each broker note and tags it (for example "drawback claim"). A tag survives only if the note's own words support it. A tag that contradicts the structured flags is shown as an AI catch, not trusted blindly, and a vetoed tag is listed in the receipt. Replaying the recorded run, the veto drops 26 of 39 recorded tags (all 9 recorded conflicts were false positives), which is why the Lightning prompt was tightened. The run receipt shows models, tokens, cost and latency per stage (`StageReceipt`); recorded values are labelled "recorded". A 1-token credit probe (`/api/run` GET, cached 60 s) hides the live buttons and says why when Token Factory is out of credit. A ~10-entry **mini live run** (`data/sample-mini.csv`) finishes in well under 20 s when credit is available.
+
+**Design.** No dead ends: upload a CSV or load the sample, then board, drawer, and exports (CAPE CSV, broker packet as .md and PDF, deadlines as .csv and .ics). Every download that leaves the page sits behind the "can't be undone" acknowledgement. A wrong file gets a plain error, not an empty board. Excluded shipments say "Not claimable" instead of showing a refund figure. `scripts/e2e.mjs` clicks through all of it at 1440 and 390 px.
+
+**Impact.** The page leads with who it is for (small importers who file once, by hand) and the sample's safe-to-file dollars, computed from the engine. Claims cite the CBP sources (`Sources` panel; `scripts/check-sources.mjs` re-fetches them). The rule-watch panel adds a **re-score**: CBP's real CSMS 69127837 change (warehouse entry types 21/22 rejected) re-runs the engine and shows which shipments move lane, with a dollar diff; a what-if scenario is labelled Simulation. For the Recon-flagged entry, the desk shows both valid paths under "Your broker decides". The suspension rule is flagged as unclear: CBP's FAQ allows suspended entries, the error table rejects "Has Suspension Record", so the tool holds the entry and says so.
+
+**Idea.** A short in-app note (`WhyLlm`) explains why this is not a spreadsheet job: the hard part is free-text broker notes and messy columns, which a formula can't read; the AI reads them, and code refuses anything it can't prove.
+
+### Upload format: a derived schema
+
+The upload columns (`entry_number`, `ieepa_duty`, `entered_value`, `hts_number`, liquidation date, notes and so on) are a **derived schema** modelled on the ES-003 and ES-701 ACE reports. We could not verify the exact column headers of a real ES-003 export from public CBP documents, so the app labels the format as derived and the sample CSV shows the layout it reads. The real CAPE upload (what the tool exports) is a single "Entry Number" column. Check the layout with your broker before relying on an export from your own system.
+
+### Status of live runs
+
+Token Factory credit was exhausted (HTTP 402) when this was written, so the **mini live run and the seeded "AI caught" entries have only been exercised with simulated AI output in tests**, not with a live model. The recorded full run is real.
 
 ## Privacy
 
@@ -66,7 +84,9 @@ URLs are in `src/lib/cbp-rules.ts`, where every CBP error string is copied verba
 npm install
 cp .env.example .env.local      # add NEBIUS_API_KEY (and optionally TAVILY_API_KEY)
 npm run dev                     # http://localhost:3100
-npm test                        # 13 tests on the deterministic engine
+npm test                        # 55 tests: engine, number guard, exports, .ics, re-scoring, code veto, live probe
+SKIP_LIVE=1 node scripts/e2e.mjs [BASE_URL]   # browser end-to-end at 1440 and 390 px
+node scripts/check-sources.mjs  # re-fetch the cited CBP pages
 npm run precompute              # re-record data/sample-run.json with a real Lightning + Ultra run
 npm run smoke                   # probe the Token Factory endpoints
 ```

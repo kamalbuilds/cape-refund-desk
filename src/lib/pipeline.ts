@@ -1,3 +1,4 @@
+import { applyCodeVeto, vetoSignals } from "./signals";
 import { MONEY_RE, figuresFor, guardCounts, guardDays, guardEntryText, portfolioDays } from "./numberguard";
 import { ERROR_DEFINITIONS, FILING_ORDER_RULES, LIMITS, SOURCES } from "./cbp-rules";
 import { fmtUsd } from "./money";
@@ -13,6 +14,8 @@ export interface EntryInfo {
   notes: string; parseNotes: string[]; ior: string; entryType: string; liquidationStatus: string; liquidationDate: string | null;
   lines: { lineNo: number; hts: string; country: string; value: string; ieepaDuty: string; framework: string }[];
   noteSignals: string[]; noteSummary: string; noteConflicts: NoteConflict[];
+  /** What the fast model tagged before the code veto, and what the veto removed (see signals.ts). Absent on runs logged before the veto. */
+  noteSignalsRaw?: string[]; noteConflictsRaw?: NoteConflict[]; noteVetoed?: { signal: string; why: string }[];
 }
 export interface Explanation {
   summary: string; brokerAction: string; whyThisOrder: string; citations: string[]; reasoning: string;
@@ -20,7 +23,7 @@ export interface Explanation {
 }
 export interface PortfolioNote { headline: string; priorities: { id: string; reason: string }[]; brokerQuestions: string[]; guardStripped: number; completionId: string }
 export interface ModelReceipt { model: string; calls: number; failed: number; promptTokens: number; completionTokens: number; reasoningTokens: number; costUsd: number; avgMs: number; ids: string[]; firstError?: string }
-export interface Receipt { lightning: ModelReceipt; ultra: ModelReceipt; wallMs: number; host: string; mode: "live" | "replay"; ranAt: string }
+export interface Receipt { lightning: ModelReceipt; ultra: ModelReceipt; /** Ultra calls that wrote the broker memo, a subset of `ultra`. Absent on runs logged before per-stage tracking. */ memo?: ModelReceipt; wallMs: number; host: string; mode: "live" | "replay"; ranAt: string }
 export interface RunResult {
   asOf: string; filerCodes: string[]; label: string; parseIssues: string[];
   portfolio: Portfolio;
@@ -80,6 +83,9 @@ Return ONLY a JSON object:
  "suspension_record": true|false, "court_injunction": true|false, "drawback_claim": true|false, "recon_flag": true|false, "recon_entry_filed": true|false,
  "note_signals": [zero or more of: ${SIGNALS.join(", ")}],
  "note_summary": "max 15 words restating the broker note, or empty"}
+Tag note_signals ONLY from words that appear in broker_note. Never tag a signal because a structured column says so, and use ["none"] when broker_note is empty.
+Tag meanings: protest = the note says a protest was filed/opened/denied; recon = the note says Recon or reconciliation; recon_deadline_soon = the note gives a Recon due date or time left; drawback_claim = the note says the entry IS designated on a drawback claim; drawback_planned = the note says a drawback claim is planned but not filed; psc_pending = the note says a post-summary correction is needed or filed; underpaid_duty = the note says duty was underpaid or underdeclared; suspension = the note mentions a suspension; injunction = the note mentions a court injunction; other_filer = the note says another filer or broker handles it.
+Do NOT tag drawback for: "ES-701" or "courtesy notice" (that is a liquidation notice), "TIB" or "temporary import under bond" (a different entry type), or "extended" liquidation. Do NOT tag underpaid_duty for an end-dated HTS or a plain duty mention.
 Use "none" in note_signals when the note carries no filing-relevant signal. Dates: copy the date, reformat only.`;
 
 function lightningInput(e: Entry) {
@@ -122,6 +128,12 @@ function conflicts(e: Entry, signals: string[]): NoteConflict[] {
   if (has("suspension") && !e.suspensionRecord) out.push({ signal: "suspension", message: "Note mentions a suspension but suspension_record is N." });
   if (has("injunction") && !e.injunction) out.push({ signal: "injunction", message: "Note mentions an injunction but court_injunction is N." });
   return out;
+}
+
+/** Conflicts from the model's raw tags plus the tags code re-derives (e.g. "plans a drawback claim" becomes drawback_planned). The veto then drops unsupported ones. */
+export function allConflicts(e: Entry, signals: string[]): NoteConflict[] {
+  const seen = new Set<string>();
+  return [...conflicts(e, signals), ...conflicts(e, vetoSignals(e.notes, signals).kept)].filter((c) => !seen.has(c.signal) && !!seen.add(c.signal));
 }
 
 /* ---------- Ultra: explain + rank (never compute) ---------- */
@@ -247,6 +259,7 @@ export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent
   const { entries, issues } = parseEs003(csv);
   const lr = emptyReceipt("nvidia/Nemotron-3_5-Lightning");
   const ur = emptyReceipt("nvidia/Nemotron-3-Ultra-550b-a55b");
+  const mr = emptyReceipt("nvidia/Nemotron-3-Ultra-550b-a55b"); // broker memo only; merged into `ur` at the end
   const live = hasKey();
   emit({ type: "start", entries: entries.length, lightningTotal: live ? entries.length : 0 });
 
@@ -288,8 +301,9 @@ export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent
     entryInfo[v.id] = {
       notes: e.notes, parseNotes: e.parseNotes, ior: e.ior, entryType: e.entryType, liquidationStatus: e.liquidationStatus, liquidationDate: e.liquidationDate,
       lines: e.lines.map((l) => ({ lineNo: l.lineNo, hts: l.hts, country: l.country, value: fmtUsd(l.enteredValueCents), ieepaDuty: fmtUsd(l.ieepaDutyCents), framework: l.frameworkGroup })),
-      noteSignals: s?.signals ?? [], noteSummary: s?.summary ?? "", noteConflicts: s ? conflicts(e, s.signals) : [],
+      noteSignals: s?.signals ?? [], noteSummary: s?.summary ?? "", noteConflicts: s ? allConflicts(e, s.signals) : [],
     };
+    entryInfo[v.id] = applyCodeVeto(entryInfo[v.id]);
   }
   const base = { asOf: o.asOf, filerCodes: o.filerCodes, label: o.label ?? "", parseIssues: issues, portfolio, entryInfo, normalization: normal };
   emit({ type: "board", result: base });
@@ -302,7 +316,7 @@ export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent
     const targets = pickUltraTargets(portfolio, o.ultraMax ?? Number(process.env.ULTRA_MAX ?? 22));
     emit({ type: "ultra-plan", total: targets.length });
     let done = 0;
-    const portfolioPromise = portfolioNote(portfolio, ctx, ur).then((n) => { pNote = n; if (n) emit({ type: "portfolio-note", note: n }); });
+    const portfolioPromise = portfolioNote(portfolio, ctx, mr).then((n) => { pNote = n; if (n) emit({ type: "portfolio-note", note: n }); });
     await pool(targets, o.ultraConcurrency ?? 8, async (v) => {
       const ex = await explainEntry(v, entryInfo[v.id], ctx, ur);
       done++;
@@ -311,9 +325,11 @@ export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent
     await portfolioPromise;
   }
 
+  ur.calls += mr.calls; ur.failed += mr.failed; ur.promptTokens += mr.promptTokens; ur.completionTokens += mr.completionTokens;
+  ur.reasoningTokens += mr.reasoningTokens; ur.costUsd += mr.costUsd; ur.avgMs += mr.avgMs; ur.ids.push(...mr.ids); ur.firstError ??= mr.firstError;
   const result: RunResult = {
     ...base, explanations, portfolioNote: pNote,
-    receipt: { lightning: fin(lr), ultra: fin(ur), wallMs: Date.now() - t0, host: "api.tokenfactory.nebius.com", mode: "live", ranAt: new Date().toISOString() },
+    receipt: { lightning: fin(lr), ultra: fin(ur), memo: fin(mr), wallMs: Date.now() - t0, host: "api.tokenfactory.nebius.com", mode: "live", ranAt: new Date().toISOString() },
   };
   emit({ type: "done", result });
   return result;
