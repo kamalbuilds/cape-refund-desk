@@ -304,14 +304,14 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(/Safe to file changes|No shipment changes/.test(h1) && await page.getByTestId("rescore-move").count() >= 1, `real CBP change re-scores entries with a visible diff: ${h1}`);
   await page.getByTestId("rescore-scenario-window-60").click();
   ok(/Simulation/.test(await rs.innerText()), "what-if scenario is labelled Simulation");
-  // --- scored test section (rules engine vs hand-labelled truth; AI arm pending credit)
+  // --- scored test section (rules engine vs hand-labelled truth; model-alone arms from the committed receipt)
   const st = page.getByTestId("scored-test");
   await st.scrollIntoViewIfNeeded();
   await page.getByTestId("arm-rules").waitFor({ timeout: 10000 });
   const rulesRow = await page.getByTestId("arm-rules").innerText();
   ok(/Rules engine/.test(rulesRow) && /\d+(\.\d)?%/.test(rulesRow) && /of 69/.test(rulesRow), `scored test shows the rules engine with real numbers: ${rulesRow.replace(/\s+/g, " ")}`);
-  const aiRow = await page.getByTestId("arm-ai").innerText();
-  ok(/AI alone/.test(aiRow) && /Pending credit/.test(aiRow) && !/\d/.test(aiRow), "scored test shows AI alone as Pending credit with no numbers");
+  const armsTxt = await page.getByTestId("model-arms-table").innerText();
+  ok(/Rules engine/.test(armsTxt) && /Nemotron Ultra alone/.test(armsTxt) && /Nemotron Lightning alone/.test(armsTxt) && (armsTxt.match(/\d+(\.\d)?% \(\d+ of \d+\)/g) ?? []).length >= 6 && /\$\d\.\d{3}/.test(armsTxt), `scored test shows the three arms side by side with real numbers: ${armsTxt.replace(/\s+/g, " ").slice(0, 160)}`);
   const hist = await page.getByTestId("scored-history").innerText();
   ok(/66 of 69 \(95\.7%\)/.test(hist) && /fixed in commit [0-9a-f]{7}/.test(hist) && /scores 69 of 69/.test(hist), `scored test says honestly what it found and when it was fixed: ${hist.replace(/\s+/g, " ").slice(0, 120)}`);
   ok(await page.getByTestId("confusion-matrix").count() === 0, "confusion matrix is hidden until asked for");

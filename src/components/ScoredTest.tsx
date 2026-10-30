@@ -3,9 +3,38 @@ import { useEffect, useState } from "react";
 import { laneOf } from "@/lib/lanes-ui";
 import { LANE_ORDER, pct, type Scored } from "@/lib/score-metrics";
 import { BTN_TERTIARY, Id } from "./ui";
+import { arms, ranAt as armsRanAt, deadlineKey } from "../../docs/receipts/model-arms-2026-10-30.json";
 
 interface Payload { asOf: string; method: string; rules: Scored; aiAlone: { label: string; note: string; status: string }; history: { commit: string; before: { correct: number; total: number; accuracy: number }; entries: readonly number[] } }
 const title = (l: (typeof LANE_ORDER)[number]) => laneOf(l).title;
+const usd = (x: number) => "$" + x.toFixed(3);
+
+/** Engine vs model alone. Every figure is read from the committed receipt docs/receipts/model-arms-2026-10-30.json (written by scripts/model-arms.ts). */
+export function ModelArms() {
+  const rows = [arms.rules, arms.ultra, arms.lightning];
+  return (
+    <div data-testid="model-arms" style={{ marginTop: 16 }}>
+      <h3 className="r6-sub">Engine vs model alone</h3>
+      <p className="fine">The same {arms.rules.n} shipments and the same hand labels. Each model was given the rulebook and one shipment&apos;s rows, with no engine output, and had to name the group and the days left in Customs&apos; 80-day window. Days left is scored on the {deadlineKey.liquidatedEntries} liquidated shipments; the other {deadlineKey.notLiquidatedEntries} have no window and the right answer is none.</p>
+      <div className="overflow-x-auto">
+        <table className="tbl num" style={{ marginTop: 8 }} data-testid="model-arms-table">
+          <thead><tr><th>Arm</th><th>Correct group</th><th>Exact days left</th><th>Shipments</th><th>Cost</th></tr></thead>
+          <tbody>
+            {rows.map((a) => (
+              <tr key={a.id} data-testid={`model-arm-${a.id}`}>
+                <td>{a.label}</td>
+                <td className="num"><Id>{pct(a.lane.strictAccuracy)}</Id> <span className="fine">({a.lane.strictCorrect} of {a.n})</span></td>
+                <td className="num"><Id>{pct(a.deadline.exactRate)}</Id> <span className="fine">({a.deadline.exactCorrect} of {a.deadline.liquidatedN})</span></td>
+                <td className="num">{a.n}</td>
+                <td className="num"><Id>{usd(a.costUsd)}</Id></td>
+              </tr>))}
+          </tbody>
+        </table>
+      </div>
+      <p className="fine" style={{ marginTop: 8 }}>Code decides, the model explains. Every group and every date in the app comes from the engine, which answers the same way on every run. Nemotron writes the plain-English explanation around those figures. The model arms ran on Nebius Token Factory on {armsRanAt.slice(0, 10)}, and each call&apos;s completion id, tokens and cost are in <Id>docs/receipts/model-arms-2026-10-30.json</Id>.</p>
+    </div>
+  );
+}
 
 export default function ScoredTest() {
   const [d, setD] = useState<Payload | null>(null);
@@ -25,11 +54,10 @@ export default function ScoredTest() {
             <thead><tr><th>Arm</th><th>Status</th><th>Correct group</th><th>Avg precision</th><th>Avg recall</th></tr></thead>
             <tbody>
               <tr data-testid="arm-rules"><td>Rules engine</td><td>Scored</td><td className="num"><Id>{pct(s.accuracy)}</Id> <span className="fine">({s.correct} of {s.total})</span></td><td className="num"><Id>{pct(s.macroPrecision)}</Id></td><td className="num"><Id>{pct(s.macroRecall)}</Id></td></tr>
-              <tr data-testid="arm-ai"><td>AI alone</td><td>Pending credit</td><td className="num">Not run</td><td className="num">Not run</td><td className="num">Not run</td></tr>
             </tbody>
           </table>
         </div>
-        <p className="fine" style={{ marginTop: 8 }}>{d.aiAlone.note} The AI arm will be scored on the same labels once Token Factory credit is back.</p>
+        <ModelArms />
 
         <p className="fine" style={{ marginTop: 12 }} data-testid="scored-history">
           What this test found: the first run scored the engine {d.history.before.correct} of {d.history.before.total} ({pct(d.history.before.accuracy)}) on the strict count. The misses were shipments {d.history.entries.map((n) => `#${n}`).join(", ")}: the engine sent any other-duty underpayment to &ldquo;{title("NET_BILL_RISK")}&rdquo;, even when the shipment still netted a refund. That rule was fixed in commit <Id>{d.history.commit}</Id>, and the engine now scores {s.correct} of {s.total} ({pct(s.accuracy)}). None of the {s.total} labels were changed to get there.

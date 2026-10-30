@@ -1,0 +1,3599 @@
+{
+ "provider": "nebius-token-factory",
+ "providerLabel": "Real run on Nebius Token Factory (default provider). Not OpenRouter, not replayed.",
+ "startedAt": "2026-10-30T13:24:34.118Z",
+ "ranAt": "2026-10-30T13:27:00.431Z",
+ "asOf": "2026-10-29",
+ "inputs": {
+  "csv": "data/sample-es003.csv (69 synthetic shipments, 79 rows)",
+  "answerKey": "data/sample-truth.json (lane labels, hand-labelled)",
+  "n": 69
+ },
+ "task": "Each arm gets one entry and must return its lane and the days left in CBP's 80-day Phase 1 window. The two model arms get the fixed prompt in scripts/model-arms-prompt.ts (a plain-English rulebook plus the entry's raw CSV rows) and no engine output.",
+ "deadlineKey": {
+  "definition": "80 minus the calendar days from liquidation_date to asOf; null when the entry has no liquidation_date. Computed by plain date arithmetic in scripts/model-arms.ts, not by src/lib/validate.ts.",
+  "liquidatedEntries": 13,
+  "notLiquidatedEntries": 56,
+  "headlineRate": "exact days-left over the liquidated entries only"
+ },
+ "prompts": {
+  "ultra": {
+   "sha256": "8adb9a1ddfb765adef321a3bd8022d95ac64975db82eb38598866f108a9af81b",
+   "thinking": true,
+   "maxTokens": 5000,
+   "system": "You are a customs pre-flight checker for CBP's CAPE Phase 1 (refunds of struck-down IEEPA tariffs). You get ONE entry: the rows of an ACE ES-003 + ES-701 export for that entry, as JSON (cells that were empty are left out), plus the as-of date. Several rows with the same entry_number are the lines (line_no) of this one entry, not duplicates. Decide which lane the entry belongs in and how many days are left in CBP's 80-day window. Use only the rules below.\n\nLANES\n- BLOCKED: CBP rejects the entry and no fix makes it eligible this phase.\n- WAIT: a CBP error or sequencing step must be cleared first (PSC, protest, status), after which the entry can go.\n- NET_BILL_RISK: the entry nets to a bill or to zero (other duties owed are at least the IEEPA refund), so a broker decides.\n- FILE_NOW: CBP's checks would pass and the entry nets to a refund.\nOrder of decision: BLOCKED if any BLOCK condition holds; otherwise WAIT if any WAIT condition holds; otherwise NET_BILL_RISK if the net rule below says so; otherwise FILE_NOW.\n\nBLOCK conditions\n- The entry number, after removing dashes, apostrophes and spaces, is not exactly 11 characters (\"Not 11 characters long\").\n- Its first 3 characters are not one of the filer codes given in the input (\"Filer Code not matching\").\n- The input says the same entry number (dashes removed) already appeared earlier in the file (\"Duplicate Entry\").\n- entry_summary_status is not Accepted (Cancelled, Rejected, Not Found).\n- entry_type is 08 (Duty Deferral), 09 (Reconciliation), 21 or 22 (Warehouse), 23 (TIB) or 47 (Drawback). Every other entry type is allowed.\n- drawback_claim is Y (\"Entry on Drawback\"). drawback_planned alone is not an error.\n- recon_flag is Y and recon_entry_filed is Y (\"Recon Already Filed\").\n- The entry was liquidated MORE than 80 days before the as-of date (\"Final Liquidation Status\"). Exactly 80 days is still eligible.\n- No line has ieepa_indicator Y with ieepa_duty above 0 (\"No IEEPA HTS on Entry\").\n\nWAIT conditions\n- control_status is not CBP (\"Trade Control\").\n- court_injunction is Y.\n- suspension_record is Y and liquidation_status is Pending, Not Liquidated or Unliquidated. A Suspended or Extended status with a suspension record is accepted by CBP and is not a WAIT condition.\n- adjusted_status is Y (\"Entry Summary Under Review\").\n- protest_status is Open or Suspended, or protest_status is Denied and afr_box is Y. Granted, None, or Denied without the AFR box is fine.\n- statement_pending is Y.\n- Any line with ieepa_indicator Y has ch99_goods_value above 0 (\"Value Not Allowed on HTS\").\n- Any line has hts_valid N (\"Invalid HTS\") or hts_relationship_ok N (\"HTS Relationship Mismatch\").\n- psc_needed_non_ieepa is Y (file the PSC before CAPE).\n- recon_flag is Y, recon_entry_filed is N, and recon_deadline is LESS than 30 days after the as-of date (reconciliation must be filed first). 30 days or more is fine.\nBroker notes (broker_note) are free text from the broker. Treat the structured columns as the record; a note does not create or clear a condition by itself.\n\nNET RULE (only reached when nothing above holds)\n- IEEPA refund = sum of ieepa_duty over lines with ieepa_indicator Y, minus the Column 1 carve-out. The carve-out applies only to lines with a framework_group (EU, JP, KR, CH): subtract col1_rate_pct percent of that line's entered_value, but never more than that line's ieepa_duty.\n- Other-duty underpayment = sum of non_ieepa_underpaid_usd over all lines of the entry.\n- Net = IEEPA refund minus other-duty underpayment. NET_BILL_RISK only if the underpayment is above 0 AND net is 0 or less. If the entry still nets a refund (net above 0) it is FILE_NOW even with an underpayment. An open IOR debt (ior_open_debt_usd) does not change the lane.\n\nDAYS LEFT\ncape_days_left = 80 minus the whole calendar days from liquidation_date to the as-of date. Counted in calendar days; 0 means the window closes today; negative means it already closed. If the entry has no liquidation_date, cape_days_left is null. Dates may be written in other formats (for example 08/20/2026 is month/day/year).\n\nOUTPUT\nReturn ONLY one JSON object, no prose, no code fence:\n{\"checks\": \"<=40 words: which conditions you found, and the net if you computed it\", \"lane\": \"FILE_NOW|WAIT|BLOCKED|NET_BILL_RISK\", \"cape_days_left\": <integer or null>}",
+   "userPrefix": "Entry to check (JSON):\n"
+  },
+  "lightning": {
+   "sha256": "17d69c787cef10f5a060a4d10c81015e60d63f90dd80326e89274bd4dd27d085",
+   "thinking": false,
+   "maxTokens": 600,
+   "system": "You are a customs pre-flight checker for CBP's CAPE Phase 1 (refunds of struck-down IEEPA tariffs). You get ONE entry: the rows of an ACE ES-003 + ES-701 export for that entry, as JSON (cells that were empty are left out), plus the as-of date. Several rows with the same entry_number are the lines (line_no) of this one entry, not duplicates. Decide which lane the entry belongs in and how many days are left in CBP's 80-day window. Use only the rules below.\n\nLANES\n- BLOCKED: CBP rejects the entry and no fix makes it eligible this phase.\n- WAIT: a CBP error or sequencing step must be cleared first (PSC, protest, status), after which the entry can go.\n- NET_BILL_RISK: the entry nets to a bill or to zero (other duties owed are at least the IEEPA refund), so a broker decides.\n- FILE_NOW: CBP's checks would pass and the entry nets to a refund.\nOrder of decision: BLOCKED if any BLOCK condition holds; otherwise WAIT if any WAIT condition holds; otherwise NET_BILL_RISK if the net rule below says so; otherwise FILE_NOW.\n\nBLOCK conditions\n- The entry number, after removing dashes, apostrophes and spaces, is not exactly 11 characters (\"Not 11 characters long\").\n- Its first 3 characters are not one of the filer codes given in the input (\"Filer Code not matching\").\n- The input says the same entry number (dashes removed) already appeared earlier in the file (\"Duplicate Entry\").\n- entry_summary_status is not Accepted (Cancelled, Rejected, Not Found).\n- entry_type is 08 (Duty Deferral), 09 (Reconciliation), 21 or 22 (Warehouse), 23 (TIB) or 47 (Drawback). Every other entry type is allowed.\n- drawback_claim is Y (\"Entry on Drawback\"). drawback_planned alone is not an error.\n- recon_flag is Y and recon_entry_filed is Y (\"Recon Already Filed\").\n- The entry was liquidated MORE than 80 days before the as-of date (\"Final Liquidation Status\"). Exactly 80 days is still eligible.\n- No line has ieepa_indicator Y with ieepa_duty above 0 (\"No IEEPA HTS on Entry\").\n\nWAIT conditions\n- control_status is not CBP (\"Trade Control\").\n- court_injunction is Y.\n- suspension_record is Y and liquidation_status is Pending, Not Liquidated or Unliquidated. A Suspended or Extended status with a suspension record is accepted by CBP and is not a WAIT condition.\n- adjusted_status is Y (\"Entry Summary Under Review\").\n- protest_status is Open or Suspended, or protest_status is Denied and afr_box is Y. Granted, None, or Denied without the AFR box is fine.\n- statement_pending is Y.\n- Any line with ieepa_indicator Y has ch99_goods_value above 0 (\"Value Not Allowed on HTS\").\n- Any line has hts_valid N (\"Invalid HTS\") or hts_relationship_ok N (\"HTS Relationship Mismatch\").\n- psc_needed_non_ieepa is Y (file the PSC before CAPE).\n- recon_flag is Y, recon_entry_filed is N, and recon_deadline is LESS than 30 days after the as-of date (reconciliation must be filed first). 30 days or more is fine.\nBroker notes (broker_note) are free text from the broker. Treat the structured columns as the record; a note does not create or clear a condition by itself.\n\nNET RULE (only reached when nothing above holds)\n- IEEPA refund = sum of ieepa_duty over lines with ieepa_indicator Y, minus the Column 1 carve-out. The carve-out applies only to lines with a framework_group (EU, JP, KR, CH): subtract col1_rate_pct percent of that line's entered_value, but never more than that line's ieepa_duty.\n- Other-duty underpayment = sum of non_ieepa_underpaid_usd over all lines of the entry.\n- Net = IEEPA refund minus other-duty underpayment. NET_BILL_RISK only if the underpayment is above 0 AND net is 0 or less. If the entry still nets a refund (net above 0) it is FILE_NOW even with an underpayment. An open IOR debt (ior_open_debt_usd) does not change the lane.\n\nDAYS LEFT\ncape_days_left = 80 minus the whole calendar days from liquidation_date to the as-of date. Counted in calendar days; 0 means the window closes today; negative means it already closed. If the entry has no liquidation_date, cape_days_left is null. Dates may be written in other formats (for example 08/20/2026 is month/day/year).\n\nOUTPUT\nReturn ONLY one JSON object, no prose, no code fence:\n{\"checks\": \"<=40 words: which conditions you found, and the net if you computed it\", \"lane\": \"FILE_NOW|WAIT|BLOCKED|NET_BILL_RISK\", \"cape_days_left\": <integer or null>}",
+   "userPrefix": "Entry to check (JSON):\n"
+  }
+ },
+ "modelsRequested": {
+  "ultra": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "lightning": "nvidia/Nemotron-3_5-Lightning"
+ },
+ "modelsReturnedByApi": {
+  "ultra": [
+   "nvidia/Nemotron-3-Ultra-550b-a55b"
+  ],
+  "lightning": [
+   "nvidia/Nemotron-3_5-Lightning"
+  ]
+ },
+ "arms": {
+  "rules": {
+   "id": "rules",
+   "label": "Rules engine",
+   "n": 69,
+   "kind": "code",
+   "model": null,
+   "lane": {
+    "strictCorrect": 69,
+    "strictAccuracy": 1,
+    "lenientCorrect": 69,
+    "lenientAccuracy": 1,
+    "unparsed": 0
+   },
+   "deadline": {
+    "liquidatedN": 13,
+    "exactCorrect": 13,
+    "exactRate": 1,
+    "notLiquidatedN": 56,
+    "nullCorrect": 56
+   },
+   "tokens": {
+    "prompt": 0,
+    "completion": 0
+   },
+   "costUsd": 0
+  },
+  "ultra": {
+   "id": "ultra",
+   "label": "Nemotron Ultra alone",
+   "n": 69,
+   "kind": "model",
+   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+   "thinking": true,
+   "promptSha256": "8adb9a1ddfb765adef321a3bd8022d95ac64975db82eb38598866f108a9af81b",
+   "maxTokens": 5000,
+   "lane": {
+    "strictCorrect": 69,
+    "strictAccuracy": 1,
+    "lenientCorrect": 69,
+    "lenientAccuracy": 1,
+    "unparsed": 0
+   },
+   "deadline": {
+    "liquidatedN": 13,
+    "exactCorrect": 13,
+    "exactRate": 1,
+    "notLiquidatedN": 56,
+    "nullCorrect": 56
+   },
+   "tokens": {
+    "prompt": 112577,
+    "completion": 117906
+   },
+   "costUsd": 0.466295
+  },
+  "lightning": {
+   "id": "lightning",
+   "label": "Nemotron Lightning alone",
+   "n": 69,
+   "kind": "model",
+   "model": "nvidia/Nemotron-3_5-Lightning",
+   "thinking": false,
+   "promptSha256": "17d69c787cef10f5a060a4d10c81015e60d63f90dd80326e89274bd4dd27d085",
+   "maxTokens": 600,
+   "lane": {
+    "strictCorrect": 49,
+    "strictAccuracy": 0.7101449275362319,
+    "lenientCorrect": 49,
+    "lenientAccuracy": 0.7101449275362319,
+    "unparsed": 0
+   },
+   "deadline": {
+    "liquidatedN": 13,
+    "exactCorrect": 4,
+    "exactRate": 0.3076923076923077,
+    "notLiquidatedN": 56,
+    "nullCorrect": 56
+   },
+   "tokens": {
+    "prompt": 112577,
+    "completion": 8164
+   },
+   "costUsd": 0.008714
+  }
+ },
+ "totals": {
+  "calls": 138,
+  "failedCalls": 0,
+  "costUsd": 0.475009,
+  "budgetUsd": 1.5,
+  "callLogEntriesThisSession": 138
+ },
+ "priceNote": "costUsd = usage x Nebius list price per 1M tokens in src/lib/nebius.ts PRICES (Ultra $1.00 in / $3.00 out, Lightning $0.06 in / $0.24 out). Ultra completion tokens include its reasoning tokens.",
+ "perEntry": [
+  {
+   "n": 1,
+   "entryNumber": "A7K50232977",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 2,
+   "entryNumber": "A7K23931066",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 3,
+   "entryNumber": "A7K38430633",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 4,
+   "entryNumber": "A7K53232500",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 5,
+   "entryNumber": "A7K96289466",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 6,
+   "entryNumber": "A7K68080633",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 7,
+   "entryNumber": "A7K28964777",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 8,
+   "entryNumber": "A7K32905622",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 9,
+   "entryNumber": "A7K53653799",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 10,
+   "entryNumber": "A7K91442644",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 11,
+   "entryNumber": "A7K57459799",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": 68,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": 68
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": 68
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 80
+   }
+  },
+  {
+   "n": 12,
+   "entryNumber": "A7K76870099",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": 55,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": 55
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": 55
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 56
+   }
+  },
+  {
+   "n": 13,
+   "entryNumber": "A7K78529799",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": 40,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": 40
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": 40
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 40
+   }
+  },
+  {
+   "n": 14,
+   "entryNumber": "A7K51577533",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": 25,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": 25
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": 25
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 25
+   }
+  },
+  {
+   "n": 15,
+   "entryNumber": "A7K21174011",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": 10,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": 10
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": 10
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 0
+   }
+  },
+  {
+   "n": 16,
+   "entryNumber": "A7K90384188",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": 2,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": 2
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": 2
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 2
+   }
+  },
+  {
+   "n": 17,
+   "entryNumber": "A7K63252888",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": 0,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": 0
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": 0
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 0
+   }
+  },
+  {
+   "n": 18,
+   "entryNumber": "A7K21937388",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": -1,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": -1
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": -1
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 80
+   }
+  },
+  {
+   "n": 19,
+   "entryNumber": "A7K19919100",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": -15,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": -15
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": -15
+   },
+   "lightning": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 20,
+   "entryNumber": "A7K50476422",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": -50,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": -50
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": -50
+   },
+   "lightning": {
+    "lane": "BLOCKED",
+    "daysLeft": -110
+   }
+  },
+  {
+   "n": 21,
+   "entryNumber": "A7K59416755",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 22,
+   "entryNumber": "A7K97171744",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 23,
+   "entryNumber": "A7K54114933",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 24,
+   "entryNumber": "A7K49021866",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 25,
+   "entryNumber": "A7K71250833",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 26,
+   "entryNumber": "A7K19925655",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 27,
+   "entryNumber": "A7K45901599",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 28,
+   "entryNumber": "A7K44795766",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 29,
+   "entryNumber": "A7K51863244",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "WAIT",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 30,
+   "entryNumber": "A7K72000077",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 31,
+   "entryNumber": "A7K15986055",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "WAIT",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 32,
+   "entryNumber": "A7K57641988",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "NET_BILL_RISK",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 33,
+   "entryNumber": "A7K45051022",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 34,
+   "entryNumber": "A7K59572888",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 35,
+   "entryNumber": "A7K59074411",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 36,
+   "entryNumber": "A7K24207088",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 37,
+   "entryNumber": "A7K22858255",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 38,
+   "entryNumber": "A7K87307599",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 39,
+   "entryNumber": "A7K91119744",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 40,
+   "entryNumber": "0P221551466",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 41,
+   "entryNumber": "0P297183888",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 42,
+   "entryNumber": "0P253683599",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": 47,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": 47
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": 47
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 33
+   }
+  },
+  {
+   "n": 43,
+   "entryNumber": "A7K41709811",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 44,
+   "entryNumber": "A7K-4170981-1",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 45,
+   "entryNumber": "A7K1234567",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 46,
+   "entryNumber": "Z3M73705788",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 47,
+   "entryNumber": "A7K28544311",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 48,
+   "entryNumber": "A7K45117533",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 49,
+   "entryNumber": "A7K51528177",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "WAIT",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 50,
+   "entryNumber": "A7K26677355",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 51,
+   "entryNumber": "A7K40611877",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 52,
+   "entryNumber": "A7K62224999",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "WAIT",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 53,
+   "entryNumber": "A7K30717000",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 54,
+   "entryNumber": "A7K79721877",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 55,
+   "entryNumber": "A7K15506011",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 56,
+   "entryNumber": "A7K53145699",
+   "truthLane": "WAIT",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "WAIT",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "WAIT",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 57,
+   "entryNumber": "A7K67089188",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 58,
+   "entryNumber": "A7K35748488",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 59,
+   "entryNumber": "A7K16386644",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": 62,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": 62
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": 62
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": 60
+   }
+  },
+  {
+   "n": 60,
+   "entryNumber": "A7K66040199",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 61,
+   "entryNumber": "A7K98997222",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 62,
+   "entryNumber": "A7K53935877",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 63,
+   "entryNumber": "A7K21865533",
+   "truthLane": "NET_BILL_RISK",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "NET_BILL_RISK",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "NET_BILL_RISK",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "NET_BILL_RISK",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 64,
+   "entryNumber": "A7K51309444",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 65,
+   "entryNumber": "A7K54825900",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 66,
+   "entryNumber": "A7K73449900",
+   "truthLane": "NET_BILL_RISK",
+   "keyDaysLeft": 36,
+   "rules": {
+    "lane": "NET_BILL_RISK",
+    "daysLeft": 36
+   },
+   "ultra": {
+    "lane": "NET_BILL_RISK",
+    "daysLeft": 36
+   },
+   "lightning": {
+    "lane": "NET_BILL_RISK",
+    "daysLeft": 35
+   }
+  },
+  {
+   "n": 67,
+   "entryNumber": "A7K84534877",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 68,
+   "entryNumber": "A7K98281700",
+   "truthLane": "BLOCKED",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "BLOCKED",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  },
+  {
+   "n": 69,
+   "entryNumber": "A7K49804222",
+   "truthLane": "FILE_NOW",
+   "keyDaysLeft": null,
+   "rules": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "ultra": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   },
+   "lightning": {
+    "lane": "FILE_NOW",
+    "daysLeft": null
+   }
+  }
+ ],
+ "perCall": {
+  "ultra": [
+   {
+    "n": 1,
+    "entryNumber": "A7K50232977",
+    "completionId": "chatcmpl-bef54d8cef22f7a5",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 9108,
+    "promptTokens": 1929,
+    "completionTokens": 2207,
+    "reasoningTokens": 2146,
+    "costUsd": 0.00855,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $31,560, underpayment $0, net $31,560. No liquidation date."
+    }
+   },
+   {
+    "n": 2,
+    "entryNumber": "A7K23931066",
+    "completionId": "chatcmpl-856a6ad0566f06cb",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 8009,
+    "promptTokens": 1575,
+    "completionTokens": 1898,
+    "reasoningTokens": 1837,
+    "costUsd": 0.007269,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $11628, no underpayment, net $11628 > 0. No liquidation date."
+    }
+   },
+   {
+    "n": 3,
+    "entryNumber": "A7K38430633",
+    "completionId": "chatcmpl-b72375d0073e5869",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6296,
+    "promptTokens": 1576,
+    "completionTokens": 1418,
+    "reasoningTokens": 1360,
+    "costUsd": 0.00583,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund $10460, no underpayment, net $10460 >0. No liquidation date."
+    }
+   },
+   {
+    "n": 4,
+    "entryNumber": "A7K53232500",
+    "completionId": "chatcmpl-a3d4f2aae7fb157d",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6295,
+    "promptTokens": 1912,
+    "completionTokens": 1293,
+    "reasoningTokens": 1235,
+    "costUsd": 0.005791,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK or WAIT conditions. IEEPA refund $28,584, no underpayment, net $28,584 > 0."
+    }
+   },
+   {
+    "n": 5,
+    "entryNumber": "A7K96289466",
+    "completionId": "chatcmpl-936c0b271db72b55",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6621,
+    "promptTokens": 1575,
+    "completionTokens": 1489,
+    "reasoningTokens": 1440,
+    "costUsd": 0.006042,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund $9160, no underpayment, net $9160."
+    }
+   },
+   {
+    "n": 6,
+    "entryNumber": "A7K68080633",
+    "completionId": "chatcmpl-9d5ec42ab148dfc0",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 8910,
+    "promptTokens": 1574,
+    "completionTokens": 2134,
+    "reasoningTokens": 2076,
+    "costUsd": 0.007976,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund $12,980, no underpayment, net $12,980. No liquidation date."
+    }
+   },
+   {
+    "n": 7,
+    "entryNumber": "A7K28964777",
+    "completionId": "chatcmpl-a3ddea8afd3699e5",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 19869,
+    "promptTokens": 1576,
+    "completionTokens": 2255,
+    "reasoningTokens": 2204,
+    "costUsd": 0.008341,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK or WAIT conditions; IEEPA refund $6100, no underpayment, net $6100"
+    }
+   },
+   {
+    "n": 8,
+    "entryNumber": "A7K32905622",
+    "completionId": "chatcmpl-b8b73df867420689",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5147,
+    "promptTokens": 1931,
+    "completionTokens": 1200,
+    "reasoningTokens": 1125,
+    "costUsd": 0.005531,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry valid: 11 chars, filer match, accepted, type 01, no drawback, no recon, unliquidated, IEEPA duties present. No wait conditions. Net refund $16909, no underpayment."
+    }
+   },
+   {
+    "n": 9,
+    "entryNumber": "A7K53653799",
+    "completionId": "chatcmpl-8f2778618ebe5c62",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 17534,
+    "promptTokens": 1905,
+    "completionTokens": 1531,
+    "reasoningTokens": 1439,
+    "costUsd": 0.006498,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry valid: 11 chars, filer A7K, accepted, type 01, no drawback, no recon, unliquidated, IEEPA duties present. No wait conditions. Net refund $14041.40 (carve-out $1543.60 on EU line)."
+    }
+   },
+   {
+    "n": 10,
+    "entryNumber": "A7K91442644",
+    "completionId": "chatcmpl-8bec2bf4f7a6b135",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 18581,
+    "promptTokens": 1575,
+    "completionTokens": 1927,
+    "reasoningTokens": 1858,
+    "costUsd": 0.007356,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund $4492.80 after KR carve-out $1747.20. No underpayment. Net refund $4492.80."
+    }
+   },
+   {
+    "n": 11,
+    "entryNumber": "A7K57459799",
+    "completionId": "chatcmpl-b3fbba523c25a631",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 16392,
+    "promptTokens": 1569,
+    "completionTokens": 1220,
+    "reasoningTokens": 1164,
+    "costUsd": 0.005229,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 68,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $6180, no underpayment, net $6180 > 0."
+    }
+   },
+   {
+    "n": 12,
+    "entryNumber": "A7K76870099",
+    "completionId": "chatcmpl-9be2459d3ec4192d",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6566,
+    "promptTokens": 1570,
+    "completionTokens": 1366,
+    "reasoningTokens": 1312,
+    "costUsd": 0.005668,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 55,
+     "checks": "No BLOCK or WAIT conditions. IEEPA refund $5020, no underpayment, net $5020 refund."
+    }
+   },
+   {
+    "n": 13,
+    "entryNumber": "A7K78529799",
+    "completionId": "chatcmpl-bcaa27c70e30a89c",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 8155,
+    "promptTokens": 1903,
+    "completionTokens": 1732,
+    "reasoningTokens": 1675,
+    "costUsd": 0.007099,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 40,
+     "checks": "No BLOCK or WAIT conditions. IEEPA refund $31,170, no underpayment, net $31,170."
+    }
+   },
+   {
+    "n": 14,
+    "entryNumber": "A7K51577533",
+    "completionId": "chatcmpl-867c859617318162",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 11020,
+    "promptTokens": 1569,
+    "completionTokens": 2430,
+    "reasoningTokens": 2375,
+    "costUsd": 0.008859,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 25,
+     "checks": "No BLOCK or WAIT conditions. IEEPA refund $6137, no underpayment, net $6137 >0."
+    }
+   },
+   {
+    "n": 15,
+    "entryNumber": "A7K21174011",
+    "completionId": "chatcmpl-8f43d5302d1c5c57",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 8643,
+    "promptTokens": 1572,
+    "completionTokens": 2316,
+    "reasoningTokens": 2255,
+    "costUsd": 0.00852,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 10,
+     "checks": "No BLOCK or WAIT conditions. IEEPA refund $11,500, no underpayment, net $11,500. FILE_NOW."
+    }
+   },
+   {
+    "n": 16,
+    "entryNumber": "A7K90384188",
+    "completionId": "chatcmpl-b5f09669094a34ac",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 12804,
+    "promptTokens": 1590,
+    "completionTokens": 3464,
+    "reasoningTokens": 3407,
+    "costUsd": 0.011982,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 2,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund 10108, underpayment 0, net 10108 >0."
+    }
+   },
+   {
+    "n": 17,
+    "entryNumber": "A7K63252888",
+    "completionId": "chatcmpl-bc72150a5c9dc254",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 12060,
+    "promptTokens": 1566,
+    "completionTokens": 2925,
+    "reasoningTokens": 2873,
+    "costUsd": 0.010341,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 0,
+     "checks": "No block/wait conditions; IEEPA refund $6400, no underpayment, net $6400 >0."
+    }
+   },
+   {
+    "n": 18,
+    "entryNumber": "A7K21937388",
+    "completionId": "chatcmpl-a53c048ebf4a8f75",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 8558,
+    "promptTokens": 1920,
+    "completionTokens": 1890,
+    "reasoningTokens": 1851,
+    "costUsd": 0.00759,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": -1,
+     "checks": "Liquidated 81 days ago (>80), BLOCKED."
+    }
+   },
+   {
+    "n": 19,
+    "entryNumber": "A7K19919100",
+    "completionId": "chatcmpl-82e8cd26534ffad5",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 8045,
+    "promptTokens": 1571,
+    "completionTokens": 1862,
+    "reasoningTokens": 1824,
+    "costUsd": 0.007157,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": -15,
+     "checks": "Entry liquidated 95 days ago (>80), blocked."
+    }
+   },
+   {
+    "n": 20,
+    "entryNumber": "A7K50476422",
+    "completionId": "chatcmpl-87ce9679e3bfc9a8",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 14311,
+    "promptTokens": 1572,
+    "completionTokens": 2821,
+    "reasoningTokens": 2780,
+    "costUsd": 0.010035,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": -50,
+     "checks": "Entry liquidated 130 days ago, exceeds 80-day window."
+    }
+   },
+   {
+    "n": 21,
+    "entryNumber": "A7K59416755",
+    "completionId": "chatcmpl-8bf896e1d64302f4",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 11135,
+    "promptTokens": 1591,
+    "completionTokens": 2086,
+    "reasoningTokens": 2031,
+    "costUsd": 0.007849,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund 19725, underpayment 0, net 19725 > 0."
+    }
+   },
+   {
+    "n": 22,
+    "entryNumber": "A7K97171744",
+    "completionId": "chatcmpl-b49dbf8ce42e348c",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5534,
+    "promptTokens": 1574,
+    "completionTokens": 1373,
+    "reasoningTokens": 1313,
+    "costUsd": 0.005693,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $17,960, no underpayment, net $17,960. No liquidation date."
+    }
+   },
+   {
+    "n": 23,
+    "entryNumber": "A7K54114933",
+    "completionId": "chatcmpl-83138ef73b50c13f",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6019,
+    "promptTokens": 1594,
+    "completionTokens": 1606,
+    "reasoningTokens": 1565,
+    "costUsd": 0.006412,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "WAIT: suspension record Y and liquidation status Unliquidated; no BLOCK conditions."
+    }
+   },
+   {
+    "n": 24,
+    "entryNumber": "A7K49021866",
+    "completionId": "chatcmpl-a2c5d2f73fc4fb19",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 4617,
+    "promptTokens": 1598,
+    "completionTokens": 952,
+    "reasoningTokens": 918,
+    "costUsd": 0.004454,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "Protest status Open triggers WAIT; no BLOCK conditions."
+    }
+   },
+   {
+    "n": 25,
+    "entryNumber": "A7K71250833",
+    "completionId": "chatcmpl-951276de877729cf",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6228,
+    "promptTokens": 1574,
+    "completionTokens": 1113,
+    "reasoningTokens": 1081,
+    "costUsd": 0.004913,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "Protest status Suspended triggers WAIT condition."
+    }
+   },
+   {
+    "n": 26,
+    "entryNumber": "A7K19925655",
+    "completionId": "chatcmpl-9a205751b1e3fd22",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5217,
+    "promptTokens": 1591,
+    "completionTokens": 829,
+    "reasoningTokens": 792,
+    "costUsd": 0.004078,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "Protest denied with AFR box triggers WAIT; no BLOCK conditions."
+    }
+   },
+   {
+    "n": 27,
+    "entryNumber": "A7K45901599",
+    "completionId": "chatcmpl-86bdc30baa02bd49",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 7149,
+    "promptTokens": 1577,
+    "completionTokens": 1366,
+    "reasoningTokens": 1306,
+    "costUsd": 0.005675,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $12080, no underpayment, net $12080 >0. No liquidation date."
+    }
+   },
+   {
+    "n": 28,
+    "entryNumber": "A7K44795766",
+    "completionId": "chatcmpl-bc6b3be797c6a508",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 8491,
+    "promptTokens": 1571,
+    "completionTokens": 2079,
+    "reasoningTokens": 2021,
+    "costUsd": 0.007808,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $6900, no underpayment, net $6900 >0. No liquidation date."
+    }
+   },
+   {
+    "n": 29,
+    "entryNumber": "A7K51863244",
+    "completionId": "chatcmpl-a70b9a07a6b0224e",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 9468,
+    "promptTokens": 1610,
+    "completionTokens": 2137,
+    "reasoningTokens": 2086,
+    "costUsd": 0.008021,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions; IEEPA refund $8320, no underpayment, net $8320 >0"
+    }
+   },
+   {
+    "n": 30,
+    "entryNumber": "A7K72000077",
+    "completionId": "chatcmpl-8e4707ddef6b6b03",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 8340,
+    "promptTokens": 1946,
+    "completionTokens": 2124,
+    "reasoningTokens": 2064,
+    "costUsd": 0.008318,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $24,820, no underpayment, net $24,820. No liquidation date."
+    }
+   },
+   {
+    "n": 31,
+    "entryNumber": "A7K15986055",
+    "completionId": "chatcmpl-add3122fbe552d07",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6444,
+    "promptTokens": 1615,
+    "completionTokens": 1890,
+    "reasoningTokens": 1840,
+    "costUsd": 0.007285,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "WAIT: recon_flag Y, recon_entry_filed N, recon_deadline 21 days from as-of (<30)."
+    }
+   },
+   {
+    "n": 32,
+    "entryNumber": "A7K57641988",
+    "completionId": "chatcmpl-9b48c73f7dd91feb",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 4192,
+    "promptTokens": 1609,
+    "completionTokens": 1091,
+    "reasoningTokens": 1049,
+    "costUsd": 0.004882,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Recon Already Filed (recon_flag Y and recon_entry_filed Y) blocks entry."
+    }
+   },
+   {
+    "n": 33,
+    "entryNumber": "A7K45051022",
+    "completionId": "chatcmpl-bc5acff1f604c19f",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 4984,
+    "promptTokens": 1582,
+    "completionTokens": 1519,
+    "reasoningTokens": 1484,
+    "costUsd": 0.006139,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry type 09 (Reconciliation) is blocked."
+    }
+   },
+   {
+    "n": 34,
+    "entryNumber": "A7K59572888",
+    "completionId": "chatcmpl-8ce85c7ad4322cfe",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 2900,
+    "promptTokens": 1584,
+    "completionTokens": 723,
+    "reasoningTokens": 689,
+    "costUsd": 0.003753,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry type 23 (TIB) blocks entry."
+    }
+   },
+   {
+    "n": 35,
+    "entryNumber": "A7K59074411",
+    "completionId": "chatcmpl-9da2a15353303b9b",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 3421,
+    "promptTokens": 1575,
+    "completionTokens": 765,
+    "reasoningTokens": 725,
+    "costUsd": 0.00387,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry type 08 (Duty Deferral) is a BLOCK condition."
+    }
+   },
+   {
+    "n": 36,
+    "entryNumber": "A7K24207088",
+    "completionId": "chatcmpl-9214a7b128803e96",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 3630,
+    "promptTokens": 1575,
+    "completionTokens": 888,
+    "reasoningTokens": 854,
+    "costUsd": 0.004239,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry type 47 (Drawback) blocks eligibility"
+    }
+   },
+   {
+    "n": 37,
+    "entryNumber": "A7K22858255",
+    "completionId": "chatcmpl-97e84980bf9a51a3",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 4361,
+    "promptTokens": 1594,
+    "completionTokens": 1262,
+    "reasoningTokens": 1222,
+    "costUsd": 0.00538,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Blocked: drawback_claim Y (Entry on Drawback). No liquidation date."
+    }
+   },
+   {
+    "n": 38,
+    "entryNumber": "A7K87307599",
+    "completionId": "chatcmpl-a6f42212d5d0f6bc",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5607,
+    "promptTokens": 1596,
+    "completionTokens": 1888,
+    "reasoningTokens": 1838,
+    "costUsd": 0.00726,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "All checks pass. IEEPA refund 12600, underpayment 0, net 12600."
+    }
+   },
+   {
+    "n": 39,
+    "entryNumber": "A7K91119744",
+    "completionId": "chatcmpl-987979d3e235e031",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 9939,
+    "promptTokens": 1905,
+    "completionTokens": 3065,
+    "reasoningTokens": 3007,
+    "costUsd": 0.0111,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $10,205, no underpayment. Net $10,205 > 0."
+    }
+   },
+   {
+    "n": 40,
+    "entryNumber": "0P221551466",
+    "completionId": "chatcmpl-91d5702f140649f7",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 7196,
+    "promptTokens": 1590,
+    "completionTokens": 2493,
+    "reasoningTokens": 2442,
+    "costUsd": 0.009069,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block or wait conditions. IEEPA refund 4217.5 after carve-out, no underpayment, net positive."
+    }
+   },
+   {
+    "n": 41,
+    "entryNumber": "0P297183888",
+    "completionId": "chatcmpl-939d2a748c2c4a99",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6340,
+    "promptTokens": 1576,
+    "completionTokens": 2222,
+    "reasoningTokens": 2166,
+    "costUsd": 0.008242,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions; IEEPA refund $15,220, no underpayment, net $15,220 > 0"
+    }
+   },
+   {
+    "n": 42,
+    "entryNumber": "0P253683599",
+    "completionId": "chatcmpl-876230839c5c440c",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 7165,
+    "promptTokens": 1571,
+    "completionTokens": 2377,
+    "reasoningTokens": 2321,
+    "costUsd": 0.008702,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 47,
+     "checks": "No BLOCK or WAIT conditions; IEEPA refund $6631, no underpayment, net $6631 > 0."
+    }
+   },
+   {
+    "n": 43,
+    "entryNumber": "A7K41709811",
+    "completionId": "chatcmpl-a17aa8b733838da1",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 4568,
+    "promptTokens": 1571,
+    "completionTokens": 1354,
+    "reasoningTokens": 1309,
+    "costUsd": 0.005633,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry passes all checks; IEEPA refund $19240, no underpayment, net positive."
+    }
+   },
+   {
+    "n": 44,
+    "entryNumber": "A7K-4170981-1",
+    "completionId": "chatcmpl-9b98060a82de0f40",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5376,
+    "promptTokens": 1590,
+    "completionTokens": 1420,
+    "reasoningTokens": 1392,
+    "costUsd": 0.00585,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Duplicate entry number in file"
+    }
+   },
+   {
+    "n": 45,
+    "entryNumber": "A7K1234567",
+    "completionId": "chatcmpl-a8b3f8413718b8dd",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 4580,
+    "promptTokens": 1570,
+    "completionTokens": 1130,
+    "reasoningTokens": 1097,
+    "costUsd": 0.00496,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry number length 10 not 11"
+    }
+   },
+   {
+    "n": 46,
+    "entryNumber": "Z3M73705788",
+    "completionId": "chatcmpl-88ad93bed3eee919",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6032,
+    "promptTokens": 1590,
+    "completionTokens": 1267,
+    "reasoningTokens": 1224,
+    "costUsd": 0.005391,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Filer code Z3M not in allowed list (A7K, 0P2)."
+    }
+   },
+   {
+    "n": 47,
+    "entryNumber": "A7K28544311",
+    "completionId": "chatcmpl-a6eee1ef35786b97",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 2995,
+    "promptTokens": 1575,
+    "completionTokens": 728,
+    "reasoningTokens": 691,
+    "costUsd": 0.003759,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry summary status Cancelled (not Accepted) -> BLOCKED."
+    }
+   },
+   {
+    "n": 48,
+    "entryNumber": "A7K45117533",
+    "completionId": "chatcmpl-b4b217754f283989",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 3969,
+    "promptTokens": 1575,
+    "completionTokens": 1060,
+    "reasoningTokens": 1028,
+    "costUsd": 0.004755,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "WAIT: control_status is Trade not CBP"
+    }
+   },
+   {
+    "n": 49,
+    "entryNumber": "A7K51528177",
+    "completionId": "chatcmpl-81f1e5da37170ae4",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6430,
+    "promptTokens": 1577,
+    "completionTokens": 1666,
+    "reasoningTokens": 1619,
+    "costUsd": 0.006575,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "WAIT: court_injunction Y. No BLOCK conditions. Entry unliquidated, so cape_days_left null."
+    }
+   },
+   {
+    "n": 50,
+    "entryNumber": "A7K26677355",
+    "completionId": "chatcmpl-9c02eb6617f160cc",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5138,
+    "promptTokens": 1571,
+    "completionTokens": 1525,
+    "reasoningTokens": 1496,
+    "costUsd": 0.006146,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "statement_pending Y triggers WAIT"
+    }
+   },
+   {
+    "n": 51,
+    "entryNumber": "A7K40611877",
+    "completionId": "chatcmpl-99219672fbda11e2",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6002,
+    "promptTokens": 1576,
+    "completionTokens": 1755,
+    "reasoningTokens": 1721,
+    "costUsd": 0.006841,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "Adjusted status Y triggers WAIT; no BLOCK conditions."
+    }
+   },
+   {
+    "n": 52,
+    "entryNumber": "A7K62224999",
+    "completionId": "chatcmpl-a9f0932ec2f0e59d",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5982,
+    "promptTokens": 1596,
+    "completionTokens": 1863,
+    "reasoningTokens": 1824,
+    "costUsd": 0.007185,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "WAIT triggered: hts_valid N (Invalid HTS). No BLOCK conditions."
+    }
+   },
+   {
+    "n": 53,
+    "entryNumber": "A7K30717000",
+    "completionId": "chatcmpl-8a30e07566dfc00d",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5886,
+    "promptTokens": 1574,
+    "completionTokens": 1824,
+    "reasoningTokens": 1783,
+    "costUsd": 0.007046,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "hts_relationship_ok N triggers WAIT; entry unliquidated so days left null"
+    }
+   },
+   {
+    "n": 54,
+    "entryNumber": "A7K79721877",
+    "completionId": "chatcmpl-9fee0ea077d8bc7f",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5062,
+    "promptTokens": 1578,
+    "completionTokens": 1248,
+    "reasoningTokens": 1193,
+    "costUsd": 0.005322,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "WAIT triggered: IEEPA line has ch99_goods_value 1500 > 0. No BLOCK conditions. No liquidation date."
+    }
+   },
+   {
+    "n": 55,
+    "entryNumber": "A7K15506011",
+    "completionId": "chatcmpl-b7c76a4f7f3d9b6a",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6034,
+    "promptTokens": 1572,
+    "completionTokens": 1880,
+    "reasoningTokens": 1826,
+    "costUsd": 0.007212,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Blocked: no line with ieepa_indicator Y and ieepa_duty > 0 (No IEEPA HTS on Entry)."
+    }
+   },
+   {
+    "n": 56,
+    "entryNumber": "A7K53145699",
+    "completionId": "chatcmpl-85290cca7b2b03d7",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6201,
+    "promptTokens": 1598,
+    "completionTokens": 2139,
+    "reasoningTokens": 2095,
+    "costUsd": 0.008015,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "WAIT: psc_needed_non_ieepa Y; no block conditions; net not computed."
+    }
+   },
+   {
+    "n": 57,
+    "entryNumber": "A7K67089188",
+    "completionId": "chatcmpl-b3955072c5877091",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5565,
+    "promptTokens": 1593,
+    "completionTokens": 1584,
+    "reasoningTokens": 1518,
+    "costUsd": 0.006345,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $4160 after 5% EU carve-out ($2080). No underpayment. Net $4160 >0."
+    }
+   },
+   {
+    "n": 58,
+    "entryNumber": "A7K35748488",
+    "completionId": "chatcmpl-8a41dcf65a91cf02",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 4298,
+    "promptTokens": 1914,
+    "completionTokens": 1395,
+    "reasoningTokens": 1293,
+    "costUsd": 0.006099,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry valid: 11 chars, filer code match, accepted, type 01, no drawback, no recon, unliquidated, IEEPA duties present. No wait conditions. Net refund $11816.70 (IEEPA $14895 minus carve-out $3078.30, no underpayment)."
+    }
+   },
+   {
+    "n": 59,
+    "entryNumber": "A7K16386644",
+    "completionId": "chatcmpl-98722cef78a5f5a5",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5523,
+    "promptTokens": 1580,
+    "completionTokens": 1524,
+    "reasoningTokens": 1464,
+    "costUsd": 0.006152,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 62,
+     "checks": "No BLOCK or WAIT conditions. IEEPA refund $9930, no underpayment, net $9930 refund. 62 days left."
+    }
+   },
+   {
+    "n": 60,
+    "entryNumber": "A7K66040199",
+    "completionId": "chatcmpl-a9a4419f1b174a37",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5406,
+    "promptTokens": 1575,
+    "completionTokens": 1602,
+    "reasoningTokens": 1541,
+    "costUsd": 0.006381,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund $4102 after KR carve-out $4688. No underpayment. Net $4102 >0."
+    }
+   },
+   {
+    "n": 61,
+    "entryNumber": "A7K98997222",
+    "completionId": "chatcmpl-829066869bc831de",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5651,
+    "promptTokens": 1577,
+    "completionTokens": 1541,
+    "reasoningTokens": 1487,
+    "costUsd": 0.0062,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK or WAIT conditions. IEEPA refund $1879.50 after carve-out, no underpayment, net positive."
+    }
+   },
+   {
+    "n": 62,
+    "entryNumber": "A7K53935877",
+    "completionId": "chatcmpl-a499f56ba94b0c5a",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5548,
+    "promptTokens": 1968,
+    "completionTokens": 1522,
+    "reasoningTokens": 1450,
+    "costUsd": 0.006534,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $28,998, underpayment $11,332, net $17,666 >0. Unliquidated, days left null."
+    }
+   },
+   {
+    "n": 63,
+    "entryNumber": "A7K21865533",
+    "completionId": "chatcmpl-9d7bc66b13a1316c",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 4646,
+    "promptTokens": 1610,
+    "completionTokens": 1455,
+    "reasoningTokens": 1391,
+    "costUsd": 0.005975,
+    "answer": {
+     "lane": "NET_BILL_RISK",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund $6000, underpayment $9000, net -$3000 => NET_BILL_RISK"
+    }
+   },
+   {
+    "n": 64,
+    "entryNumber": "A7K51309444",
+    "completionId": "chatcmpl-b1e4a05d8dbe0b7a",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5782,
+    "promptTokens": 1588,
+    "completionTokens": 2015,
+    "reasoningTokens": 1959,
+    "costUsd": 0.007633,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund $8000, underpayment $5600, net $2400 > 0."
+    }
+   },
+   {
+    "n": 65,
+    "entryNumber": "A7K54825900",
+    "completionId": "chatcmpl-9c72d8ef824b3379",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 6020,
+    "promptTokens": 1591,
+    "completionTokens": 2007,
+    "reasoningTokens": 1949,
+    "costUsd": 0.007612,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund $12200, no underpayment, net $12200 >0. No liquidation date."
+    }
+   },
+   {
+    "n": 66,
+    "entryNumber": "A7K73449900",
+    "completionId": "chatcmpl-8e55c4e862c99563",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 7386,
+    "promptTokens": 1592,
+    "completionTokens": 2678,
+    "reasoningTokens": 2605,
+    "costUsd": 0.009626,
+    "answer": {
+     "lane": "NET_BILL_RISK",
+     "daysLeft": 36,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $10,500, underpayment $13,125, net -$2,625 => NET_BILL_RISK."
+    }
+   },
+   {
+    "n": 67,
+    "entryNumber": "A7K84534877",
+    "completionId": "chatcmpl-b44538dcb826fb9c",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 4545,
+    "promptTokens": 1573,
+    "completionTokens": 1467,
+    "reasoningTokens": 1401,
+    "costUsd": 0.005974,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No BLOCK/WAIT conditions. IEEPA refund $7600, underpayment $1520, net $6080 >0. Unliquidated, days left null."
+    }
+   },
+   {
+    "n": 68,
+    "entryNumber": "A7K98281700",
+    "completionId": "chatcmpl-ab72f33428108056",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 3983,
+    "promptTokens": 1590,
+    "completionTokens": 935,
+    "reasoningTokens": 897,
+    "costUsd": 0.004395,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry type 21 (Warehouse) blocks; no liquidation date."
+    }
+   },
+   {
+    "n": 69,
+    "entryNumber": "A7K49804222",
+    "completionId": "chatcmpl-ad91d674f39a5a83",
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "ms": 5343,
+    "promptTokens": 1585,
+    "completionTokens": 2096,
+    "reasoningTokens": 2042,
+    "costUsd": 0.007873,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "No block/wait conditions. IEEPA refund 13015, no underpayment, net 13015 > 0."
+    }
+   }
+  ],
+  "lightning": [
+   {
+    "n": 1,
+    "entryNumber": "A7K50232977",
+    "completionId": "chatcmpl-63bd686e",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2896,
+    "promptTokens": 1929,
+    "completionTokens": 159,
+    "reasoningTokens": 0,
+    "costUsd": 0.000154,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "2 lines, ieepa_indicator Y on both; no BLOCK or WAIT conditions triggered; recon_flag N; liquidation Unliquidated; no prior entry dup; entry_type 01 allowed; 11-char entry number valid; filer A7K matches; drawback N; no PSC needed; hts valid/ok Y; protest None; no ch99 value; no suspension; adjusted N; statement N; afr_box N; ieepa_duty total 31560.00; non_ieepa_underpaid 0.00; net refund 31560.00"
+    }
+   },
+   {
+    "n": 2,
+    "entryNumber": "A7K23931066",
+    "completionId": "chatcmpl-4462bfd4",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2422,
+    "promptTokens": 1575,
+    "completionTokens": 131,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 11628, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 3,
+    "entryNumber": "A7K38430633",
+    "completionId": "chatcmpl-6455c1a4",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2505,
+    "promptTokens": 1576,
+    "completionTokens": 131,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 10460, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 4,
+    "entryNumber": "A7K53232500",
+    "completionId": "chatcmpl-5fab7df2",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1940,
+    "promptTokens": 1912,
+    "completionTokens": 84,
+    "reasoningTokens": 0,
+    "costUsd": 0.000135,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "IEEPA HTS present; both lines have valid HTS; no PSC; no protest; no reconciliation; no drawback; liquidation Unliquidated; no final liquidation date yet; entry number 11 chars; filer A7K valid; no BLOCK or WAIT conditions triggered"
+    }
+   },
+   {
+    "n": 5,
+    "entryNumber": "A7K96289466",
+    "completionId": "chatcmpl-93a944c8",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2847,
+    "promptTokens": 1575,
+    "completionTokens": 164,
+    "reasoningTokens": 0,
+    "costUsd": 0.000134,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa Y duty 9160, no liquidation >80d ago, no PSC, no HTS issues, no ch99 value, no invalid HTS, protest None, afr N, statement N, no suspension record, no court injunction, no adjusted status, no ieepa_indicator Y lines with ch99_good"
+    }
+   },
+   {
+    "n": 6,
+    "entryNumber": "A7K68080633",
+    "completionId": "chatcmpl-08306151",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2435,
+    "promptTokens": 1574,
+    "completionTokens": 131,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 12980, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 7,
+    "entryNumber": "A7K28964777",
+    "completionId": "chatcmpl-48250521",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1410,
+    "promptTokens": 1576,
+    "completionTokens": 130,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 6100, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 8,
+    "entryNumber": "A7K32905622",
+    "completionId": "chatcmpl-ba7883a4",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 749,
+    "promptTokens": 1931,
+    "completionTokens": 60,
+    "reasoningTokens": 0,
+    "costUsd": 0.00013,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Unliquidated entry; 2 IEEPA lines with 0 ch99 value; HTS valid/ok; no PSC/recon/blocked conditions; net refund computed"
+    }
+   },
+   {
+    "n": 9,
+    "entryNumber": "A7K53653799",
+    "completionId": "chatcmpl-a4618706",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 950,
+    "promptTokens": 1905,
+    "completionTokens": 85,
+    "reasoningTokens": 0,
+    "costUsd": 0.000135,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Unliquidated entry; 2 lines with ieepa_indicator Y; IEEPA refund 15585.00 after 0% carve-out; other underpayment 0; net 15585.00; no BLOCK/WAIT conditions met"
+    }
+   },
+   {
+    "n": 10,
+    "entryNumber": "A7K91442644",
+    "completionId": "chatcmpl-f814d95f",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1275,
+    "promptTokens": 1575,
+    "completionTokens": 130,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 6240, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 11,
+    "entryNumber": "A7K57459799",
+    "completionId": "chatcmpl-d1901957",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1772,
+    "promptTokens": 1569,
+    "completionTokens": 133,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 80,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidated 12 days ago within 80 days, ieepa_indicator Y duty 6180, no other ieepa lines, hts valid Y, hts_relationship_ok Y, no ch99 value, psc N, protest None, no suspension, no adjusted status, statement N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 12,
+    "entryNumber": "A7K76870099",
+    "completionId": "chatcmpl-1cb14c6e",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1651,
+    "promptTokens": 1570,
+    "completionTokens": 128,
+    "reasoningTokens": 0,
+    "costUsd": 0.000125,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 56,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidated 25 days ago within 80 days, ieepa_indicator Y duty 5020, no other ieepa lines, hts valid Y, hts_relationship_ok Y, no ch99 value, psc N, protest None, no suspension, no adjusted, no statement, no court injunction"
+    }
+   },
+   {
+    "n": 13,
+    "entryNumber": "A7K78529799",
+    "completionId": "chatcmpl-45e049b2",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 762,
+    "promptTokens": 1903,
+    "completionTokens": 61,
+    "reasoningTokens": 0,
+    "costUsd": 0.000129,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 40,
+     "checks": "IEEPA HTS present; 2 lines; liquidated 40 days ago within 80-day window; no BLOCK or WAIT conditions triggered; net refund computed"
+    }
+   },
+   {
+    "n": 14,
+    "entryNumber": "A7K51577533",
+    "completionId": "chatcmpl-67aa811d",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1414,
+    "promptTokens": 1569,
+    "completionTokens": 93,
+    "reasoningTokens": 0,
+    "costUsd": 0.000116,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 25,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon, liquidated 55 days ago, IEEPA HTS present, no PSC, no protest, no ch99 value, HTS valid/ok, no broker note issues"
+    }
+   },
+   {
+    "n": 15,
+    "entryNumber": "A7K21174011",
+    "completionId": "chatcmpl-b7b69078",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1246,
+    "promptTokens": 1572,
+    "completionTokens": 81,
+    "reasoningTokens": 0,
+    "costUsd": 0.000114,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 0,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidated 80 days ago exactly, ieepa_indicator Y duty 11500 > 0"
+    }
+   },
+   {
+    "n": 16,
+    "entryNumber": "A7K90384188",
+    "completionId": "chatcmpl-e5cc9397",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2419,
+    "promptTokens": 1590,
+    "completionTokens": 165,
+    "reasoningTokens": 0,
+    "costUsd": 0.000135,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 2,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidated 80 days ago (2026-08-12 to 2026-10-29 = 78 days), ieepa_indicator Y duty 10108, no other ieepa lines, hts valid Y, hts_relationship_ok Y, no ch99 value, psc N, protest None, no suspension, no adjusted, no statement, no invalid HTS, broker note free text, no BLOCK or WAIT condit"
+    }
+   },
+   {
+    "n": 17,
+    "entryNumber": "A7K63252888",
+    "completionId": "chatcmpl-26762571",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2366,
+    "promptTokens": 1566,
+    "completionTokens": 172,
+    "reasoningTokens": 0,
+    "costUsd": 0.000135,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 0,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidated 80 days ago (2026-08-10 to 2026-10-29 = 80 days), ieepa_indicator Y duty 6400, no other ieepa lines, hts valid Y, hts_relationship_ok Y, no ch99 value, no psc, no protest issues, no invalid HTS, no suspension record, no adjusted status, no statement pending, no court injunction"
+    }
+   },
+   {
+    "n": 18,
+    "entryNumber": "A7K21937388",
+    "completionId": "chatcmpl-6fe8f882",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2830,
+    "promptTokens": 1920,
+    "completionTokens": 207,
+    "reasoningTokens": 0,
+    "costUsd": 0.000165,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 80,
+     "checks": "11-char entry; filer A7K match; no duplicate; Accepted; type 01 allowed; no drawback; no recon; liquidated 80+ days ago; IEEPA HTS present; WAIT: control_status=CBP ok; court_injunction N; suspension N; adjusted N; protest None; statement N; ch99_goods_value 0; hts valid/ok Y; psc N; recon N; no WAIT triggers. NET: IEEPA refund 8725 minus 0 col1 carve-out (both lines have col1_rate_pct 0 or 2.5 bu"
+    }
+   },
+   {
+    "n": 19,
+    "entryNumber": "A7K19919100",
+    "completionId": "chatcmpl-68b72e36",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1623,
+    "promptTokens": 1571,
+    "completionTokens": 109,
+    "reasoningTokens": 0,
+    "costUsd": 0.00012,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon, liquidated 85 days ago (BLOCKED), no IEEPA duty lines with HTS, HTS valid/ok, no PSC, no protest, no statement, ch99_goods_value 0, no invalid HTS, no broker note issues"
+    }
+   },
+   {
+    "n": 20,
+    "entryNumber": "A7K50476422",
+    "completionId": "chatcmpl-66ac225f",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1456,
+    "promptTokens": 1572,
+    "completionTokens": 87,
+    "reasoningTokens": 0,
+    "costUsd": 0.000115,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": -110,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidated 130 days ago (>80), ieepa_indicator Y with duty 11670 > 0"
+    }
+   },
+   {
+    "n": 21,
+    "entryNumber": "A7K59416755",
+    "completionId": "chatcmpl-8876f6d6",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1533,
+    "promptTokens": 1591,
+    "completionTokens": 106,
+    "reasoningTokens": 0,
+    "costUsd": 0.000121,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no dup, status Accepted, type 01 allowed, no drawback, recon N, liquidation Extended with suspension N (not WAIT), protest None (not WAIT), no PSC, ieepa Y duty 19725, ch99 0, hts Y/Y, no underpayment, broker note free text"
+    }
+   },
+   {
+    "n": 22,
+    "entryNumber": "A7K97171744",
+    "completionId": "chatcmpl-3a6dff4f",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1034,
+    "promptTokens": 1574,
+    "completionTokens": 56,
+    "reasoningTokens": 0,
+    "costUsd": 0.000108,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Suspended status with suspension record is not a WAIT condition; IEEPA HTS present with duty; no BLOCK or WAIT conditions triggered; nets to refund"
+    }
+   },
+   {
+    "n": 23,
+    "entryNumber": "A7K54114933",
+    "completionId": "chatcmpl-114af2e8",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2329,
+    "promptTokens": 1594,
+    "completionTokens": 143,
+    "reasoningTokens": 0,
+    "costUsd": 0.00013,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 12160, control CBP, no injunction, suspension Y but liquidation Unliquidated (accepted), no adjusted status, protest None, afr N, no PSC, no ch99 value, hts Y/Y, ieepa duty 12160, underpayment 0"
+    }
+   },
+   {
+    "n": 24,
+    "entryNumber": "A7K49021866",
+    "completionId": "chatcmpl-9b9a6eb8",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1640,
+    "promptTokens": 1598,
+    "completionTokens": 95,
+    "reasoningTokens": 0,
+    "costUsd": 0.000119,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, recon N, protest Open, no PSC, no HTS issues, ieepa Y duty 12240, ch99_goods_value 0, hts Y/Y, underpaid 0"
+    }
+   },
+   {
+    "n": 25,
+    "entryNumber": "A7K71250833",
+    "completionId": "chatcmpl-4b79f9b4",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2117,
+    "promptTokens": 1574,
+    "completionTokens": 129,
+    "reasoningTokens": 0,
+    "costUsd": 0.000125,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, protest Suspended but afr_box N so fine, no PSC, no HTS issues, ieepa Y with duty 8500, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, no psc_needed, ieepa_indicator Y lines exist"
+    }
+   },
+   {
+    "n": 26,
+    "entryNumber": "A7K19925655",
+    "completionId": "chatcmpl-a5e3468e",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1608,
+    "promptTokens": 1591,
+    "completionTokens": 98,
+    "reasoningTokens": 0,
+    "costUsd": 0.000119,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon, protest Denied with AFR Y, no PSC, no HTS issues, ieepa Y duty 15048, ch99 val 0, hts Y/Y, underpaid 0"
+    }
+   },
+   {
+    "n": 27,
+    "entryNumber": "A7K45901599",
+    "completionId": "chatcmpl-02af0308",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2098,
+    "promptTokens": 1577,
+    "completionTokens": 128,
+    "reasoningTokens": 0,
+    "costUsd": 0.000125,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 12080, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, protest Denied without AFR, psc_needed N, ieepa HTS present with duty above 0"
+    }
+   },
+   {
+    "n": 28,
+    "entryNumber": "A7K44795766",
+    "completionId": "chatcmpl-39d5b643",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2099,
+    "promptTokens": 1571,
+    "completionTokens": 137,
+    "reasoningTokens": 0,
+    "costUsd": 0.000127,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 6900, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, protest Granted, no PSC, no adjusted status, no statement pending, no invalid HTS, ieepa duty 6900, underpayment 0"
+    }
+   },
+   {
+    "n": 29,
+    "entryNumber": "A7K51863244",
+    "completionId": "chatcmpl-d1d6d1f2",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1658,
+    "promptTokens": 1610,
+    "completionTokens": 112,
+    "reasoningTokens": 0,
+    "costUsd": 0.000123,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "recon_flag Y, recon_entry_filed N, deadline 2027-02-26 > 30 days after 2026-10-29; ieepa_indicator Y, ieepa_duty 8320.00; hts_valid Y, hts_relationship_ok Y; ch99_goods_value 0.00; no BLOCK conditions met"
+    }
+   },
+   {
+    "n": 30,
+    "entryNumber": "A7K72000077",
+    "completionId": "chatcmpl-de57a165",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1529,
+    "promptTokens": 1946,
+    "completionTokens": 94,
+    "reasoningTokens": 0,
+    "costUsd": 0.000139,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Recon flag Y, filed N, deadline 2027-02-01 is >30 days after 2026-10-29; both lines have ieepa_indicator Y, hts_valid Y, hts_relationship_ok Y; no BLOCK or WAIT conditions triggered; net refund computed"
+    }
+   },
+   {
+    "n": 31,
+    "entryNumber": "A7K15986055",
+    "completionId": "chatcmpl-778e66fa",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1274,
+    "promptTokens": 1615,
+    "completionTokens": 107,
+    "reasoningTokens": 0,
+    "costUsd": 0.000123,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "recon_flag Y, recon_entry_filed N, recon_deadline 2026-11-19 is 21 days after 2026-10-29 (<30); hts_valid Y, hts_relationship_ok Y; ieepa_indicator Y with ieepa_duty 14660 > 0; no BLOCK conditions met"
+    }
+   },
+   {
+    "n": 32,
+    "entryNumber": "A7K57641988",
+    "completionId": "chatcmpl-cbb2bf19",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1500,
+    "promptTokens": 1609,
+    "completionTokens": 135,
+    "reasoningTokens": 0,
+    "costUsd": 0.000129,
+    "answer": {
+     "lane": "NET_BILL_RISK",
+     "daysLeft": null,
+     "checks": "Recon flag Y, filed Y; deadline 2026-10-19 is 10 days before as-of 2026-10-29 (less than 30 days). No other BLOCK/WAIT conditions triggered. IEEPA duty 16796, col1 2.5% of 88400 = 2210, refund 14586. Underpayment 0. Net positive. No IOR debt impact."
+    }
+   },
+   {
+    "n": 33,
+    "entryNumber": "A7K45051022",
+    "completionId": "chatcmpl-c72b8298",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 3030,
+    "promptTokens": 1582,
+    "completionTokens": 112,
+    "reasoningTokens": 0,
+    "costUsd": 0.000122,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 09 allowed, no drawback, no recon flag, liquidation Unliquidated (not >80 days), IEEPA HTS present, control CBP, no injunction, no suspension record, adjusted N, protest None, no PSC, no ch99 value, HTS valid/ok, broker note free text"
+    }
+   },
+   {
+    "n": 34,
+    "entryNumber": "A7K59572888",
+    "completionId": "chatcmpl-52da0137",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1495,
+    "promptTokens": 1584,
+    "completionTokens": 131,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 23 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 1560, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, broker note free text, no invalid HTS"
+    }
+   },
+   {
+    "n": 35,
+    "entryNumber": "A7K59074411",
+    "completionId": "chatcmpl-96a4f3a8",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1805,
+    "promptTokens": 1575,
+    "completionTokens": 138,
+    "reasoningTokens": 0,
+    "costUsd": 0.000128,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry type 08 blocked; IEEPA duty 9150 on HTS 9903.01.25 with CH origin; no other IEEPA lines; ch99_goods_value 0; HTS valid Y; hts_relationship_ok Y; no PSC; no recon; protest None; no AFR; statement N; no suspension; no court injunction; drawback N; not on drawback; not final liquidated; liquidation date missing; as_of 2026-10-29"
+    }
+   },
+   {
+    "n": 36,
+    "entryNumber": "A7K24207088",
+    "completionId": "chatcmpl-e439d4bf",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1272,
+    "promptTokens": 1575,
+    "completionTokens": 94,
+    "reasoningTokens": 0,
+    "costUsd": 0.000117,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry type 47 (drawback) allowed; IEEPA indicator Y with duty 6045; no liquidation date; no BLOCK or WAIT conditions found; recon_flag N; PSC N; protest None; hts valid Y; hts_relationship ok Y; ch99_goods_value 0; broker note empty"
+    }
+   },
+   {
+    "n": 37,
+    "entryNumber": "A7K22858255",
+    "completionId": "chatcmpl-63cd26c2",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1253,
+    "promptTokens": 1594,
+    "completionTokens": 103,
+    "reasoningTokens": 0,
+    "costUsd": 0.00012,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "drawback_claim Y; No IEEPA HTS with duty >0 (line has ieepa_indicator Y but ieepa_duty 0); Recon flag N; PSC N; HTS valid Y; HTS relationship ok Y; protest None; afr N; statement N; ch99_goods_value 0; non_ieepa_underpaid 0"
+    }
+   },
+   {
+    "n": 38,
+    "entryNumber": "A7K87307599",
+    "completionId": "chatcmpl-40bb5feb",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2069,
+    "promptTokens": 1596,
+    "completionTokens": 137,
+    "reasoningTokens": 0,
+    "costUsd": 0.000129,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback claim, recon flag N, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 12600, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, broker note free text, no BLOCK or WAIT conditions triggered"
+    }
+   },
+   {
+    "n": 39,
+    "entryNumber": "A7K91119744",
+    "completionId": "chatcmpl-c3e2a539",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1637,
+    "promptTokens": 1905,
+    "completionTokens": 84,
+    "reasoningTokens": 0,
+    "costUsd": 0.000134,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "IEEPA HTS present; no BLOCK or WAIT conditions triggered; net refund computed as 7525+2680 - (4.2% of 13400) = 9653.80; other underpayment 0; net positive"
+    }
+   },
+   {
+    "n": 40,
+    "entryNumber": "0P221551466",
+    "completionId": "chatcmpl-134375b1",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1559,
+    "promptTokens": 1590,
+    "completionTokens": 92,
+    "reasoningTokens": 0,
+    "costUsd": 0.000117,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer 0P2 matches, no dup, status Accepted, type 01 allowed, no drawback, no recon, protest None, no PSC, no HTS issues, ieepa Y duty 4820, ch99 0, hts Y/Y, underpaid 0"
+    }
+   },
+   {
+    "n": 41,
+    "entryNumber": "0P297183888",
+    "completionId": "chatcmpl-c11623d1",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2298,
+    "promptTokens": 1576,
+    "completionTokens": 140,
+    "reasoningTokens": 0,
+    "costUsd": 0.000128,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 0P297183888: 11 chars, filer 0P2 matches, first occurrence, status Accepted, type 01 allowed, no drawback, no recon, protest None, no PSC, no HTS issues, ieepa Y with duty 15220, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, no underpayment, no IOR debt. IEEPA refund 15220. Net 15220."
+    }
+   },
+   {
+    "n": 42,
+    "entryNumber": "0P253683599",
+    "completionId": "chatcmpl-069d38f3",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2187,
+    "promptTokens": 1571,
+    "completionTokens": 132,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 33,
+     "checks": "Entry 0P253683599: 11 chars, filer 0P2 matches, no duplicate, status Accepted, type 01 allowed, no drawback, recon N, liquidated 2026-09-26, 33 days since liquidation, ieepa_indicator Y duty 6631, ch99_goods_value 0, hts Y/Y, non_ieepa_underpaid 0, broker N"
+    }
+   },
+   {
+    "n": 43,
+    "entryNumber": "A7K41709811",
+    "completionId": "chatcmpl-e346203d",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2101,
+    "promptTokens": 1571,
+    "completionTokens": 131,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 19240, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 44,
+    "entryNumber": "A7K-4170981-1",
+    "completionId": "chatcmpl-9d8a5e19",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1663,
+    "promptTokens": 1590,
+    "completionTokens": 96,
+    "reasoningTokens": 0,
+    "costUsd": 0.000118,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, first occurrence, status Accepted, type 01 allowed, no drawback, no recon flag, unliquidated, no PSC, no protest issue, HTS valid/ok, ieepa Y duty 19540, ch99 val 0, no invalid HTS"
+    }
+   },
+   {
+    "n": 45,
+    "entryNumber": "A7K1234567",
+    "completionId": "chatcmpl-b114a074",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1799,
+    "promptTokens": 1570,
+    "completionTokens": 131,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 12740, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 46,
+    "entryNumber": "Z3M73705788",
+    "completionId": "chatcmpl-ab8d8fde",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1825,
+    "promptTokens": 1590,
+    "completionTokens": 103,
+    "reasoningTokens": 0,
+    "costUsd": 0.00012,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer Z3M not in [A7K,0P2], no earlier dup, status Accepted, type 01 allowed, no drawback, recon N, liquidation Unliquidated, no IEEPA duty >0 issue, no PSC/HTS/injunction/protest/statement/underreview/value/30day recon issues"
+    }
+   },
+   {
+    "n": 47,
+    "entryNumber": "A7K28544311",
+    "completionId": "chatcmpl-ac11299d",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1074,
+    "promptTokens": 1575,
+    "completionTokens": 69,
+    "reasoningTokens": 0,
+    "costUsd": 0.000111,
+    "answer": {
+     "lane": "BLOCKED",
+     "daysLeft": null,
+     "checks": "Entry cancelled; not 11 chars after removing dashes/apostrophes/spaces; IEEPA duty 0; no IEEPA HTS indicator Y with duty above 0; recon_flag N; all other conditions clear"
+    }
+   },
+   {
+    "n": 48,
+    "entryNumber": "A7K45117533",
+    "completionId": "chatcmpl-92f227d7",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1647,
+    "promptTokens": 1575,
+    "completionTokens": 131,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 16620, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 49,
+    "entryNumber": "A7K51528177",
+    "completionId": "chatcmpl-734cca17",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1364,
+    "promptTokens": 1577,
+    "completionTokens": 83,
+    "reasoningTokens": 0,
+    "costUsd": 0.000115,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "court_injunction Y blocks lane; entry type 01 allowed; no IEEPA HTS conflict; no PSC needed; no recon issues; no HTS invalidity; no statement pending; no drawback; no PSC; no suspension record conflict; liquidation unliquidated; days left null"
+    }
+   },
+   {
+    "n": 50,
+    "entryNumber": "A7K26677355",
+    "completionId": "chatcmpl-4224a1eb",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1627,
+    "promptTokens": 1571,
+    "completionTokens": 111,
+    "reasoningTokens": 0,
+    "costUsd": 0.000121,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, recon N, liquidation Unliquidated, protest None, AFR N, PSC N, hts Y/Y, ch99_goods 0, ieepa Y with duty 16940, non_ieepa underpaid 0, statement_pending Y"
+    }
+   },
+   {
+    "n": 51,
+    "entryNumber": "A7K40611877",
+    "completionId": "chatcmpl-b5c82f69",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1512,
+    "promptTokens": 1576,
+    "completionTokens": 100,
+    "reasoningTokens": 0,
+    "costUsd": 0.000119,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, recon N, liquidation Unliquidated, protest None, no PSC, no HTS issues, ieepa Y duty 15160, ch99 val 0, hts Y/Y, underpaid 0"
+    }
+   },
+   {
+    "n": 52,
+    "entryNumber": "A7K62224999",
+    "completionId": "chatcmpl-e43806ae",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 994,
+    "promptTokens": 1596,
+    "completionTokens": 48,
+    "reasoningTokens": 0,
+    "costUsd": 0.000107,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "hts_valid N triggers WAIT; hts_relationship_ok Y; ieepa_indicator Y; no BLOCK conditions met"
+    }
+   },
+   {
+    "n": 53,
+    "entryNumber": "A7K30717000",
+    "completionId": "chatcmpl-c7acf9dc",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 986,
+    "promptTokens": 1574,
+    "completionTokens": 61,
+    "reasoningTokens": 0,
+    "costUsd": 0.000109,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "hts_relationship_ok N; No BLOCK or WAIT conditions triggered; IEEPA refund 16245; underpayment 0; net 16245"
+    }
+   },
+   {
+    "n": 54,
+    "entryNumber": "A7K79721877",
+    "completionId": "chatcmpl-185ae5c7",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2706,
+    "promptTokens": 1578,
+    "completionTokens": 216,
+    "reasoningTokens": 0,
+    "costUsd": 0.000147,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 7725, ch99_goods_value 1500, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no suspension record, no court injunction, no adjusted_status, no statement_pending"
+    }
+   },
+   {
+    "n": 55,
+    "entryNumber": "A7K15506011",
+    "completionId": "chatcmpl-721cce47",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1427,
+    "promptTokens": 1572,
+    "completionTokens": 104,
+    "reasoningTokens": 0,
+    "costUsd": 0.000119,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, unliquidated, no protest block, no PSC, no HTS issues, no IEEPA indicator, no ch99 value, no invalid HTS, broker note free text, no IEEPA duty, no other underpayment"
+    }
+   },
+   {
+    "n": 56,
+    "entryNumber": "A7K53145699",
+    "completionId": "chatcmpl-21b5fb70",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1139,
+    "promptTokens": 1598,
+    "completionTokens": 84,
+    "reasoningTokens": 0,
+    "costUsd": 0.000116,
+    "answer": {
+     "lane": "WAIT",
+     "daysLeft": null,
+     "checks": "psc_needed_non_ieepa Y; entry_type 01 allowed; ieepa_indicator Y with duty 10564; hts_valid Y; hts_relationship_ok Y; ch99_goods_value 0; no other BLOCK/WAIT conditions"
+    }
+   },
+   {
+    "n": 57,
+    "entryNumber": "A7K67089188",
+    "completionId": "chatcmpl-a1a9cd67",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2208,
+    "promptTokens": 1593,
+    "completionTokens": 163,
+    "reasoningTokens": 0,
+    "costUsd": 0.000135,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated (not >80 days), ieepa_indicator Y duty 6240 >0, control CBP, no injunction, no suspension record, adjusted N, protest None, no AFR issue, statement N, ch99_goods_value 0, hts valid Y, hts_relationship_ok Y, psc N, ieepa line ch99_goods_value 0, no invalid HTS, bro"
+    }
+   },
+   {
+    "n": 58,
+    "entryNumber": "A7K35748488",
+    "completionId": "chatcmpl-aa65e527",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 903,
+    "promptTokens": 1914,
+    "completionTokens": 48,
+    "reasoningTokens": 0,
+    "costUsd": 0.000126,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Unliquidated status; 2 IEEPA lines EU framework; carve-out applied; zero underpayment; nets refund"
+    }
+   },
+   {
+    "n": 59,
+    "entryNumber": "A7K16386644",
+    "completionId": "chatcmpl-e8903424",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1930,
+    "promptTokens": 1580,
+    "completionTokens": 135,
+    "reasoningTokens": 0,
+    "costUsd": 0.000127,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": 60,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidated 18 days ago within 80 days, ieepa_indicator Y duty 9930, no other ieepa lines, ch99_goods_value 0, hts valid Y, hts_relationship_ok Y, psc_needed N, protest None, statement_pending N, broker note free text, no WAIT conditions triggered"
+    }
+   },
+   {
+    "n": 60,
+    "entryNumber": "A7K66040199",
+    "completionId": "chatcmpl-20679450",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1721,
+    "promptTokens": 1575,
+    "completionTokens": 136,
+    "reasoningTokens": 0,
+    "costUsd": 0.000127,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 8790, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed_non_ieepa N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 61,
+    "entryNumber": "A7K98997222",
+    "completionId": "chatcmpl-05112428",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1814,
+    "promptTokens": 1577,
+    "completionTokens": 137,
+    "reasoningTokens": 0,
+    "costUsd": 0.000127,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 2685, ch99_goods_value 0, hts valid Y, hts_relationship_ok Y, psc_needed N, protest None, no AFR issue, statement_pending N, ieepa HTS valid, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 62,
+    "entryNumber": "A7K53935877",
+    "completionId": "chatcmpl-8873acff",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2202,
+    "promptTokens": 1968,
+    "completionTokens": 164,
+    "reasoningTokens": 0,
+    "costUsd": 0.000157,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Unliquidated status; 2 lines with ieepa_indicator Y; ch99_goods_value=0; hts_valid/ok Y; no PSC; no recon flag; no drawback; protest None; afr_box N; 11-char entry after removing dashes/quotes/spaces; filer A7K matches; no duplicate earlier entries; net IEEPA refund 28998.00 minus underpayment 11332.36 = 17665.64 refund; days from 0000-00-00 to 2026-10-29 = null"
+    }
+   },
+   {
+    "n": 63,
+    "entryNumber": "A7K21865533",
+    "completionId": "chatcmpl-2b4e7af0",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1274,
+    "promptTokens": 1610,
+    "completionTokens": 67,
+    "reasoningTokens": 0,
+    "costUsd": 0.000113,
+    "answer": {
+     "lane": "NET_BILL_RISK",
+     "daysLeft": null,
+     "checks": "Not 11 chars after removing dashes; IEEPA duty 6000; other underpaid 9000; net -3000; 80-day window open"
+    }
+   },
+   {
+    "n": 64,
+    "entryNumber": "A7K51309444",
+    "completionId": "chatcmpl-2232cda3",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 2024,
+    "promptTokens": 1588,
+    "completionTokens": 156,
+    "reasoningTokens": 0,
+    "costUsd": 0.000133,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y duty 8000, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, broker note free text, no other lines, ieepa_duty 8000, underpaid 5600, net refund 2400"
+    }
+   },
+   {
+    "n": 65,
+    "entryNumber": "A7K54825900",
+    "completionId": "chatcmpl-13772287",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1711,
+    "promptTokens": 1591,
+    "completionTokens": 131,
+    "reasoningTokens": 0,
+    "costUsd": 0.000127,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 12200, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 66,
+    "entryNumber": "A7K73449900",
+    "completionId": "chatcmpl-7c9a1c25",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1992,
+    "promptTokens": 1592,
+    "completionTokens": 234,
+    "reasoningTokens": 0,
+    "costUsd": 0.000152,
+    "answer": {
+     "lane": "NET_BILL_RISK",
+     "daysLeft": 35,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, recon N, liquidated 44 days ago, IEEPA HTS present, ch99_goods_value 0, hts valid Y, hts_relationship_ok Y, psc N, protest None, no AFR issue, broker note free text, ieepa_indicator Y on line 1, ch99_goods_value 0, hts valid Y, hts_relationship_ok Y, psc_needed_non_ieepa N, recon_flag N, court_injunctio"
+    }
+   },
+   {
+    "n": 67,
+    "entryNumber": "A7K84534877",
+    "completionId": "chatcmpl-27acd7c0",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1479,
+    "promptTokens": 1573,
+    "completionTokens": 136,
+    "reasoningTokens": 0,
+    "costUsd": 0.000127,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 01 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 7600, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed_non_ieepa N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note empty"
+    }
+   },
+   {
+    "n": 68,
+    "entryNumber": "A7K98281700",
+    "completionId": "chatcmpl-0feab3b9",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1290,
+    "promptTokens": 1590,
+    "completionTokens": 131,
+    "reasoningTokens": 0,
+    "costUsd": 0.000127,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, no duplicate, status Accepted, type 21 allowed, no drawback, no recon flag, liquidation Unliquidated, no final liquidation date, ieepa_indicator Y with duty 4150, ch99_goods_value 0, hts_valid Y, hts_relationship_ok Y, psc_needed N, protest None, afr_box N, statement_pending N, no invalid HTS, broker note free text"
+    }
+   },
+   {
+    "n": 69,
+    "entryNumber": "A7K49804222",
+    "completionId": "chatcmpl-9e3ef7f9",
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "ms": 1212,
+    "promptTokens": 1585,
+    "completionTokens": 114,
+    "reasoningTokens": 0,
+    "costUsd": 0.000122,
+    "answer": {
+     "lane": "FILE_NOW",
+     "daysLeft": null,
+     "checks": "Entry 11 chars, filer A7K matches, first occurrence, status Accepted, type 31 allowed, no drawback, recon N, liquidation Unliquidated, no IEEPA duty >0, control CBP, no injunction, no suspension record, adjusted N, statement N, ch99_goods_value 0, hts valid/ok Y, psc N, protest None, no broker note conditions"
+    }
+   }
+  ]
+ }
+}
