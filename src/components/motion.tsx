@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
 import { fmtUsd } from "@/lib/money";
+import { HERO_TWIST } from "@/lib/sample-stats";
 
 export function useReducedMotion() {
   const [r, setR] = useState(false);
@@ -73,14 +74,14 @@ export function Words({ text, base = 0, step = 70 }: { text: string; base?: numb
  * The hero's twist, shown in its true final state from the first paint. No loop, no tween, no intermediate figures.
  * The figures are the real sample shipment A7K-7344990-0 (see the drawer): $10,500.00 refundable, $13,125.00 of other duties underpaid.
  */
-const REFUND = 1050000, UNDER = 1312500, NET = REFUND - UNDER;
+const REFUND = HERO_TWIST.refundCents, UNDER = HERO_TWIST.underpaidCents, NET = REFUND - UNDER;
 export function TwistCard() {
   const bill = NET < 0;
   return (
-    <div className={`twist ${bill ? "bill" : ""}`} role="img" aria-label="Example: a shipment worth a $10,500.00 refund turns into a $2,625.00 bill once other duties it underpaid are netted off.">
+    <div className={`twist ${bill ? "bill" : ""}`} role="img" aria-label={`Example: a shipment worth a ${fmtUsd(REFUND)} refund turns into a ${fmtUsd(-NET)} bill once other duties it underpaid are netted off.`}>
       <div className="twist-top">
         <span className="twist-lbl">{bill ? "You'd owe Customs" : "You'd get back"}</span>
-        <span className="twist-id mono">A7K-7344990-0</span>
+        <span className="twist-id mono">{HERO_TWIST.entryNumber}</span>
       </div>
       <div className="twist-num" aria-hidden>
         <b>{fmtUsd(NET)}</b>

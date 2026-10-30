@@ -13,3 +13,9 @@ export const SAMPLE_STATS = {
   blockedCount: 15,
   blockedRefundCents: 16966900,
 } as const;
+
+/**
+ * The hero card's example shipment (A7K-7344990-0 in the sample). tests/numbers-audit.test.ts checks these against the engine's
+ * verdict for that entry, so the card cannot show a figure the app does not compute.
+ */
+export const HERO_TWIST = { entryNumber: "A7K-7344990-0", refundCents: 1050000, underpaidCents: 1312500 } as const;

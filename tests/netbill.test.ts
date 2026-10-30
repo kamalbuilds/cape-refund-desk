@@ -68,7 +68,12 @@ describe("recorded sample run gets today's lanes at serve time", () => {
     expect(changed.length).toBe(3);
     for (const v of changed) { expect(before.portfolio.verdicts.find((b) => b.id === v.id)!.lane).toBe("NET_BILL_RISK"); expect(v.lane).toBe("FILE_NOW"); expect(v.filingStep).toMatch(/^Step \d/); }
     expect(served.portfolio.verdicts.map((v) => [v.id, v.order, v.money])).toEqual(before.portfolio.verdicts.map((v) => [v.id, v.order, v.money]));
-    expect(served.explanations).toEqual(before.explanations);
+    // AI text of unmoved entries is untouched; the three moved entries lose their recorded text (it names the old group).
+    const movedIds = new Set(changed.map((v) => v.id));
+    expect(Object.keys(before.explanations).length - Object.keys(served.explanations).length).toBe([...movedIds].filter((id) => before.explanations[id]).length);
+    for (const [id, e] of Object.entries(before.explanations)) { if (movedIds.has(id)) expect(served.explanations[id]).toBeUndefined(); else expect(served.explanations[id]).toEqual(e); }
+    // no served AI text claims a lane the entry is not in
+    for (const v of served.portfolio.verdicts) { const e = served.explanations[v.id]; if (e && /NET_BILL_RISK lane/.test(JSON.stringify(e))) expect(v.lane).toBe("NET_BILL_RISK"); }
   });
   it("group totals add up to the served verdicts", () => {
     const sum = (l: string) => served.portfolio.verdicts.filter((v) => v.lane === l).reduce((a, v) => a + v.money.netRefundCents, 0);

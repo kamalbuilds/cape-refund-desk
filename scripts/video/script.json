@@ -49,8 +49,8 @@
      "cap": "Nemotron Lightning cleans the messy columns. Nemotron Ultra reads the hard ones."
     },
     {
-     "say": "Four lanes. Thirty-six clear to file, thirteen to fix first, five for her broker, and fifteen customs would reject.",
-     "cap": "Four lanes: 36 clear to file, 13 to fix first, 5 for her broker, 15 customs would reject."
+     "say": "Four lanes. Thirty-nine clear to file, thirteen to fix first, two for her broker, and fifteen customs would reject.",
+     "cap": "Four lanes: 39 clear to file, 13 to fix first, 2 for her broker, 15 customs would reject."
     }
    ]
   },
@@ -73,12 +73,12 @@
    "title": "The trap",
    "sentences": [
     {
-     "say": "Now the trap. This entry looks like eight thousand dollars.",
-     "cap": "Now the trap. This entry looks like $8,000."
+     "say": "Now the trap. This entry looks like ten and a half thousand dollars.",
+     "cap": "Now the trap. This entry looks like $10,500."
     },
     {
-     "say": "But five thousand six hundred of underpaid duty gets netted against it, so the real refund is twenty-four hundred.",
-     "cap": "But $5,600 of underpaid duty gets netted against it. The real refund is $2,400."
+     "say": "But thirteen thousand one hundred twenty-five of underpaid duty gets netted against it, so claiming would cost her twenty-six hundred twenty-five.",
+     "cap": "But $13,125 of underpaid duty gets netted against it. Claiming would cost her $2,625."
     },
     {
      "say": "Ultra explains why her broker must decide first, and shows its reasoning.",

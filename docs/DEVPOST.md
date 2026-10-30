@@ -29,7 +29,7 @@ We built the check that runs before the upload button.
 
 ### What it does
 
-You give it a Customs shipment export (or press "Run the sample"). It sorts every shipment into four groups and gives a headline in plain words, for example "33 of 69 shipments shouldn't go in the refund file yet. Here's why."
+You give it a Customs shipment export (or press "Run the sample"). It sorts every shipment into four groups and gives a headline in plain words, for example "30 of 69 shipments shouldn't go in the refund file yet. Here's why."
 
 | Group | Meaning |
 |---|---|
@@ -131,8 +131,8 @@ Voiceover is first person plural, plain, no hype. Times are cumulative.
 | 1 | 0:00 to 0:15 | Landing, top of page | Header, the red "Irreversible." banner, the broker-review line | "CBP's CAPE portal refunds IEEPA tariffs from a CSV. Once the declaration is accepted you cannot amend it or remove an entry. Small importers get one attempt. This is the check that runs before they press upload." |
 | 2 | 0:15 to 0:30 | Pan to the intro panel | "The models never decide eligibility or touch a dollar figure." and the "synthetic sample" line | "Deterministic code checks each entry against CBP's published rules and computes the money in cents. Nemotron Lightning normalizes the messy columns. Nemotron Ultra explains and ranks. The sample is synthetic. We never ask for ACE credentials or bank details." |
 | 3 | 0:30 to 0:45 | Click "Run the sample (recorded real run)" | Progress counter, then the four lane totals | "This replays a real run we recorded on Nebius Token Factory: 69 entries, 69 Lightning calls and 23 Ultra calls. The receipt at the bottom has the completion ids." |
-| 4 | 0:45 to 1:15 | Hold on the four lane totals, scroll the board slowly | Lane counts (36 / 13 / 5 / 15) and dollars per lane | "Thirty-six cleared to file, thirteen to hold, five that need a broker decision, fifteen that ACE would reject. Each card shows the exact CBP error string, days left in the window and the filing step. The urgent one is at the top: zero days left." |
-| 5 | 1:15 to 1:55 | Click the broker-decision card A7K-5130944-4 | Drawer: Ultra explanation, then the money table ($8,000 refundable, $5,600 underpaid, $2,400 net), then the lines and the broker note | "This is the trap. The line shows eight thousand dollars of IEEPA duty, but a Section 301 underpayment of fifty-six hundred may be recalculated, so the real net is twenty-four hundred, and the importer has open debt CBP may offset. Ultra explains why this one needs a broker before it goes in. Notice what Ultra did not write: every dollar figure here comes from the engine." |
+| 4 | 0:45 to 1:15 | Hold on the four lane totals, scroll the board slowly | Lane counts (39 / 13 / 2 / 15) and dollars per lane | "Thirty-nine cleared to file, thirteen to hold, two that need a broker decision, fifteen that ACE would reject. Each card shows the exact CBP error string, days left in the window and the filing step. The urgent one is at the top: zero days left." |
+| 5 | 1:15 to 1:55 | Click the broker-decision card A7K-7344990-0 | Drawer: Ultra explanation, then the money table ($10,500 refundable, $13,125 underpaid, -$2,625 net), then the lines and the broker note | "This is the trap. The line shows ten and a half thousand dollars of refundable IEEPA duty, but thirteen thousand of other duties that Customs may bill back wipe it out, so the real net is a $2,625 bill, and the importer has open debt CBP may offset. Ultra explains why this one needs a broker before it goes in. Notice what Ultra did not write: every dollar figure here comes from the engine." |
 | 6 | 1:55 to 2:15 | Expand "Ultra's reasoning trace", then close the drawer | The reasoning trace, the guard note under the explanation | "The reasoning trace is the real one. A guard checks every figure and day count in the model's text against the engine. In our own recording Ultra wrote 'file 7 entries expiring today'. The engine says one. The guard corrects it, and there is a test for that sentence." |
 | 7 | 2:15 to 2:30 | Scroll to the Export panel, tick the acknowledgement, click the CAPE CSV download | The acknowledgement text, the downloaded filename, the CSV in the OS preview (one `Entry Number` column, apostrophes on leading zeros) | "Export sits behind an acknowledgement that the declaration is irreversible. The CSV follows CBP's published format. Your broker uploads it. We do not." |
 | 8 | 2:30 to 2:42 | Scroll to Rule-watch, click "Check CBP now" | "4 changes touch checks this tool runs; 7 more are informational", the warehouse 21/22 change with July and October quotes, the "Tavily agrees" badge | "Rule-watch reads CBP's live page, compares it to a July capture and quotes four changes that touch our checks, such as warehouse entries now being rejected. Tavily Extract reads the page independently and agrees." |
@@ -154,13 +154,14 @@ Recording checklist:
 
 | Claim | Where |
 |---|---|
-| 69 entries; lanes 36 / 13 / 5 / 15 | `data/sample-run.json` (`portfolio.lanes`), visible on the board |
+| 69 entries; lanes 39 / 13 / 2 / 15 | `data/sample-run.json` (`portfolio.lanes`) re-derived by the engine at serve time (`src/lib/sample-relane.ts`); visible on the board; pinned in `tests/numbers-audit.test.ts` |
 | 69 Lightning calls, 1 failed; 23 Ultra calls | `data/sample-run.json` `receipt`, shown in the receipt panel |
 | Cost $0.0035 Lightning, $0.0949 Ultra | same, list prices in `docs/token-factory-findings.md` |
 | 609 of 612 fields agree; 3 disagreements | `data/sample-run.json` `normalization` |
 | 15,139 reasoning tokens of 17,613 | `receipt.ultra` |
 | Full recorded run took 157 s | `receipt.wallMs` |
-| Underpaid-301 entry: $8,000, $5,600, $2,400 | drawer for A7K-5130944-4; `tests/numberguard.test.ts` |
+| Net-bill entry: $10,500 refundable, $13,125 underpaid, -$2,625 net | drawer for A7K-7344990-0 and the hero card; `tests/numbers-audit.test.ts` |
+| Underpaid-301 entry: $8,000, $5,600, $2,400 (still nets a refund, so Safe to claim with a note) | drawer for A7K-5130944-4; `tests/numberguard.test.ts` |
 | "7 entries expiring today" vs 1 | `portfolioNote.headline` in the recording; pinned in `tests/numberguard.test.ts` |
 | 4 key changes, 7 informational, 11 of 11 confirmed | `GET /api/rulewatch` on the hosted URL; `data/rulewatch-recorded.json`; `node scripts/treg-crosscheck.mjs` |
 | 402 notice | click "Run live on Token Factory" on the hosted URL while the account has no credit; `tests/credit.test.ts` |

@@ -54,7 +54,7 @@ A pre-flight check that runs before the upload button.
 
 Users: owners of small importers who file once, and the customs brokers who upload for them.
 
-Story: a small importer sends a 69-line export to the broker. The desk shows 36 safe, 13 to fix, 5 for the broker, 15 to leave out. The $8,000 entry goes to the broker with the reason written out.
+Story: a small importer sends a 69-line export to the broker. The desk shows 39 safe, 13 to fix, 2 for the broker, 15 to leave out. The $10,500 entry, where $13,125 of other duties Customs may bill back wipes out the refund, goes to the broker with the reason written out.
 
 Buyer wedge: the customs broker or trade-compliance firm that handles many small importers and carries the risk if a bad file goes in. Pricing per file reviewed or per seat is our hypothesis, not tested. [needs source] for refund volume or market size. Nobody outside the team has used it yet.
 

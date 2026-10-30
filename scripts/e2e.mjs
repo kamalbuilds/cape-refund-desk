@@ -37,6 +37,12 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(overflow <= 1, `landing: no horizontal overflow (${overflow}px)`);
   await page.screenshot({ path: `${OUT}/landing-${label}.png` });
   ok(await page.getByTestId("audience").count() === 1 && /\$467,490\.84/.test(await page.getByTestId("sample-safe-total").innerText()), "landing leads with the audience and the sample's safe-to-file dollars");
+  { // numbers on the landing page: hero card and audience strip match the engine (tests/numbers-audit.test.ts pins the source of each)
+    const twist = (await page.locator(".twist").first().innerText()).replace(/\s+/g, " ");
+    ok(/A7K-7344990-0/.test(twist) && /-\$2,625\.00/.test(twist) && /\$10,500\.00/.test(twist) && /-\$13,125\.00/.test(twist), `hero card shows the real net-bill shipment's figures (${twist.slice(0, 120)})`);
+    const aud = (await page.getByTestId("audience").innerText()).replace(/\s+/g, " ");
+    ok(/\b39 shipments \$467,490\.84 safe/.test(aud) && /\b13 shipments \$176,372\.00/.test(aud) && /\b2 shipments \$5,625\.00 possible bill/.test(aud) && /\b15 shipments not claimable/.test(aud), "audience strip shows 39 / 13 / 2 / 15 with the engine's dollars");
+  }
   const probe = await (await fetch(`${BASE}/api/run`)).json();
   if (probe.live === false) ok(await page.getByTestId("live-note").count() === 1 && /paused|key|unavailable|credit/i.test(await page.getByTestId("live-note").innerText()), `live AI is down (${probe.reason}), so the page says so and does not offer a dead button`);
   else ok(await page.getByTestId("live-note").count() === 0, "live AI is up, no pause note");
