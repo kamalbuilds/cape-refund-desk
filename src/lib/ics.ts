@@ -1,5 +1,6 @@
 import type { Portfolio } from "./validate";
 import { addDays } from "./dates";
+import { DEADLINE_SOURCES, routesFor } from "./deadlines";
 
 /** RFC 5545 text escaping. */
 const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/;/g, "\\;").replace(/,/g, "\\,");
@@ -21,21 +22,25 @@ const ymd = (iso: string) => iso.replace(/-/g, "");
 export interface IcsOptions { include?: Set<string>; /** only entries in these ids; default all */ }
 export interface IcsEvent { uid: string; date: string; summary: string; description: string }
 
-/** Deadline events for the proposed declaration: CAPE window close, reconciliation deadline, protest window close. */
+/** Deadline events for the proposed declaration. Dates come from the shared deadline module so the calendar, drawer and by-week view always agree. */
 export function icsEvents(p: Portfolio, asOf: string, o: IcsOptions = {}): IcsEvent[] {
   const ev: IcsEvent[] = [];
   for (const v of p.verdicts) {
     if (o.include && !o.include.has(v.id)) continue;
-    const d = v.deadlines;
-    if (d.capeDaysLeft !== null && d.capeDaysLeft >= 0 && v.lane !== "BLOCKED" && d.capeCutoffDate)
-      ev.push({ uid: `${v.key}-cape@cape-refund-desk`, date: d.capeCutoffDate, summary: `CAPE window closes: ${v.displayNumber}`,
-        description: `Phase 1 accepts entries liquidated within the preceding 80 days. This shipment's window closes ${d.capeCutoffDate} (${d.capeDaysLeft} days after ${asOf}). Lane: ${v.lane}. Source: CBP IEEPA refunds FAQ. Not legal advice; confirm with your broker.` });
-    if (d.reconDeadlineDaysLeft !== null && d.reconDeadlineDaysLeft >= 0 && v.lane !== "BLOCKED")
-      ev.push({ uid: `${v.key}-recon@cape-refund-desk`, date: addDays(asOf, d.reconDeadlineDaysLeft), summary: `Reconciliation filing due: ${v.displayNumber}`,
-        description: `Reconciliation deadline for a recon-flagged entry. Lane: ${v.lane}. Source: CBP IEEPA refunds FAQ.` });
-    if (d.protestDaysLeft !== null && d.protestDaysLeft >= 0 && d.protestDeadlineDate)
-      ev.push({ uid: `${v.key}-protest@cape-refund-desk`, date: d.protestDeadlineDate, summary: `Protest window closes: ${v.displayNumber}`,
-        description: `Protest deadline under 19 U.S.C. 1514: 180 days from liquidation. Lane: ${v.lane}. Not legal advice; confirm with your broker.` });
+    for (const r of routesFor(v, asOf)) {
+      if (r.closes === null || r.daysLeft === null || r.daysLeft < 0) continue;
+      const src = r.sources.map((s) => DEADLINE_SOURCES[s]).filter((s) => s && s.url).map((s) => s.url).join(" ");
+      const tail = `Counted from ${asOf}, the date in this data. ${src ? `Source: ${src}. ` : ""}Not legal advice; confirm with your broker.`;
+      if (r.id === "CAPE" && v.lane !== "BLOCKED")
+        ev.push({ uid: `${v.key}-cape@cape-refund-desk`, date: r.closes, summary: `CAPE window closes: ${v.displayNumber}`,
+          description: `Phase 1 accepts entries liquidated within the preceding 80 days. This shipment's window closes ${r.closes} (${r.daysLeft} days after ${asOf}). Lane: ${v.lane}. ${tail}` });
+      else if (r.id === "RECON" && v.lane !== "BLOCKED")
+        ev.push({ uid: `${v.key}-recon@cape-refund-desk`, date: r.closes, summary: `Reconciliation filing due: ${v.displayNumber}`,
+          description: `Reconciliation deadline for a recon-flagged entry. Lane: ${v.lane}. ${tail}` });
+      else if (r.id === "PROTEST")
+        ev.push({ uid: `${v.key}-protest@cape-refund-desk`, date: r.closes, summary: `Protest window closes: ${v.displayNumber}`,
+          description: `Form 19 protest deadline under 19 U.S.C. 1514 and 19 CFR 174.12(e): 180 days from liquidation. Lane: ${v.lane}. ${tail}` });
+    }
   }
   return ev.sort((a, b) => a.date.localeCompare(b.date) || a.uid.localeCompare(b.uid));
 }

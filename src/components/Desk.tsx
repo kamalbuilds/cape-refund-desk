@@ -18,6 +18,7 @@ import Waterfall from "./Waterfall";
 import { AlertTriangle, ChevronDown, Download, FileText, Play, Upload, X } from "lucide-react";
 import { BTN_PRIMARY, BTN_SECONDARY, BTN_TERTIARY, Id } from "./ui";
 import Audience from "./Audience";
+import Deadlines, { DrawerRoutes } from "./Deadlines";
 import ExportExtras from "./ExportExtras";
 import RuleRescore from "./RuleRescore";
 import Sources from "./Sources";
@@ -383,6 +384,7 @@ export default function Desk() {
             </div>
           </section>
 
+          <Deadlines portfolio={board.portfolio} asOf={board.asOf} onOpen={openFirstLane} />
           <RuleWatch />
           <RuleRescore csvText={csvText} asOf={board.asOf} filerCodes={board.filerCodes} isSample={!csvText} />
           <ReceiptPanel receipt={receipt} board={board} mode={mode} />
@@ -614,12 +616,7 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
         <section className="d-sect">
           <h3>Dates <span className="d-muted">as of {board.asOf}</span></h3>
           <table className="tbl"><tbody><tr><td>Finalized by Customs</td><td>{info?.liquidationDate ?? info?.liquidationStatus}</td></tr></tbody></table>
-          {d.capeCutoffDate && <Countdown label="Last day to claim (80 days after Customs finalized it)" date={d.capeCutoffDate} left={d.capeDaysLeft} span={80} />}
-          {d.protestDeadlineDate && <Countdown label="Last day to appeal the amount (180 days after)" date={d.protestDeadlineDate} left={d.protestDaysLeft} span={180} />}
-          <table className="tbl"><tbody>
-            {d.reconDeadlineDaysLeft !== null && <tr><td>Deadline for a related filing (&ldquo;reconciliation&rdquo;)</td><td>{d.reconDeadlineDaysLeft} days</td></tr>}
-            {d.projectedLiquidationDaysLeft !== null && <tr><td>Customs expects to finalize it</td><td>in {d.projectedLiquidationDaysLeft} days</td></tr>}
-          </tbody></table>
+          <DrawerRoutes v={v} asOf={board.asOf} />
         </section>
 
         {info && (

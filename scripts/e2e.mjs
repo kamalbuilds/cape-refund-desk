@@ -121,6 +121,36 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(pmn.endsWith(".md") && pmt.length > 500, `broker packet ${pmn} (${pmt.length} chars)`);
   const [ppn, ppt] = await grab(page.getByTestId("dl-packet-pdf"));
   ok(ppn.endsWith(".pdf") && fs.readFileSync(`${OUT}/${label}-${ppn}`).subarray(0, 5).toString() === "%PDF-", `broker packet ${ppn} is a PDF`);
+  // --- deadline tracker: by-week dollars, route toggle, week list, drawer routes, and agreement with the .ics
+  const dlt = page.getByTestId("dl-tracker");
+  await dlt.scrollIntoViewIfNeeded();
+  ok(await dlt.count() === 1 && /closes in the next 4 weeks/.test(await page.getByTestId("dl-summary").innerText()), "deadline tracker renders with a 4-week summary");
+  ok(/Days are counted from \d{4}-\d{2}-\d{2}/.test(await page.getByTestId("dl-asof").innerText()), "tracker labels the as-of date its days run from");
+  ok(await page.locator('[data-testid^="dl-week-"]:not([data-testid="dl-week-list"])').count() === 12, "tracker shows 12 weekly rows");
+  const liveWeeks = page.locator('[data-testid^="dl-week-"]:not([data-testid="dl-week-list"]):not([disabled])');
+  ok(await liveWeeks.count() >= 1, "at least one week has shipments closing");
+  await liveWeeks.last().click();
+  const wl = page.getByTestId("dl-week-list");
+  ok(await wl.locator("tbody tr").count() >= 1 && /\$/.test(await wl.innerText()), "clicking a week lists its shipments with dollars");
+  const rowsInfo = await wl.locator("tbody tr").evaluateAll((trs) => trs.map((t) => [t.querySelector("button")?.textContent ?? "", t.children[2]?.textContent ?? ""]));
+  const icsDate = (key) => { const m = new RegExp(`UID:${key}-cape@[\\s\\S]*?DTSTART;VALUE=DATE:(\\d{8})`).exec(ict.replace(/\r\n /g, "")); return m ? `${m[1].slice(0, 4)}-${m[1].slice(4, 6)}-${m[1].slice(6)}` : null; };
+  const matched = rowsInfo.filter(([n, c]) => icsDate(n.replace(/-/g, "")) === c).length;
+  const mismatched = rowsInfo.filter(([n, c]) => { const d = icsDate(n.replace(/-/g, "")); return d && d !== c; }).length;
+  ok(mismatched === 0, `tracker closing dates never disagree with the .ics (${matched} matched, ${mismatched} mismatched)`);
+  await page.screenshot({ path: `${OUT}/deadlines-${label}.png`, clip: await dlt.evaluate((el) => { const r = el.getBoundingClientRect(); return { x: 0, y: Math.max(0, r.top + window.scrollY), width: window.innerWidth, height: Math.min(r.height + 24, 2400) }; }), fullPage: true });
+  await page.getByTestId("dl-route-protest").click();
+  ok(/Form 19/.test(await page.getByTestId("dl-asof").innerText()) && await page.getByTestId("dl-weeks").locator("li").count() === 12, "protest route view renders with the Form 19 note");
+  ok(/19 CFR 174\.12/.test(await dlt.innerText()), "protest view cites 19 CFR 174.12");
+  await page.getByTestId("dl-route-cape").click();
+  await liveWeeks.first().click();
+  await wl.locator("tbody tr button").first().click();
+  const drr = page.getByTestId("dl-drawer-routes");
+  await drr.waitFor({ timeout: 5000 });
+  const drt = await drr.innerText();
+  ok(/CAPE declaration window/.test(drt) && /days? left|closes today|closed/.test(drt), "drawer shows days left for the CAPE route");
+  ok(/Form 19 protest/.test(drt) && await drr.locator('a[href*="1514"], a[href*="174.12"]').count() >= 1, "drawer shows the protest route with a citation link");
+  await page.locator(".drawer .x").click();
+
   // --- rule-watch re-score shows a visible diff
   const rs = page.getByTestId("rescore");
   await rs.scrollIntoViewIfNeeded();
