@@ -69,7 +69,13 @@ ff(["-f", "concat", "-safe", "0", "-i", path.join(work, "v.txt"), "-c", "copy", 
 const args = ["-i", path.join(work, "v.mp4")];
 caps.forEach((_, i) => args.push("-i", path.join(work, "caps", `cap_${String(i).padStart(3, "0")}.png`)));
 args.push("-i", path.join(work, "audio.wav"));
-const f = []; let last = "0:v";
+// opening lockup: the real NVIDIA and Nebius logos over a dimmed first frame (fades in at 0, out by LK.until); narration timing untouched
+const LK = EL.lockup || null; const f = []; let last = "0:v";
+if (LK) {
+  execFileSync("/usr/bin/python3", [path.join(HERE, "make_lockup.py"), path.join(work, "lockup.png")]);
+  args.push("-loop", "1", "-t", String(LK.until + 1), "-i", path.join(work, "lockup.png"));
+  f.push(`[${caps.length + 2}:v]format=rgba,fade=t=in:st=0:d=0.4:alpha=1,fade=t=out:st=${(LK.until - 0.5).toFixed(2)}:d=0.5:alpha=1[lk]`, `[0:v][lk]overlay=enable='lt(t,${LK.until})':format=auto[vl]`); last = "vl";
+}
 caps.forEach((c, i) => { f.push(`[${last}][${i + 1}:v]overlay=enable='between(t,${c.a.toFixed(3)},${c.b.toFixed(3)})':format=auto[v${i}]`); last = `v${i}`; });
 f.push(`[${last}]fade=t=in:st=0:d=0.5,fade=t=out:st=${(total - 0.7).toFixed(3)}:d=0.7,format=yuv420p[vout]`);
 args.push("-filter_complex", f.join(";"), "-map", "[vout]", "-map", `${caps.length + 1}:a`, "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-pix_fmt", "yuv420p", "-r", "30", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-t", total.toFixed(3), outPath);

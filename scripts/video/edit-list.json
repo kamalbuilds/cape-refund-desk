@@ -94,5 +94,8 @@
     "voiceLufs": -14,
     "truePeak": -1.5,
     "bedLufs": -30
+  },
+  "lockup": {
+    "until": 3.3
   }
 }

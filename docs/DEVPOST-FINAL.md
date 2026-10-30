@@ -40,7 +40,7 @@ Five terms make the rest of this page readable:
 
 - **ACE**: CBP's online portal for importers and brokers. CAPE lives inside it.
 - **ES-003**: the entry-summary report you export from ACE, one row per shipment line.
-- **Liquidated**: CBP has made its final duty calculation on a shipment. CAPE only takes shipments liquidated 80 days ago or less.
+- **Liquidated**: CBP has made its final duty calculation on a shipment. CAPE rejects shipments liquidated more than 80 days ago.
 - **PSC**: a post-summary correction, the filing that fixes an entry before liquidation.
 - **CSMS**: CBP's bulletins announcing rule changes.
 
