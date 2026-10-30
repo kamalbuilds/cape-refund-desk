@@ -21,6 +21,7 @@ import Audience from "./Audience";
 import Deadlines, { DrawerRoutes } from "./Deadlines";
 import ExportExtras from "./ExportExtras";
 import RuleRescore from "./RuleRescore";
+import OfferCheck from "./OfferCheck";
 import Sources from "./Sources";
 import StageReceipt from "./StageReceipt";
 import WhyLlm from "./WhyLlm";
@@ -392,6 +393,8 @@ export default function Desk() {
         </>
       )}
       {!board && <RuleWatch />}
+
+      <OfferCheck />
 
       <Sources />
 

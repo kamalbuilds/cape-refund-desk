@@ -42,6 +42,26 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   else ok(await page.getByTestId("live-note").count() === 0, "live AI is up, no pause note");
   ok(await page.getByTestId("why-llm").count() === 1, "landing explains why an AI model beats a spreadsheet");
   ok(await page.getByTestId("source-link").count() >= 8, "sources panel lists the CBP links");
+
+  // --- offer check: runs in the browser, examples give different verdicts, flags quote the offer and cite CBP
+  const flagIds = async () => page.getByTestId("offer-flag").evaluateAll((els) => els.map((e) => e.getAttribute("data-flag")));
+  ok(await page.getByTestId("offercheck").count() === 1 && await page.getByTestId("offer-empty").count() === 1, "offer check: section is on the page and starts empty (no fake result)");
+  await page.getByTestId("offer-example-predatory").click();
+  ok(/High risk/.test(await page.getByTestId("offer-verdict").innerText()), "offer check: predatory example is High risk");
+  const pf = await flagIds();
+  for (const f of ["impersonation", "credentials", "payee-firm", "upfront", "fee-pct", "lock-in", "urgency"]) ok(pf.includes(f), `offer check: predatory example flags ${f}`);
+  ok(await page.getByTestId("offer-cite").count() >= 5 && (await page.getByTestId("offer-cite").first().locator("a").getAttribute("href")).startsWith("https://"), "offer check: flags carry CBP quotes with https links");
+  ok(/\$441,345\.20/.test(await page.getByTestId("offer-amount").inputValue().then((v) => "$" + v)) && /\$/.test(await page.getByTestId("cost-fee-flat").innerText()), "offer check: comparison defaults to the sample's safe total and shows the published flat fee");
+  ok(await page.getByTestId("offer-compare").getByText(/published prices as of 2026-10-30/).count() === 1, "offer check: flat-fee row is dated");
+  ok(await page.getByTestId("offer-ai").count() === 0, "offer check: no AI explanation shown without a recorded one");
+  await page.getByTestId("offer-amount").fill("100000");
+  ok(/\$0\.00|\$0\b/.test(await page.getByTestId("cost-fee-self").innerText()) && /\$100,000\.00/.test(await page.getByTestId("cost-keep-self").innerText()), "offer check: self-filing row is $0 fee, you keep 100%");
+  await page.getByTestId("offer-example-clean").click();
+  ok(/No red flags/.test(await page.getByTestId("offer-verdict").innerText()) && (await flagIds()).every((f) => f === "poa"), "offer check: clean example has no red flags");
+  await page.getByTestId("offer-example-borderline").click();
+  ok(/closer look/i.test(await page.getByTestId("offer-verdict").innerText()) && await page.locator('[data-testid=offer-flag][data-severity=high]').count() === 0, "offer check: borderline example needs a closer look with no red flags");
+  await page.getByTestId("offer-text").fill("");
+  ok(await page.getByTestId("offer-empty").count() === 1, "offer check: clearing the text clears the result");
   ok(/derived schema/.test(await page.getByTestId("schema-note").innerText()), "upload format is labelled as a derived schema");
 
   // --- a file that is not an ES-003 export gives a clear error, not a silent 0 of 0
