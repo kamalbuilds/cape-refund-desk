@@ -85,11 +85,16 @@ describe("scored test on the sample (computed live from the engine, nothing hard
 });
 
 describe("AI-alone arm", () => {
-  it("is stubbed as pending credit and carries no numbers", () => {
-    expect(AI_ALONE_ARM.status).toBe("pending-credit");
-    expect(AI_ALONE_ARM.note).toMatch(/Pending credit/);
-    expect(Object.keys(AI_ALONE_ARM).sort()).toEqual(["id", "label", "note", "status"]);
-    expect(JSON.stringify(AI_ALONE_ARM)).not.toMatch(/\d/);
+  it("reports the measured model arms from the committed receipt", () => {
+    expect(AI_ALONE_ARM.status).toBe("measured");
+    expect(AI_ALONE_ARM.arms.map((a) => a.id)).toEqual(["ultra", "lightning"]);
+    const receipt = JSON.parse(fs.readFileSync(new URL("../docs/receipts/model-arms-2026-10-30.json", import.meta.url), "utf8"));
+    for (const a of AI_ALONE_ARM.arms) {
+      expect(a.laneCorrect).toBe(receipt.arms[a.id].lane.strictCorrect);
+      expect(a.exactDeadlines).toBe(receipt.arms[a.id].deadline.exactCorrect);
+      expect(a.costUsd).toBe(receipt.arms[a.id].costUsd);
+    }
+    expect(JSON.stringify(AI_ALONE_ARM)).not.toMatch(/[Pp]ending/);
   });
 });
 

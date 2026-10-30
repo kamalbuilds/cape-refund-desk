@@ -1,3 +1,4 @@
+import { arms as MODEL_ARMS, ranAt as MODEL_ARMS_RAN_AT } from "../../docs/receipts/model-arms-2026-10-30.json";
 import { parseEs003 } from "./parse";
 import { validateEntries } from "./validate";
 import { scoreArm, type Scored, type Truth } from "./score-metrics";
@@ -24,4 +25,15 @@ export const RULE_FIX_HISTORY = {
 } as const;
 
 /** The AI-alone arm cannot run without Token Factory credit. It carries no numbers on purpose. */
-export const AI_ALONE_ARM = { id: "ai-alone", label: "AI alone", status: "pending-credit" as const, note: "Pending credit. Not run, so no numbers are shown." };
+/** The model-alone arms, read from the committed receipt written by scripts/model-arms.ts (live Token Factory run). */
+export const AI_ALONE_ARM = {
+  id: "ai-alone",
+  label: "AI alone",
+  status: "measured" as const,
+  ranAt: MODEL_ARMS_RAN_AT,
+  receipt: "docs/receipts/model-arms-2026-10-30.json",
+  arms: [MODEL_ARMS.ultra, MODEL_ARMS.lightning].map((a) => ({
+    id: a.id, label: a.label, model: a.model, n: a.n,
+    laneCorrect: a.lane.strictCorrect, exactDeadlines: a.deadline.exactCorrect, liquidated: a.deadline.liquidatedN, costUsd: a.costUsd,
+  })),
+};
