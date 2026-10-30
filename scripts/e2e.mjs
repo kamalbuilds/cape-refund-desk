@@ -51,6 +51,21 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   const pf = await flagIds();
   for (const f of ["impersonation", "credentials", "payee-firm", "upfront", "fee-pct", "lock-in", "urgency"]) ok(pf.includes(f), `offer check: predatory example flags ${f}`);
   ok(await page.getByTestId("offer-cite").count() >= 5 && (await page.getByTestId("offer-cite").first().locator("a").getAttribute("href")).startsWith("https://"), "offer check: flags carry CBP quotes with https links");
+  // compact view: one row per finding, details closed until clicked, counts at the top, comparison visible without scrolling past the flags
+  const nFlags = await page.getByTestId("offer-flag").count();
+  const counts = await page.getByTestId("offer-counts").innerText();
+  ok(nFlags >= 7 && new RegExp(`\\b${nFlags}\\s+findings`).test(counts) && /red flag/.test(counts), `offer check: counts line matches the ${nFlags} flags ("${counts.replace(/\s+/g, " ")}")`);
+  const h0 = await page.getByTestId("offer-flag").first().evaluate((e) => e.getBoundingClientRect().height);
+  ok(h0 < 60 && await page.locator('[data-testid=offer-flag] details[open]').count() === 0, `offer check: each flag is one compact row (${Math.round(h0)}px) and starts collapsed`);
+  ok(await page.getByTestId("offer-frag").first().evaluate((e) => e.innerText.length <= 72), "offer check: row shows a single short quoted fragment");
+  const secH = await page.getByTestId("offercheck").evaluate((e) => e.getBoundingClientRect().height);
+  ok(secH < (label === "1440" ? 2200 : 6500), `offer check: whole section is ${Math.round(secH)}px tall (compact)`);
+  await page.getByTestId("offer-flag-toggle").first().click();
+  ok(await page.getByTestId("offer-flag-more").first().isVisible() && await page.getByTestId("offer-flag").first().locator('[data-testid=offer-cite]').first().isVisible(), "offer check: clicking a row opens the full quotes and the CBP source");
+  const ocH2 = await page.evaluate(() => getComputedStyle(document.querySelector("[data-testid=offercheck] h2")).fontSize);
+  ok(ocH2 === "16px", `offer check: h2 is the design's 16px section heading, as in the receipt and deadline panels (got ${ocH2})`);
+  ok(await page.getByTestId("offer-compare").isVisible(), "offer check: cost comparison is visible with the flags");
+  if (process.env.OFFER_SHOT) { await page.getByTestId("offercheck").scrollIntoViewIfNeeded(); await page.getByTestId("offercheck").screenshot({ path: process.env.OFFER_SHOT + "-" + label + ".png" }); }
   ok(/\$441,345\.20/.test(await page.getByTestId("offer-amount").inputValue().then((v) => "$" + v)) && /\$/.test(await page.getByTestId("cost-fee-flat").innerText()), "offer check: comparison defaults to the sample's safe total and shows the published flat fee");
   ok(await page.getByTestId("offer-compare").getByText(/published prices as of 2026-10-30/).count() === 1, "offer check: flat-fee row is dated");
   ok(await page.getByTestId("offer-ai").count() === 0, "offer check: no AI explanation shown without a recorded one");

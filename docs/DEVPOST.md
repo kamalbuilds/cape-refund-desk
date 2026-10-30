@@ -98,6 +98,10 @@ The primary job of the screen is "which entries do I hold before I press upload"
 - The CAPE CSV is validated against CBP's published file format in code and in a browser test, and cited in the README.
 - A run costs about ten cents. The recorded run was $0.0035 for Lightning and $0.0949 for Ultra at list prices.
 
+### Other tools
+
+We are not the only pre-flight. Saxum Systems sells a manual "CAPE Refund Preflight" review, "From $499 per claim population" (saxumsystems.com/products/cape-refund-preflight.html), with a qualified adviser in the loop. Tariffi and Flexport file refunds for a fee or a share. Ours is free and self-serve, gives a per-shipment reason with CBP's own wording, tracks the 80-day and 180-day windows, checks a recovery firm's offer against CBP's fraud warnings, and exports CBP's CAPE template. Sources and caveats: `docs/CAPE-positioning.md`.
+
 ### What we learned
 
 - Splitting the job works better than asking one model to do it. Lightning is quick enough to run on every row. Ultra is worth its latency only on the few entries that need an argument.
@@ -132,7 +136,7 @@ Voiceover is first person plural, plain, no hype. Times are cumulative.
 | 6 | 1:55 to 2:15 | Expand "Ultra's reasoning trace", then close the drawer | The reasoning trace, the guard note under the explanation | "The reasoning trace is the real one. A guard checks every figure and day count in the model's text against the engine. In our own recording Ultra wrote 'file 7 entries expiring today'. The engine says one. The guard corrects it, and there is a test for that sentence." |
 | 7 | 2:15 to 2:30 | Scroll to the Export panel, tick the acknowledgement, click the CAPE CSV download | The acknowledgement text, the downloaded filename, the CSV in the OS preview (one `Entry Number` column, apostrophes on leading zeros) | "Export sits behind an acknowledgement that the declaration is irreversible. The CSV follows CBP's published format. Your broker uploads it. We do not." |
 | 8 | 2:30 to 2:42 | Scroll to Rule-watch, click "Check CBP now" | "4 changes touch checks this tool runs; 7 more are informational", the warehouse 21/22 change with July and October quotes, the "Tavily agrees" badge | "Rule-watch reads CBP's live page, compares it to a July capture and quotes four changes that touch our checks, such as warehouse entries now being rejected. Tavily Extract reads the page independently and agrees." |
-| 9 | 2:42 to 2:45 | Back to the top | Title and URL | "CAPE Refund Desk. The pre-flight check before an irreversible upload." |
+| 9 | 2:42 to 2:45 | Back to the top | Title and URL | "CAPE Refund Desk. A free pre-flight check before an irreversible upload." |
 
 Optional shot, only if the account has credit again, replace the second half of shot 3: click "Run live on Token Factory" and let the Lightning and Ultra progress run for about 15 seconds, then cut to the board. The last full live run took 157 seconds, so do not wait through it on camera.
 

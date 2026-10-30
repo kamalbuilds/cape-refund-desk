@@ -1,8 +1,10 @@
 # CAPE Refund Desk
 
-**An independent pre-flight check for your IEEPA refund file, run BEFORE you upload it to CAPE, the refund system U.S. Customs and Border Protection (CBP) runs inside ACE.**
+**A free, independent pre-flight check for your IEEPA refund file, run BEFORE you upload it to CAPE, the refund system U.S. Customs and Border Protection (CBP) runs inside ACE.**
 
 This is for small US importers owed refunds on the struck-down IEEPA tariffs. The CAPE upload can't be undone, so one wrong shipment can be rejected or turn a refund into a bill. This tool checks the file first, sorts every shipment into **Safe to claim**, **Fix first**, **Your broker decides** and **Leave out**, and says why in plain English. "CAPE" in the name means CBP's system that your file goes into; this tool is not made by, affiliated with or endorsed by CBP.
+
+**Other pre-flight options exist.** For example, Saxum Systems sells "CAPE Refund Preflight", a manual specialist review listed "From $499 per claim population" ([their page](https://saxumsystems.com/products/cape-refund-preflight.html)). This tool is the free, self-serve option: per-shipment reasons quoting CBP, a deadline tracker, a recovery-offer check and an export in CBP's CAPE template. How we compared, with sources: `docs/CAPE-positioning.md`.
 
 How the AI fits in:
 
