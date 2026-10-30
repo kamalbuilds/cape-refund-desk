@@ -80,7 +80,7 @@ export default function Stage(p: {
           const ah = sorted && t ? rowsFor(c, aw) * CELL - GAP : 0;
           return (
             <button key={l.id} role="tab" aria-selected={lane === l.id} className={`tab ${l.tone} ${lane && lane !== l.id ? "dim" : ""} ${t ? "lit" : "ghost"}`} onClick={() => onLane(l.id)} style={{ ["--li" as string]: li }}>
-              <span className="tab-top"><span className="lane-t">{l.title}</span><span className="tab-dot" aria-hidden /></span>
+              <span className="tab-top"><span className="tab-dot" aria-hidden /><span className="lane-t">{l.title}</span></span>
               <span className="lane-h">
                 <span className="lane-n">{t ? <CountInt n={t.count} animate={animate} delay={450 + li * 90} /> : "0"}</span>
                 <span className="lane-u">shipments</span>

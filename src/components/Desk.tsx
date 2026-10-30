@@ -171,13 +171,25 @@ export default function Desk() {
 
   const zone = board ? (
     <div className="zone-in">
-      <h2 className="headline text-3xl font-semibold tracking-tight text-zinc-900"><b><CountInt n={attention} animate={animate} dur={1000} delay={500} /></b> of {verdicts.length} shipments shouldn&apos;t go in the refund file yet. Here&apos;s why.</h2>
+      <h2 className="headline"><b><CountInt n={attention} animate={animate} dur={1000} delay={500} /></b> of {verdicts.length} shipments shouldn&apos;t go in the refund file yet. Here&apos;s why.</h2>
       {laneTotals && (
-        <p className="answer text-base text-zinc-600 max-w-2xl leading-relaxed mt-2">
-          You could get back <b><CountMoney cents={laneTotals.FILE_NOW.refundCents} animate={animate} dur={800} delay={300} /></b> on {laneTotals.FILE_NOW.count} safe shipments.{" "}
-          {laneTotals.NET_BILL_RISK.count} {laneTotals.NET_BILL_RISK.count === 1 ? "shipment" : "shipments"} could turn a refund into a bill.
-        </p>
+        <>
+          <p className="answer">
+            {laneTotals.NET_BILL_RISK.count} {laneTotals.NET_BILL_RISK.count === 1 ? "shipment" : "shipments"} could turn a refund into a bill. Open a group below to see what Customs found.
+          </p>
+          <div className="claimcard">
+            <p className="claim-label">Safe to claim</p>
+            <p className="claim-num"><CountMoney cents={laneTotals.FILE_NOW.refundCents} animate={animate} dur={800} delay={300} /></p>
+            <p className="claim-sub"><b>{laneTotals.FILE_NOW.count} {laneTotals.FILE_NOW.count === 1 ? "shipment" : "shipments"}</b> · Customs&apos; checks found nothing wrong</p>
+            <button className={BTN_PRIMARY} onClick={() => document.querySelector(".dock")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" })}>Add safe shipments to the refund file</button>
+          </div>
+        </>
       )}
+      <p className="runmeta">
+        <span>{mode === "replay" ? "Recorded run" : mode === "live" ? "Live run" : "Browser-only check"}</span>
+        <span>{/^SYNTHETIC SAMPLE/.test(board.label) ? `Sample data: ${verdicts.length} made-up shipments. Not real trade data.` : board.label}</span>
+        <span>Checked as of <span className="mono">{board.asOf}</span></span>
+      </p>
     </div>
   ) : (
     <div className="zone-in">
@@ -252,12 +264,6 @@ export default function Desk() {
 
       {(board || running) && (
         <>
-          {board && (
-            <div className="datalabel">
-              <span className="tag">{mode === "replay" ? "Recorded run" : mode === "live" ? "Live run" : "Browser-only check"}</span> <span>{/^SYNTHETIC SAMPLE/.test(board.label) ? `Sample data: ${verdicts.length} made-up shipments that look like real Customs exports. Not real trade data. Checked as of ${board.asOf}.` : board.label}</span>
-            </div>
-          )}
-
           <Stage verdicts={verdicts} count={total || 69} arrived={arrived} lanes={laneTotals} animate={animate} lane={lane} onLane={pickLane} onOpen={openFirstLane} explained={explained} zone={zone} running={running} />
 
           {board && running && <section className="panel"><Progress prog={prog} stage={stage} /></section>}
@@ -267,7 +273,7 @@ export default function Desk() {
             <section ref={panelRef} className={`panel lanepanel ${laneMeta.tone}`} role="tabpanel" aria-label={laneMeta.title}>
               <div className="lanepanel-h">
                 <div>
-                  <h2><span className={`pill ${laneMeta.tone}`}>{laneMeta.title}</span> <span className="muted">{laneList.length} shipments</span></h2>
+                  <h2><span className={`ldot ${laneMeta.tone}`} aria-hidden /><span>{laneMeta.title}</span> <span className="muted">{laneList.length} shipments</span></h2>
                   <p>{laneMeta.sub}</p>
                 </div>
                 {laneList.length > 1 && <label className="flex items-center gap-2 text-sm text-zinc-600">Sort by
