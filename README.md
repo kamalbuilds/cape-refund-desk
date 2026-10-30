@@ -1,8 +1,8 @@
 # CAPE Refund Desk
 
-**Check your tariff refund file before you send it.**
+**An independent pre-flight check for your IEEPA refund file, run BEFORE you upload it to CAPE, the refund system U.S. Customs and Border Protection (CBP) runs inside ACE.**
 
-US importers are owed money back for tariffs that were struck down. To get it, they upload one file to US Customs, and the upload can't be undone: Customs can't edit it or take shipments back out. One wrong shipment can turn a refund into a bill. This tool checks the file first. It sorts every shipment into four groups: **Safe to claim**, **Fix first**, **Your broker decides** and **Leave out**, and says why in plain English.
+This is for small US importers owed refunds on the struck-down IEEPA tariffs. The CAPE upload can't be undone, so one wrong shipment can be rejected or turn a refund into a bill. This tool checks the file first, sorts every shipment into **Safe to claim**, **Fix first**, **Your broker decides** and **Leave out**, and says why in plain English. "CAPE" in the name means CBP's system that your file goes into; this tool is not made by, affiliated with or endorsed by CBP.
 
 How the AI fits in:
 
