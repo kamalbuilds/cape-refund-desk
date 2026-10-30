@@ -12,7 +12,7 @@ import { LANES, laneOf } from "@/lib/lanes-ui";
 import Stage from "./Stage";
 import { CountInt, CountMoney, Reveal, TwistCard, Words } from "./motion";
 import Waterfall from "./Waterfall";
-import { AlertTriangle, Download, FileText, Play, X } from "lucide-react";
+import { AlertTriangle, ChevronDown, Download, FileText, Play, X } from "lucide-react";
 import { BTN_PRIMARY, BTN_SECONDARY, BTN_TERTIARY, Id } from "./ui";
 
 type Board = Omit<RunResult, "receipt" | "explanations" | "portfolioNote">;
@@ -468,9 +468,9 @@ function Countdown({ label, date, left, span }: { label: string; date: string; l
   const used = Math.max(0, Math.min(1, (span - left) / span));
   const hot = !closed && left <= 7;
   return (
-    <div className="cd">
-      <div className="cd-h"><span>{label} <span className="muted">{date}</span></span><b className={hot || closed ? "hot" : ""}>{closed ? "closed" : `${left} day${left === 1 ? "" : "s"} left`}</b></div>
-      <div className="track" role="img" aria-label={`${label}: ${closed ? "closed" : `${left} days left`}`}><i className={hot || closed ? "hot" : ""} style={{ width: `${(closed ? 1 : used) * 100}%` }} /></div>
+    <div className="d-cd">
+      <div className="d-cd-h"><span>{label} <span className="d-muted">{date}</span></span><b className={hot || closed ? "d-hot" : ""}>{closed ? "closed" : `${left} day${left === 1 ? "" : "s"} left`}</b></div>
+      <div className="d-cd-track" role="img" aria-label={`${label}: ${closed ? "closed" : `${left} days left`}`}><i className={hot || closed ? "d-hot" : ""} style={{ width: `${(closed ? 1 : used) * 100}%` }} /></div>
     </div>
   );
 }
@@ -489,53 +489,62 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
   return (
     <div className="drawer-wrap" onClick={onClose}>
       <aside className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Shipment ${v.displayNumber}`}>
-        <button ref={closeRef} className="x" onClick={onClose} aria-label="Close">{Icon.close}</button>
-        <div className="d-meta"><span>Importer <Id>{v.ior}</Id></span><span>Number {v.order} in your filing order</span></div>
-        <h2><Id className="text-sm!">{v.displayNumber}</Id></h2>
-        <span className={`pill ${meta.tone}`}>{meta.title}</span>
-        <p className="verdict">{plainVerdict(v)}</p>
-        <p className="step" title={v.filingStep}>{plainStep(v.filingStep)}</p>
-
-        <div className={`story ${m.netCents < 0 ? "bill" : "ok"}`}>
-          <span className="story-l">{m.netCents < 0 ? "You'd owe Customs" : "You'd get back"}</span>
-          <b className="story-n"><CountMoney cents={m.netCents} animate dur={1000} delay={150} /></b>
-          <Waterfall m={m} />
-          <div className="parts">
-            <div><span>Struck-down tariff you paid</span><Id>{money(m.grossIeepaCents)}</Id></div>
-            {m.frameworkCarveOutCents > 0 && <div><span>Part that stays owed under a trade deal ({m.frameworkGroups.join("/")})</span><Id>-{money(m.frameworkCarveOutCents)}</Id></div>}
+        <div className="d-bar">
+          <div className="d-bar-l">
+            <Id className="d-chip">{v.displayNumber}</Id>
+            <span className={`d-status ${meta.tone}`}><i aria-hidden />{meta.title}</span>
           </div>
+          <button ref={closeRef} className="x" onClick={onClose} aria-label="Close">{Icon.close}</button>
         </div>
-        <p className="fine">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>
-        {v.diversionRisk && <p className="fine warn" style={{ marginTop: 6 }}>This importer owes Customs money from before. Customs may subtract it from the refund (19 CFR 24.72).</p>}
+        <p className="d-sub">Importer <span className="d-id">{v.ior}</span> · Number {v.order} in your filing order</p>
+        <p className="d-answer">{plainVerdict(v)}</p>
+        <p className="d-step" title={v.filingStep}>{plainStep(v.filingStep)}</p>
+
+        <div className="d-money">
+          <p className="d-money-l">{m.netCents < 0 ? "You'd owe Customs" : "Refund"}</p>
+          <p className={`d-figure ${m.netCents < 0 ? "bill" : "ok"}`}><CountMoney cents={m.netCents} animate dur={1000} delay={150} /></p>
+          <dl className="d-break">
+            <div className="d-brk"><dt>Struck-down tariff you paid</dt><dd>{money(m.grossIeepaCents)}</dd></div>
+            {m.frameworkCarveOutCents > 0 && <div className="d-brk d-brk-sub"><dt>Part kept under a trade deal ({m.frameworkGroups.join("/")})</dt><dd>-{money(m.frameworkCarveOutCents)}</dd></div>}
+            <div className="d-brk"><dt>Other duties you underpaid</dt><dd className={m.underpaidOtherCents > 0 ? "bill" : ""}>{m.underpaidOtherCents > 0 ? `-${money(m.underpaidOtherCents)}` : money(0)}</dd></div>
+            <div className="d-brk d-brk-net"><dt>Net</dt><dd className={m.netCents < 0 ? "bill" : ""}>{money(m.netCents)}</dd></div>
+          </dl>
+          <Waterfall m={m} />
+        </div>
+        <p className="d-note">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>
+        {v.diversionRisk && <p className="d-alert"><AlertTriangle size={16} aria-hidden /><span>This importer owes Customs money from before. Customs may subtract it from the refund (19 CFR 24.72).</span></p>}
 
         {ex && (
-          <div className="sect ultra">
-            <div className="analyst-h"><span className="spark" aria-hidden /><h3>What the reasoning AI says</h3><span className="cid">{ex.completionId}</span></div>
-            <span className="ai-tag">AI analyst · Nemotron Ultra</span>
-            <p>{ex.summary}</p>
-            <p className="next"><b>Next step:</b> {ex.brokerAction}</p>
-            <p><b>Why it sits here:</b> {ex.whyThisOrder}</p>
-            {ex.citations.length > 0 && <div className="cites">{ex.citations.map((c) => <span key={c}>{c}</span>)}</div>}
-            {ex.guardStripped > 0 && <p className="fine">The number guard removed {ex.guardStripped} figure{ex.guardStripped === 1 ? "" : "s"} that didn't match the code's math.</p>}
-            {ex.reasoning && <details style={{ marginTop: 10 }}><summary>The AI&apos;s reasoning trace ({ex.ms} ms)</summary><pre>{ex.reasoning}</pre></details>}
-          </div>
+          <section className="d-sect">
+            <h3>What the reasoning AI says</h3>
+            <p className="d-tag"><span>AI analyst · Nemotron Ultra</span><span className="d-cid">{ex.completionId}</span></p>
+            <p className="d-body">{ex.summary}</p>
+            <div className="d-next"><span>Next step</span><p>{ex.brokerAction}</p></div>
+            <details className="d-reason">
+              <summary>Why this was flagged <ChevronDown size={16} aria-hidden /></summary>
+              <p><b>Why it sits here:</b> {ex.whyThisOrder}</p>
+              {ex.citations.length > 0 && <p className="d-cites">{ex.citations.map((c) => <span key={c}>{c}</span>)}</p>}
+              {ex.guardStripped > 0 && <p className="d-small">The number guard removed {ex.guardStripped} figure{ex.guardStripped === 1 ? "" : "s"} that didn&apos;t match the code&apos;s math.</p>}
+              {ex.reasoning && <details className="d-trace"><summary>The AI&apos;s reasoning trace ({ex.ms} ms)</summary><pre>{ex.reasoning}</pre></details>}
+            </details>
+          </section>
         )}
 
-        <div className="sect">
+        <section className="d-sect">
           <h3>What Customs&apos; checks found</h3>
-          {v.findings.length === 0 ? <p className="pos" style={{ color: "var(--go-ink)" }}>{v.lane === "NET_BILL_RISK" ? "No error. The risk is the money: see the math above." : "Nothing wrong found by the checks in this tool."}</p> : v.findings.map((f, i) => (
-            <div className="finding" key={i}>
+          {v.findings.length === 0 ? <p className="d-body">{v.lane === "NET_BILL_RISK" ? "No error. The risk is the money: see the math above." : "Nothing wrong found by the checks in this tool."}</p> : v.findings.map((f, i) => (
+            <div className="d-finding" key={i}>
               <p><b>{plainTitle(f.code, f.detail)}.</b> {PLAIN_FINDING[f.code]?.what}</p>
               <p>{f.detail}</p>
-              {f.fix && <p className="fix"><b>How to fix it:</b> {f.fix}</p>}
-              {f.cbpError ? <div className="cbpq">Customs&apos; exact error: &ldquo;{f.cbpError}&rdquo;{ERROR_DEFINITIONS[f.cbpError] ? <span> (means: {ERROR_DEFINITIONS[f.cbpError]})</span> : null}</div> : <div className="cbpq soft">Filing-order rule, not a Customs error</div>}
-              <p><a className="src" href={SOURCES[f.sourceId]?.url} target="_blank" rel="noreferrer">{SOURCES[f.sourceId]?.label ?? f.sourceId}</a></p>
+              {f.fix && <p className="d-fix"><b>How to fix it:</b> {f.fix}</p>}
+              {f.cbpError ? <p className="d-quote">Customs&apos; exact error: &ldquo;{f.cbpError}&rdquo;{ERROR_DEFINITIONS[f.cbpError] ? <span> (means: {ERROR_DEFINITIONS[f.cbpError]})</span> : null}</p> : <p className="d-quote d-quote-soft">Filing-order rule, not a Customs error</p>}
+              <p className="d-src"><a href={SOURCES[f.sourceId]?.url} target="_blank" rel="noreferrer">{SOURCES[f.sourceId]?.label ?? f.sourceId}</a></p>
             </div>
           ))}
-        </div>
+        </section>
 
-        <div className="sect">
-          <h3>Dates <span className="muted" style={{ fontWeight: 400 }}>as of {board.asOf}</span></h3>
+        <section className="d-sect">
+          <h3>Dates <span className="d-muted">as of {board.asOf}</span></h3>
           <table className="tbl"><tbody><tr><td>Finalized by Customs</td><td>{info?.liquidationDate ?? info?.liquidationStatus}</td></tr></tbody></table>
           {d.capeCutoffDate && <Countdown label="Last day to claim (80 days after Customs finalized it)" date={d.capeCutoffDate} left={d.capeDaysLeft} span={80} />}
           {d.protestDeadlineDate && <Countdown label="Last day to appeal the amount (180 days after)" date={d.protestDeadlineDate} left={d.protestDaysLeft} span={180} />}
@@ -543,21 +552,30 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
             {d.reconDeadlineDaysLeft !== null && <tr><td>Deadline for a related filing (&ldquo;reconciliation&rdquo;)</td><td>{d.reconDeadlineDaysLeft} days</td></tr>}
             {d.projectedLiquidationDaysLeft !== null && <tr><td>Customs expects to finalize it</td><td>in {d.projectedLiquidationDaysLeft} days</td></tr>}
           </tbody></table>
-        </div>
+        </section>
 
         {info && (
-          <div className="sect">
+          <section className="d-sect">
             <h3>Products and the broker&apos;s note</h3>
             <table className="tbl"><tbody>{info.lines.map((l) => <tr key={l.lineNo}><td>#{l.lineNo} <Id>{l.hts}</Id> {l.country}{l.framework ? ` · ${l.framework} trade deal` : ""}</td><td>{l.value} / struck-down tariff {l.ieepaDuty}</td></tr>)}</tbody></table>
-            {info.notes && <p className="note-q">&ldquo;{info.notes}&rdquo;</p>}
-            {info.noteSignals.length > 0 && <div className="sig">Topics the AI spotted: {info.noteSignals.map((s) => <span key={s}>{s}</span>)}</div>}
-            {info.noteConflicts.map((c, i) => <p key={i} className="error" style={{ marginTop: 8 }}>The note disagrees with the data: {c.message}</p>)}
-            {info.parseNotes.map((c, i) => <p key={i} className="fine" style={{ marginTop: 6 }}>{c}</p>)}
-          </div>
+            {info.notes && <p className="d-quote">&ldquo;{info.notes}&rdquo;</p>}
+            {info.noteSignals.length > 0 && <p className="d-small d-sig">Topics the AI spotted: {info.noteSignals.map((s) => <span key={s}>{s}</span>)}</p>}
+            {info.noteConflicts.map((c, i) => <p key={i} className="d-fix bill">The note disagrees with the data: {c.message}</p>)}
+            {info.parseNotes.map((c, i) => <p key={i} className="d-small">{c}</p>)}
+          </section>
         )}
 
-        {(v.lane === "FILE_NOW" || v.lane === "NET_BILL_RISK") && <div style={{ marginTop: 28 }}><button className={BTN_PRIMARY} onClick={onToggle}>{included ? "Take out of the refund file" : "Add to the refund file"}</button></div>}
-        <p className="fine" style={{ marginTop: 14 }}>{PREPARED_FOR_PLAIN}</p>
+        <p className="d-prepared">{PREPARED_FOR_PLAIN}</p>
+        <div className="d-foot">
+          {v.lane === "FILE_NOW" || v.lane === "NET_BILL_RISK" ? (
+            <>
+              <button className={`${BTN_PRIMARY} d-btn`} onClick={onToggle}>{included ? "Take out of the refund file" : "Add to the refund file"}</button>
+              <button className={`${BTN_SECONDARY} d-btn`} onClick={onClose}>Close</button>
+            </>
+          ) : (
+            <button className={`${BTN_PRIMARY} d-btn`} onClick={onClose}>Done</button>
+          )}
+        </div>
       </aside>
     </div>
   );
