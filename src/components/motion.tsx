@@ -70,33 +70,12 @@ export function Words({ text, base = 0, step = 70 }: { text: string; base?: numb
 }
 
 /**
- * The hero's twist, shown as a loop: a refund counts up, then other duties come off and the same shipment flips to a bill.
+ * The hero's twist, shown in its true final state from the first paint. No loop, no tween, no intermediate figures.
  * The figures are the real sample shipment A7K-7344990-0 (see the drawer): $10,500.00 refundable, $13,125.00 of other duties underpaid.
  */
 const REFUND = 1050000, UNDER = 1312500, NET = REFUND - UNDER;
 export function TwistCard() {
-  const reduced = useReducedMotion();
-  const [t, setT] = useState(0);
-  useEffect(() => {
-    if (reduced) return;
-    let raf = 0; let t0 = 0; let vis = true;
-    const onVis = () => { vis = document.visibilityState === "visible"; };
-    document.addEventListener("visibilitychange", onVis);
-    const step = (now: number) => {
-      if (!t0) t0 = now;
-      if (vis) setT((now - t0) % 9000);
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVis); };
-  }, [reduced]);
-  const T = reduced ? 6000 : t;
-  const up = easeOut(Math.min(1, T / 800));
-  const roll = Math.min(1, Math.max(0, (T - 2600) / 1200));
-  const rollE = roll * roll * (3 - 2 * roll);
-  const value = Math.round(T < 2600 ? REFUND * up : REFUND + (NET - REFUND) * rollE);
-  const bill = T >= 3200;
-  const under = T >= 2000;
+  const bill = NET < 0;
   return (
     <div className={`twist ${bill ? "bill" : ""}`} role="img" aria-label="Example: a shipment worth a $10,500.00 refund turns into a $2,625.00 bill once other duties it underpaid are netted off.">
       <div className="twist-top">
@@ -104,7 +83,7 @@ export function TwistCard() {
         <span className="twist-id mono">A7K-7344990-0</span>
       </div>
       <div className="twist-num" aria-hidden>
-        <b>{fmtUsd(value)}</b>
+        <b>{fmtUsd(NET)}</b>
       </div>
       <div className="twist-breakdown" aria-hidden>
         <div className="twist-row"><span>Refundable tariff</span><b>{fmtUsd(REFUND)}</b></div>
@@ -112,8 +91,8 @@ export function TwistCard() {
         <div className="twist-row twist-net"><span>Net</span><b>{fmtUsd(NET)}</b></div>
       </div>
       <div className="twist-bar" aria-hidden>
-        <i className="r" style={{ transform: `scaleX(${T < 2600 ? up : 1})` }} />
-        <i className="u" style={{ transform: `scaleX(${under ? Math.min(1, (T - 2000) / 1000) : 0})` }} />
+        <i className="r" style={{ transform: "scaleX(1)" }} />
+        <i className="u" style={{ transform: "scaleX(1)" }} />
       </div>
       <div className="twist-base" aria-hidden>$0 baseline</div>
       <p className="twist-cap" aria-hidden>Same shipment. One catch. Checked before you file, not after.</p>
