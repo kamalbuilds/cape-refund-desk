@@ -8,11 +8,16 @@ CAPE is CBP's own refund system in ACE. CAPE Refund Desk is an independent pre-f
 
 ## Competitors
 
-The competitor page (https://cursor.com/canvas/store-20fb3aee-d98b-4c80-a2c5-93f6ec9a70c6/67ec36c0-6d25-44a0-9a20-32aea968d769) could not be opened on 2026-10-30 (canvas lookup found nothing and the web fetch timed out), so this section does not describe RefundRadar or the others on it. Fill in once the page is readable. Our differences that do not depend on that page:
+Checked 2026-10-30 against each source listed. Rivals are described from their own pages.
 
-- We check a file before the upload. We do not file, collect logins or take a cut of the refund.
-- Every dollar and every group comes from plain code in integer cents, with CBP's exact error text and a source link.
-- The AI reads messy notes and explains hard cases. Where a call needs judgment, it goes to the customs broker, not to the model.
+**Line:** Tariffi takes a percentage and Flexport offers paid filing; CAPE Refund Desk is the pre-flight that tells you which shipments to leave out, and why, before an upload nobody can undo.
+
+- **RefundRadar** (github.com/amekinya/refundradar; Apache-2.0, 0 stars, last push 2026-10-28; live at refundradar-f9ul.onrender.com). Another entry in this hackathon, also on Nemotron, Token Factory and Tavily. It routes entries and flags deadlines, reads Form 7501 photos with Nemotron 3.5 Super VL, checks refund offers against CBP's fraud warning, and compares the cost to recover across self-filing, brokers and contingency firms. Its README reports a 49-entry routing eval: rules engine 100%, Nemotron 3 Ultra alone 86%. It says it does not file with CBP. Its README does not state pricing, so "free" and "takes no cut" are unverified. Difference: RefundRadar is a wide self-check before you hire help. We go deep on the one file going into CAPE, entry by entry, with CBP's exact error strings and a CAPE CSV export.
+- **un-tariff** (un-tariff.com/pricing). Unverified: the site returned "402 Payment required, DEPLOYMENT_DISABLED" on 2026-10-30, so we make no claims about its features or pricing.
+- **Tariffi** (tariffi.io). ES-003 upload, ACH enrolment and CAPE data prep; a partner CBP-licensed broker files. No upfront fee; contingency tiers of 10%, 15% and 18%. (The tier-by-entry-age split was not stated on the page we read.) Difference: we don't file or take a share; we check the file and hand judgment to your own broker.
+- **Flexport** (tariffs.flexport.com/refunds). A free refund calculator from an ES-003 upload or a 7-column ACE custom report; paid full-service filing by its brokerage, and an offer to buy your refund claim. Difference: Flexport estimates the amount and sells the filing. We check eligibility and errors per entry before anyone files.
+- **Saxum CAPE Refund Preflight** (saxumsystems.com/products/cape-refund-preflight.html). The closest in concept: a manual service pilot that reconciles the claimed population, surfaces errors and documents every change. From $499 per claim population. Difference: ours is software you run yourself in seconds, free, with the rules visible.
+- **GitHub long tail.** A GitHub search for "IEEPA refund" returned 14 repos, all with 0 stars, mostly calculators, landing pages and briefings. We did not audit each one, so we don't claim none has an entry-level rules engine. One to watch: vhb13/dutyback ("AI agents that sort small importers' IEEPA tariff refunds by route").
 
 ## Why it is built this way
 
