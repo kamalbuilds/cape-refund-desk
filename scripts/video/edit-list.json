@@ -2,15 +2,97 @@
   "_about": "Order of segments in the final cut. Set a segment's enabled to true/false and run: node scripts/video/render.mjs. Each segment = a clip of exact duration D plus its narration timeline (timeline.json from timeline.mjs).",
   "out": "cape-refund-desk-demo.mp4",
   "segments": [
-    { "id": "B01", "enabled": true },
-    { "id": "B02", "enabled": true },
-    { "id": "B03", "enabled": true, "note": "LIVE run on the hosted site: real Nebius Token Factory calls, time-mapped onto the narration" },
-    { "id": "B04", "enabled": true },
-    { "id": "B05", "enabled": true },
-    { "id": "B06", "enabled": true, "note": "second half is a LIVE ten-shipment run" },
-    { "id": "B07", "enabled": true },
-    { "id": "B08", "enabled": true },
-    { "id": "B09", "enabled": true },
-    { "id": "B10", "enabled": true }
-  ]
+    {
+      "id": "B01",
+      "enabled": true,
+      "motion": [
+        [
+          0,
+          1.0,
+          960,
+          540
+        ],
+        [
+          3,
+          1.06,
+          1180,
+          560
+        ],
+        [
+          10.8,
+          1.16,
+          1330,
+          640
+        ],
+        [
+          12.5,
+          1.2,
+          700,
+          330
+        ],
+        [
+          17.5,
+          1.2,
+          700,
+          330
+        ],
+        [
+          19.5,
+          1.1,
+          960,
+          420
+        ],
+        [
+          26.6,
+          1.0,
+          960,
+          540
+        ]
+      ],
+      "note": "slow push-in: card, then brand, then the can't-be-undone banner; keyframes [t, zoom, centreX, centreY] in 1920x1080 clip pixels"
+    },
+    {
+      "id": "B02",
+      "enabled": true
+    },
+    {
+      "id": "B03",
+      "enabled": true,
+      "note": "LIVE run on the hosted site: real Nebius Token Factory calls, time-mapped onto the narration"
+    },
+    {
+      "id": "B04",
+      "enabled": true
+    },
+    {
+      "id": "B05",
+      "enabled": true
+    },
+    {
+      "id": "B06",
+      "enabled": true,
+      "note": "second half is a LIVE ten-shipment run"
+    },
+    {
+      "id": "B07",
+      "enabled": true
+    },
+    {
+      "id": "B08",
+      "enabled": true
+    },
+    {
+      "id": "B09",
+      "enabled": true
+    },
+    {
+      "id": "B10",
+      "enabled": true
+    }
+  ],
+  "audio": {
+    "voiceLufs": -14,
+    "truePeak": -1.5,
+    "bedLufs": -30
+  }
 }

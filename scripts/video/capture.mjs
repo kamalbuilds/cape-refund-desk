@@ -56,6 +56,7 @@ const beats = {
     await tagChip(p, `<small>LIVE on Nebius Token Factory</small>Elapsed <b id="__rt">0.0 s</b>`);
     await r.click(btn, 700); await r.clear();
     const tClick = r.now();
+    if (tClick > S(0, 0.7) + 2.8) throw new Error(`click landed at ${tClick.toFixed(1)}s, narration needs it by ${(S(0, 0.7) + 2.8).toFixed(1)}s (machine too busy, retry)`);
     await p.evaluate(() => { const t0 = performance.now(); window.__rtI = setInterval(() => { const e = document.getElementById("__rt"); if (e) e.textContent = ((performance.now() - t0) / 1000).toFixed(1) + " s"; }, 100); });
     const bad = () => p.locator("section.notice").count();
     const prog = p.locator(".prog");
@@ -68,11 +69,17 @@ const beats = {
     }, 90000, "Lightning 69 / 69");
     const tBoard = await until(async () => (await bad()) ? (() => { throw new Error("notice during run"); })() : (await p.locator(".claimcard").count()) ? r.now() : 0, 90000, "board");
     await r.clear();
+    // The headline counts up for about 1.5 s after the board lands (29 of 69 -> 30 of 69). Find the moment the headline and the safe-to-claim total stop changing, so the cut can skip the count-up.
+    const heroSig = () => p.evaluate(() => (document.querySelector(".headline")?.innerText || "") + "|" + [...document.querySelectorAll(".claimcard, .tabs button.tab")].map((e) => e.innerText.replace(/\s+/g, " ")).join("|") + "|" + (document.body.innerText.match(/\$\s?[\d,]+\.\d\d(?=\s*\n?\s*\d+ shipments)/)?.[0] || ""));
+    let sig = await heroSig(), tChange = r.now(), tSettle = 0;
+    while (!tSettle) { await sleep(80); const n = await heroSig(); if (n !== sig) { sig = n; tChange = r.now(); } else if (r.now() - tChange > 0.9) tSettle = tChange; if (r.now() - tBoard > 12) throw new Error("headline never settled"); }
+    console.log("  headline settled at +" + (tSettle - tBoard).toFixed(2) + "s after the board landed: " + sig.split("|")[0].replace(/\s+/g, " "));
+    if (!/^30\b/.test(sig)) throw new Error("settled headline is not 30 of 69: " + sig.slice(0, 80));
     // the four group totals, narrated in S(2)
     const tabs = p.locator(".tabs button.tab"); const order = ["go", "hold", "decide", "stop"], col = ["green", "", "blue", "red"];
     await until(async () => (await tabs.count()) === 4, 8000, "four tabs");
-    const v2 = (f) => S(2, f), vReal = (v) => tBoard + (v - S(2, 0)) + 0.1; // 1x after the board lands; the post-board anchor absorbs the drift
-    await r.scrollTo(170, 600); // lift the four groups clear of the burned-in captions
+    const v2 = (f) => S(2, f), vReal = (v) => tSettle + (v - S(2, 0)) + 0.1; // 1x after the board lands; the post-board anchor absorbs the drift
+    await r.scrollTo(260, 600); await p.evaluate(() => { const c = document.querySelector('.__card[data-keep]'); if (c) c.style.top = '8px'; }); // keep the elapsed chip off the safe-to-claim total. Lift the four groups clear of the burned-in caption band (css y 632 to 740)
     for (let i = 0; i < 4; i++) { await r.at(Math.max(r.now(), vReal(v2([0.28, 0.5, 0.7, 0.86][i]) - 0.45))); await r.clear(); await r.moveTo(p.locator("button.tab." + order[i]), 420, 0.5, 0.3); await r.ring(p.locator("button.tab." + order[i]), "", col[i], 6); }
     // wait for the receipt: the run is over when the total row exists
     const done = await until(async () => {
@@ -90,7 +97,10 @@ const beats = {
     await r.clear();
     await tagChip(p, `<small>This live run's receipt</small><b>${calls} calls</b> &middot; none failed &middot; <b>${wall.toFixed(1)} s</b> &middot; <b>~$${cost}</b>`, { left: "40px", bottom: "140px" });
     const realEnd = tDone + (tl.D - S(3, 0.1));
-    const anchors = [[tClick, tClick], [tL, S(1, 0.97)], [tBoard, S(2, 0.02)], [tDone, S(3, 0.1)], [realEnd, tl.D]];
+    const x1 = S(3, 0.1) - (S(2, 0.0) + 0.02); // the group walk-through (rings, narration) runs 1x after the settled board; whatever is left of a slow live run is cut away, so the rings land on their words
+    const anchors = tDone > tSettle + x1 + 0.5
+      ? [[tClick, tClick], [tL, S(1, 0.97)], [tBoard - 0.02, S(2, 0.0)], [tSettle, S(2, 0.0) + 0.02], [tSettle + x1, S(3, 0.1)], [tDone, S(3, 0.1) + 0.02], [realEnd, tl.D]]
+      : [[tClick, tClick], [tL, S(1, 0.97)], [tBoard - 0.02, S(2, 0.0)], [tSettle, S(2, 0.0) + 0.02], [tDone, S(3, 0.1)], [realEnd, tl.D]]; // the count-up frames between board and tSettle are squeezed into under one frame
     return { anchors, note: `live: click ${tClick.toFixed(1)}s, lightning done ${tL.toFixed(1)}s, board ${tBoard.toFixed(1)}s, done ${tDone.toFixed(1)}s, run receipt wall ${wall}s` };
   },
   async B04(p, r, S) {
@@ -179,6 +189,9 @@ const beats = {
     const btn = p.getByRole("button", { name: /Check Customs' page now/ });
     await r.at(S(0, 0.08)); await r.click(btn, 800);
     await p.locator(".watch .wr .chg").first().waitFor({ timeout: 60000 });
+    // The narration names Tavily as the second reader and says nothing of treg, so the unexplained "treg agrees" chips are blurred in the recording (the page itself is untouched on the host).
+    const nTreg = await p.evaluate(() => { let n = 0; document.querySelectorAll(".watch .chg header .fine").forEach((e) => { if (/^treg agrees/.test(e.innerText.trim())) { e.style.filter = "blur(6px)"; n++; } }); return n; });
+    if (!nTreg) throw new Error("no treg chips found to blur: the page changed, recheck the beat");
     await r.at(S(0, 0.4)); await r.scrollToEl(p.locator(".watch .wr"), 700, 130);
     await r.at(S(0, 0.7)); await r.ring(p.locator(".watch .wr > p").first(), "Live cbp.gov page vs the July copy", "blue", 6);
     await r.at(S(1, 0.0)); await r.clear(); await r.ring(p.locator(".watch .wr > p").nth(1), "4 changes touch these checks", "red", 6);
@@ -197,6 +210,16 @@ const beats = {
     await r.scrollToEl(sec, 800, 70);
     const row = sec.locator("tr", { hasText: "Rules engine" }).first();
     await r.at(S(0, 0.78)); await r.ring(row, "69 of 69, labelled by hand", "green", 6);
+    // The live site now shows the measured model arms under the rules row (docs/receipts/model-arms-2026-10-30.json). Read the receipt, assert the page shows the same figures, then hold on them.
+    const arms = JSON.parse(readSrc("docs/receipts/model-arms-2026-10-30.json")).arms;
+    const tbl = p.locator('[data-testid="model-arms-table"]'); await tbl.waitFor({ timeout: 10000 });
+    for (const id of ["ultra", "lightning"]) {
+      const t = (await p.locator('[data-testid="model-arm-' + id + '"]').innerText()).replace(/\s+/g, " ");
+      const want = `${arms[id].lane.strictCorrect} of ${arms[id].n}`;
+      if (!t.includes(want)) throw new Error(`model arm ${id}: page says "${t}", receipt says ${want}`);
+    }
+    if (await p.evaluate(() => /Pending credit|Token Factory credit is back/.test(document.body.innerText))) throw new Error("page still shows the pending AI-alone stub");
+    await r.at(S(0, 0.9)); await r.ring(tbl, `Models alone: Ultra ${arms.ultra.lane.strictCorrect} of ${arms.ultra.n}, Lightning ${arms.lightning.lane.strictCorrect} of ${arms.lightning.n}`, "blue", 6, "below");
   },
   async B10(p, r, S) {
     await r.at(S(0, 0.0)); await r.scrollTo(0, 900);

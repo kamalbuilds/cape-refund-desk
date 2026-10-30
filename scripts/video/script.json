@@ -11,6 +11,8 @@
     },
     {
      "say": "Cape Refund Desk checks that file before the upload nobody can undo.",
+     "speak": "Kayp Refund Desk checks that file before the upload nobody can undo.",
+     "speed": 0.85,
      "cap": "CAPE Refund Desk checks that file before the upload nobody can undo."
     },
     {
@@ -141,6 +143,8 @@
    "sentences": [
     {
      "say": "Cape Refund Desk checks the file before the upload nobody can undo.",
+     "speak": "Kayp refund desk checks the file before the upload nobody can undo.",
+     "speed": 0.85,
      "cap": "CAPE Refund Desk checks the file before the upload nobody can undo."
     },
     {

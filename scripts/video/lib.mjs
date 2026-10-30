@@ -134,10 +134,12 @@ export class Rig {
   }
   // ---- motion ----
   async move(x, y, ms = 700) {
-    const sx = this.mx, sy = this.my, steps = Math.max(6, Math.round(ms / 16));
-    for (let i = 1; i <= steps; i++) {
-      const k = i / steps, e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-      await this.p.mouse.move(sx + (x - sx) * e, sy + (y - sy) * e); await sleep(ms / steps);
+    // Time-driven: the pointer is placed by wall clock, so a slow CDP round trip (busy machine) skips frames of the glide instead of stretching it past the narration.
+    const sx = this.mx, sy = this.my, t0 = Date.now();
+    for (;;) {
+      const k = Math.min(1, (Date.now() - t0) / ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      await this.p.mouse.move(sx + (x - sx) * e, sy + (y - sy) * e);
+      if (k >= 1) break; await sleep(8);
     }
     this.mx = x; this.my = y;
   }
@@ -169,7 +171,7 @@ export class Rig {
 }
 
 export async function openDesk(page, replay) {
-  await page.goto(BASE + (replay ? "/?demo=replay" : "/"), { waitUntil: "networkidle" });
+  await page.goto(BASE + "/?" + (replay ? "demo=replay&" : "") + "cb=" + Date.now(), { waitUntil: "networkidle" }); // fresh query string every take, so no stale edge copy is recorded
   if (replay) {
     await page.waitForSelector(".claimcard", { timeout: 60000 });
     await page.waitForSelector(".receipt", { state: "attached", timeout: 60000 });
