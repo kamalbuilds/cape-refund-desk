@@ -113,11 +113,13 @@ describe("rule-watch re-scoring", () => {
 describe("per-stage run receipt (recorded run)", () => {
   const rows = stageRows(run);
   it("reports the real logged totals without inventing a rationale/memo split", () => {
-    expect(rows.map((r) => r.id)).toEqual(["lightning", "ultra-combined", "guard", "engine"]);
+    const combined = stageRows({ ...run, receipt: { ...run.receipt, memo: undefined } }); // a recording that did not track the memo separately
+    expect(combined.map((r) => r.id)).toEqual(["lightning", "ultra-combined", "guard", "engine"]);
+    expect(rows.map((r) => r.id)).toEqual(["lightning", "ultra-rationale", "ultra-memo", "guard", "engine"]); // this recording tracked the memo
     const t = stageTotals(rows);
     expect(t.calls).toBe(run.receipt.lightning.calls + run.receipt.ultra.calls);
     expect(t.costUsd).toBeCloseTo(run.receipt.lightning.costUsd + run.receipt.ultra.costUsd, 6);
-    expect(rows[0].promptTokens).toBe(26813);
+    expect(rows[0].promptTokens).toBe(44737); // data/sample-run.json receipt, Token Factory run of 2026-10-30
   });
   it("splits Ultra into rationale and memo when the run tracked them, and the parts add up", () => {
     const memo = { ...run.receipt.ultra, calls: 1, failed: 0, promptTokens: 3000, completionTokens: 2000, reasoningTokens: 1500, costUsd: 0.01, avgMs: 9000 };

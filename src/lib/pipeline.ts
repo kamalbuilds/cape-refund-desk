@@ -188,17 +188,32 @@ export function guardText(text: string, allowed: Set<string>): { text: string; s
 
 const VALID_CITES = new Set<string>([...Object.keys(SOURCES), ...FILING_ORDER_RULES.map((r) => r.id)]);
 
+/** Ultra is a reasoning model: on a hard prompt the thinking can eat the whole token budget and leave `content` empty (seen live on the broker memo).
+ *  Retry once with a doubled budget. The cut-off first attempt stays in the receipt as a failed call. */
+type UltraArgs = Parameters<typeof chat>[0];
+async function ultraJson<T>(args: UltraArgs, receipt: ModelReceipt): Promise<{ c: ChatResult; j: T | null }> {
+  let a = args;
+  for (let attempt = 0; ; attempt++) {
+    const c = await chat(a);
+    track(receipt, "ultra", c);
+    const j = parseJson<T>(c.content);
+    if (j) return { c, j };
+    receipt.failed++;
+    const cutOff = c.completionTokens >= (a.maxTokens ?? 0) - 8;
+    if (attempt >= 1 || !cutOff) return { c, j: null };
+    a = { ...a, maxTokens: (a.maxTokens ?? 3000) * 2, timeoutMs: (a.timeoutMs ?? 150000) * 2 };
+  }
+}
+
 async function explainEntry(v: Verdict, info: EntryInfo, ctx: string, receipt: ModelReceipt): Promise<Explanation | null> {
   const packet = JSON.stringify(entryPacket(v, info));
   try {
-    const c = await chat({
+    const { c, j } = await ultraJson<{ summary?: string; broker_action?: string; why_this_order?: string; citations?: string[] }>({
       model: "ultra", thinking: true, json: true, maxTokens: 3000, timeoutMs: 150000,
       system: ULTRA_SYSTEM(ctx),
       user: `Explain this entry. Return JSON exactly like:\n${ENTRY_SCHEMA}\n\nENTRY (deterministic results):\n${packet}`,
-    });
-    track(receipt, "ultra", c);
-    const j = parseJson<{ summary?: string; broker_action?: string; why_this_order?: string; citations?: string[] }>(c.content);
-    if (!j) { receipt.failed++; return null; }
+    }, receipt);
+    if (!j) return null;
     const figs = figuresFor(v);
     let stripped = 0;
     const g = (s?: string) => { const r = guardEntryText(String(s ?? ""), figs); stripped += r.stripped; return r.text; };
@@ -221,14 +236,12 @@ async function portfolioNote(p: Portfolio, ctx: string, receipt: ModelReceipt): 
     candidates_in_filing_order: top,
   });
   try {
-    const c = await chat({
+    const { c, j } = await ultraJson<{ headline?: string; priorities?: { id: string; reason: string }[]; broker_questions?: string[] }>({
       model: "ultra", thinking: true, json: true, maxTokens: 3500, timeoutMs: 150000,
       system: ULTRA_SYSTEM(ctx),
       user: `Give the broker a short portfolio read. Return JSON exactly like:\n{"headline": "<=40 words, plain English, for a small business owner: what to do first and what must not be uploaded blindly",\n "priorities": [{"id": "an id from candidates_in_filing_order", "reason": "<=25 words, plain English"}] (max 5),\n "broker_questions": ["3 short plain-English questions to ask the importer before upload"]}\n\nPORTFOLIO (deterministic results):\n${packet}`,
-    });
-    track(receipt, "ultra", c);
-    const j = parseJson<{ headline?: string; priorities?: { id: string; reason: string }[]; broker_questions?: string[] }>(c.content);
-    if (!j) { receipt.failed++; return null; }
+    }, receipt);
+    if (!j) return null;
     const allowed = allowedMoney(packet);
     const dayOk = portfolioDays(top.map((t) => p.verdicts.find((v) => v.id === t.id)!).filter(Boolean));
     let stripped = 0;

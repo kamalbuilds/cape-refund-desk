@@ -1,0 +1,1304 @@
+{
+  "provider": "nebius-token-factory",
+  "providerLabel": "Real run on Nebius Token Factory (default provider). Not OpenRouter, not replayed.",
+  "mode": "full",
+  "startedAt": "2026-10-30T08:13:29.341Z",
+  "ranAt": "2026-10-30T08:13:58.876Z",
+  "host": "api.tokenfactory.nebius.com",
+  "inputs": {
+    "csv": "data/sample-es003.csv (69 synthetic shipments, 79 rows)",
+    "asOf": "2026-10-29"
+  },
+  "modelsRequested": {
+    "ultra": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "lightning": "nvidia/Nemotron-3_5-Lightning"
+  },
+  "modelsReturnedByApi": {
+    "ultra": [
+      "nvidia/Nemotron-3-Ultra-550b-a55b"
+    ],
+    "lightning": [
+      "nvidia/Nemotron-3_5-Lightning"
+    ]
+  },
+  "wallMs": 29535,
+  "wallSeconds": 29.5,
+  "totals": {
+    "calls": 92,
+    "medianMs": 2211,
+    "p95Ms": 5335,
+    "maxMs": 6426,
+    "promptTokens": 90603,
+    "completionTokens": 31270,
+    "reasoningTokens": 20124,
+    "modelIdsReturned": [
+      "nvidia/Nemotron-3_5-Lightning",
+      "nvidia/Nemotron-3-Ultra-550b-a55b"
+    ],
+    "failedCalls": 0,
+    "estCostUsd": 0.12
+  },
+  "lightning": {
+    "calls": 69,
+    "medianMs": 2060,
+    "p95Ms": 3533,
+    "maxMs": 4441,
+    "promptTokens": 44737,
+    "completionTokens": 8096,
+    "reasoningTokens": 0,
+    "modelIdsReturned": [
+      "nvidia/Nemotron-3_5-Lightning"
+    ],
+    "failed": 0,
+    "firstError": null
+  },
+  "ultra": {
+    "calls": 23,
+    "medianMs": 4307,
+    "p95Ms": 6245,
+    "maxMs": 6426,
+    "promptTokens": 45866,
+    "completionTokens": 23174,
+    "reasoningTokens": 20124,
+    "modelIdsReturned": [
+      "nvidia/Nemotron-3-Ultra-550b-a55b"
+    ],
+    "failed": 0,
+    "firstError": null,
+    "explanations": 22,
+    "portfolioNote": true
+  },
+  "normalization": {
+    "checked": 621,
+    "agree": 618
+  },
+  "auditor": {
+    "notesChecked": 29,
+    "fabricatedTagsRemovedByCodeVeto": 13,
+    "numberGuardStrippedFromUltraText": 0,
+    "perNote": [
+      {
+        "id": "A7K62224999#2",
+        "note": "HTS end-dated Sept 1; PSC needed to replace.",
+        "rawTags": [
+          "psc_pending",
+          "underpaid_duty"
+        ],
+        "keptTags": [
+          "psc_pending"
+        ],
+        "vetoedTags": [
+          "underpaid_duty"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K53145699#3",
+        "note": "PSC for country of origin correction filed 10/12, awaiting acceptance.",
+        "rawTags": [
+          "psc_pending"
+        ],
+        "keptTags": [
+          "psc_pending"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K15986055#5",
+        "note": "Recon due in 3 weeks; importer asked to file Recon first.",
+        "rawTags": [
+          "recon",
+          "recon_deadline_soon"
+        ],
+        "keptTags": [
+          "recon",
+          "recon_deadline_soon"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K90384188#7",
+        "note": "Liquidated per ES-701 courtesy notice; broker flagged as urgent.",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "other_filer"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K16386644#13",
+        "note": "Japan framework entry.",
+        "rawTags": [
+          "none"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K51863244#16",
+        "note": "Flagged for Recon; Type 09 not filed yet.",
+        "rawTags": [
+          "recon",
+          "recon_deadline_soon"
+        ],
+        "keptTags": [
+          "recon"
+        ],
+        "vetoedTags": [
+          "recon_deadline_soon"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K87307599#17",
+        "note": "Importer plans a drawback claim in Q1; file CAPE first.",
+        "rawTags": [
+          "drawback_planned"
+        ],
+        "keptTags": [
+          "drawback_planned"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K50232977#19",
+        "note": "Importer confirmed 301 was declared on both lines.",
+        "rawTags": [
+          "underpaid_duty"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "underpaid_duty"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K53935877#20",
+        "note": "Importer says 301 was declared on both lines.",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "other_filer"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K59416755#22",
+        "note": "liquidation extended by CBP; refund issues at liquidation",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "other_filer"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K32905622#25",
+        "note": "steel derivative, 232 declared.",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "other_filer"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K49804222#28",
+        "note": "Warehouse withdrawal for consumption.",
+        "rawTags": [
+          "none"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K51309444#36",
+        "note": "301 underdeclared on this line.",
+        "rawTags": [
+          "underpaid_duty"
+        ],
+        "keptTags": [
+          "underpaid_duty"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "0P221551466#41",
+        "note": "Filer code starts with zero, careful in Excel.",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "other_filer"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K67089188#42",
+        "note": "EU Framework: 15% all-in on one line.",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "other_filer"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K73449900#45",
+        "note": "301 underdeclared on liquidated entry.",
+        "rawTags": [
+          "underpaid_duty"
+        ],
+        "keptTags": [
+          "underpaid_duty"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K21865533#46",
+        "note": "232 underpaid; may net to a bill.",
+        "rawTags": [
+          "underpaid_duty"
+        ],
+        "keptTags": [
+          "underpaid_duty"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K19925655#51",
+        "note": "Protest denied, AFR box checked.",
+        "rawTags": [
+          "protest",
+          "none"
+        ],
+        "keptTags": [
+          "protest",
+          "none"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K49021866#52",
+        "note": "Protest 2704-26-000123 on classification still open.",
+        "rawTags": [
+          "protest",
+          "recon_deadline_soon"
+        ],
+        "keptTags": [
+          "protest"
+        ],
+        "vetoedTags": [
+          "recon_deadline_soon"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K54114933#53",
+        "note": "AD/CVD scope inquiry opened, suspension record on file.",
+        "rawTags": [
+          "suspension"
+        ],
+        "keptTags": [
+          "suspension"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K21937388#57",
+        "note": "Liquidated early August per ES-701; client asking about the refund.",
+        "rawTags": [
+          "none"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "Z3M73705788#58",
+        "note": "Filed by a different broker (Z3M).",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "other_filer"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K41709811#59",
+        "note": "Pasted from the broker portal.",
+        "rawTags": [
+          "none"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K45051022#60",
+        "note": "Reconciliation summary entry.",
+        "rawTags": [
+          "recon"
+        ],
+        "keptTags": [
+          "recon"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": [
+          "recon"
+        ]
+      },
+      {
+        "id": "A7K57641988#62",
+        "note": "Recon entry already filed for this one last month.",
+        "rawTags": [
+          "recon",
+          "recon_deadline_soon"
+        ],
+        "keptTags": [
+          "recon"
+        ],
+        "vetoedTags": [
+          "recon_deadline_soon"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K22858255#64",
+        "note": "Designated on drawback claim DBK-3321.",
+        "rawTags": [
+          "drawback_claim"
+        ],
+        "keptTags": [
+          "drawback_claim"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K98281700#67",
+        "note": "Bonded warehouse entry, withdrawals to follow.",
+        "rawTags": [
+          "recon"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "recon"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K59572888#68",
+        "note": "Temporary import under bond, TIB.",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "other_filer"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K15506011#69",
+        "note": "No chapter 99 IEEPA line on this entry.",
+        "rawTags": [
+          "none"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      }
+    ],
+    "tagVetoAllEntries": {
+      "tagged": 32,
+      "vetoed": 16,
+      "conflictsBefore": 4,
+      "conflictsAfter": 1,
+      "entriesTouched": 15
+    }
+  },
+  "perCall": [
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-5dffee1c",
+      "ms": 2053,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-5e3650e1",
+      "ms": 2058,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-d2d95421",
+      "ms": 2095,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-4d5c34d8",
+      "ms": 2131,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-7c0cad43",
+      "ms": 2256,
+      "promptTokens": 654,
+      "completionTokens": 125,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-4463ef09",
+      "ms": 2496,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-6c49b64f",
+      "ms": 3029,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-2826a06d",
+      "ms": 3610,
+      "promptTokens": 651,
+      "completionTokens": 120,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-34de1b4f",
+      "ms": 1797,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-8e808eb9",
+      "ms": 1821,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-3f7d6e97",
+      "ms": 1887,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-a4d563fb",
+      "ms": 3995,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-6adc438b",
+      "ms": 1876,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-269b0dc1",
+      "ms": 4441,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-9412ccdc",
+      "ms": 2991,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-49ee710a",
+      "ms": 1612,
+      "promptTokens": 639,
+      "completionTokens": 107,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-7e735be8",
+      "ms": 2041,
+      "promptTokens": 668,
+      "completionTokens": 129,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-4e686abe",
+      "ms": 1809,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-f646937e",
+      "ms": 1809,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-5841e1b1",
+      "ms": 3333,
+      "promptTokens": 668,
+      "completionTokens": 138,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-7e075022",
+      "ms": 3121,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-1fdf3dd7",
+      "ms": 2827,
+      "promptTokens": 653,
+      "completionTokens": 123,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-614876d0",
+      "ms": 1777,
+      "promptTokens": 642,
+      "completionTokens": 110,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-8c236782",
+      "ms": 1665,
+      "promptTokens": 642,
+      "completionTokens": 110,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-d3ab4d60",
+      "ms": 3471,
+      "promptTokens": 651,
+      "completionTokens": 121,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-d39f871e",
+      "ms": 1912,
+      "promptTokens": 651,
+      "completionTokens": 123,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-5f176dfe",
+      "ms": 2056,
+      "promptTokens": 664,
+      "completionTokens": 142,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-055a0b42",
+      "ms": 2027,
+      "promptTokens": 651,
+      "completionTokens": 129,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-56cad8d9",
+      "ms": 3533,
+      "promptTokens": 663,
+      "completionTokens": 141,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-2c3b68bb",
+      "ms": 2622,
+      "promptTokens": 642,
+      "completionTokens": 110,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-72c3ae44",
+      "ms": 2151,
+      "promptTokens": 662,
+      "completionTokens": 141,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-b561c2c2",
+      "ms": 2034,
+      "promptTokens": 647,
+      "completionTokens": 115,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-5da21304",
+      "ms": 1681,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-0f6a0be9",
+      "ms": 2025,
+      "promptTokens": 650,
+      "completionTokens": 111,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-88b13afc",
+      "ms": 3337,
+      "promptTokens": 667,
+      "completionTokens": 145,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-34eb0458",
+      "ms": 2036,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-8d6218b1",
+      "ms": 1925,
+      "promptTokens": 654,
+      "completionTokens": 125,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-6cc61faa",
+      "ms": 2161,
+      "promptTokens": 656,
+      "completionTokens": 127,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-8088ace6",
+      "ms": 2327,
+      "promptTokens": 652,
+      "completionTokens": 122,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-5b21f436",
+      "ms": 1804,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-499d8036",
+      "ms": 1844,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-509c6409",
+      "ms": 2923,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-550701c2",
+      "ms": 1825,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-da9eedac",
+      "ms": 1715,
+      "promptTokens": 650,
+      "completionTokens": 108,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-094dee53",
+      "ms": 1896,
+      "promptTokens": 640,
+      "completionTokens": 108,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-a38b9b5a",
+      "ms": 2320,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-8782cdd2",
+      "ms": 2147,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-4a17c92d",
+      "ms": 1803,
+      "promptTokens": 641,
+      "completionTokens": 110,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-caa401fd",
+      "ms": 1693,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-98061e12",
+      "ms": 3054,
+      "promptTokens": 652,
+      "completionTokens": 117,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-b655e373",
+      "ms": 2155,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-0f9b103c",
+      "ms": 2181,
+      "promptTokens": 655,
+      "completionTokens": 132,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-e1a19534",
+      "ms": 2203,
+      "promptTokens": 654,
+      "completionTokens": 122,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-09a10ba5",
+      "ms": 1800,
+      "promptTokens": 658,
+      "completionTokens": 121,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-21b25aff",
+      "ms": 3017,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-33efd7df",
+      "ms": 3005,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-94365c90",
+      "ms": 1914,
+      "promptTokens": 654,
+      "completionTokens": 124,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-bd60843b",
+      "ms": 1760,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-c3227ca9",
+      "ms": 2325,
+      "promptTokens": 654,
+      "completionTokens": 124,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-e826c94c",
+      "ms": 1863,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-ab9c5827",
+      "ms": 2060,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-d2b9a240",
+      "ms": 2075,
+      "promptTokens": 654,
+      "completionTokens": 124,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-54922f04",
+      "ms": 1994,
+      "promptTokens": 651,
+      "completionTokens": 121,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-f14ab2ac",
+      "ms": 1748,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-1e04518c",
+      "ms": 2211,
+      "promptTokens": 653,
+      "completionTokens": 124,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-bf33d9fb",
+      "ms": 1732,
+      "promptTokens": 641,
+      "completionTokens": 109,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-91552691",
+      "ms": 2615,
+      "promptTokens": 661,
+      "completionTokens": 133,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-d72cf99a",
+      "ms": 2567,
+      "promptTokens": 652,
+      "completionTokens": 121,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-cd2909dd",
+      "ms": 2113,
+      "promptTokens": 647,
+      "completionTokens": 115,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-9c55ae0e39dbace8",
+      "ms": 2445,
+      "promptTokens": 1993,
+      "completionTokens": 600,
+      "reasoningTokens": 484
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-8ba02f459f80b4d4",
+      "ms": 2883,
+      "promptTokens": 1953,
+      "completionTokens": 690,
+      "reasoningTokens": 533
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-bca15a9e0f19401c",
+      "ms": 4281,
+      "promptTokens": 1977,
+      "completionTokens": 831,
+      "reasoningTokens": 718
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-bd40966910eedea9",
+      "ms": 4307,
+      "promptTokens": 1923,
+      "completionTokens": 730,
+      "reasoningTokens": 561
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-a5a09330e859db6b",
+      "ms": 4353,
+      "promptTokens": 1973,
+      "completionTokens": 805,
+      "reasoningTokens": 683
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-88df6925ebf8c9a1",
+      "ms": 4988,
+      "promptTokens": 1954,
+      "completionTokens": 1055,
+      "reasoningTokens": 922
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-90ff2a6f06be3a0b",
+      "ms": 5877,
+      "promptTokens": 1940,
+      "completionTokens": 1157,
+      "reasoningTokens": 1067
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-aaff61e4be87ee9a",
+      "ms": 3049,
+      "promptTokens": 1933,
+      "completionTokens": 640,
+      "reasoningTokens": 515
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-bc984529ee418a1f",
+      "ms": 6117,
+      "promptTokens": 2036,
+      "completionTokens": 1279,
+      "reasoningTokens": 1144
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-bda48ddeb130d947",
+      "ms": 6426,
+      "promptTokens": 2841,
+      "completionTokens": 1408,
+      "reasoningTokens": 1046
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-adea31a1c2e607c4",
+      "ms": 4744,
+      "promptTokens": 1931,
+      "completionTokens": 1077,
+      "reasoningTokens": 963
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-872ff6e65a753ce2",
+      "ms": 3821,
+      "promptTokens": 1925,
+      "completionTokens": 878,
+      "reasoningTokens": 753
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-bd85320f34015412",
+      "ms": 3860,
+      "promptTokens": 1982,
+      "completionTokens": 957,
+      "reasoningTokens": 853
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-9f14159aceca3fca",
+      "ms": 4824,
+      "promptTokens": 1970,
+      "completionTokens": 1225,
+      "reasoningTokens": 1130
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-9540961e9f05dd44",
+      "ms": 3355,
+      "promptTokens": 1946,
+      "completionTokens": 770,
+      "reasoningTokens": 650
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-98c33d46479a3913",
+      "ms": 4484,
+      "promptTokens": 1980,
+      "completionTokens": 1058,
+      "reasoningTokens": 938
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-815e06d8ef173145",
+      "ms": 6245,
+      "promptTokens": 1964,
+      "completionTokens": 1505,
+      "reasoningTokens": 1393
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-9e1849ccac83c836",
+      "ms": 4765,
+      "promptTokens": 1948,
+      "completionTokens": 1162,
+      "reasoningTokens": 1064
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-bf7afbfbdb557d26",
+      "ms": 3792,
+      "promptTokens": 1956,
+      "completionTokens": 1090,
+      "reasoningTokens": 965
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-8a7801327c9aba41",
+      "ms": 3228,
+      "promptTokens": 1928,
+      "completionTokens": 919,
+      "reasoningTokens": 790
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-89837c4b06cd3513",
+      "ms": 2673,
+      "promptTokens": 1932,
+      "completionTokens": 747,
+      "reasoningTokens": 575
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-b3303ac5a17b9c4d",
+      "ms": 2976,
+      "promptTokens": 1948,
+      "completionTokens": 932,
+      "reasoningTokens": 804
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-b4d0bd05695eac35",
+      "ms": 5335,
+      "promptTokens": 1933,
+      "completionTokens": 1659,
+      "reasoningTokens": 1573
+    }
+  ],
+  "note": "estCostUsd uses Nebius list prices x usage (see src/lib/nebius.ts PRICES); latencies are client-side wall time per successful call."
+}

@@ -72,11 +72,13 @@ describe("C: code vetoes AI tag false positives", () => {
     expect(a.noteSignalsRaw).toEqual(["drawback_claim"]);
     expect(applyCodeVeto(a)).toEqual(a);
   });
-  it("the recorded run: every logged conflict was a false positive and the veto removes them", () => {
+  it("the recorded run: the veto removes the false-positive conflicts; one survives and is reported (a Type 09 'Reconciliation summary entry' note with recon_flag N)", () => {
     const infos = Object.values(run.entryInfo).map(applyCodeVeto);
     const s = vetoStats(infos);
     expect(s.conflictsBefore).toBeGreaterThan(0);
-    expect(s.conflictsAfter).toBe(0);
+    expect(s.conflictsAfter).toBe(1); // honest result of the 2026-10-30 run: the note really says "Reconciliation", so the veto cannot call it unsupported
+    const left = Object.entries(run.entryInfo).filter(([, i]) => applyCodeVeto(i).noteConflicts.length);
+    expect(left.map(([id]) => id.split("#")[0])).toEqual(["A7K45051022"]);
     expect(s.vetoed).toBeGreaterThan(0);
     expect(s.vetoed).toBeLessThanOrEqual(s.tagged);
   });

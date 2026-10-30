@@ -12,7 +12,9 @@ const text = (e: { summary: string; brokerAction: string; whyThisOrder: string }
 const g = (id: string, t: string) => guardEntryText(t, figuresFor(V.get(id)!));
 
 // The three traps seeded in the sample (scripts/gen-sample.mjs): 81 days since liquidation, EU Framework carve-out, underpaid 301.
-const T81 = "A7K21937388#57", TFW = "A7K35748488#31", TU301 = "A7K51309444#44";
+// Ids carry the filing-order suffix, which moves when the engine changes, so look entries up by their entry-number key.
+const idOf = (key: string) => run.portfolio.verdicts.find((v: Verdict) => v.key === key)!.id as string;
+const T81 = idOf("A7K21937388"), TFW = idOf("A7K35748488"), TU301 = idOf("A7K51309444"), TNB = idOf("A7K73449900"), TRECON = idOf("A7K15986055");
 
 describe("number guard on the recorded Ultra run", () => {
   it("the recording has 22 explanations and every one passes the guard unchanged (Ultra stated no figure the engine did not produce)", () => {
@@ -43,21 +45,26 @@ describe("number guard on the recorded Ultra run", () => {
     expect(n.guardStripped).toBe(0);
   });
 
-  it("FOUND IN THE RECORDING: the portfolio headline says 7 entries expire today; the engine says 1 (the other FILE NOW entries have 2 to 40 days left). The count guard corrects it", () => {
+  it("FOUND IN THE EARLIER RECORDING: the portfolio headline said 7 entries expire today; the engine says 1. The count guard corrects that sentence", () => {
     const vs: Verdict[] = run.portfolio.verdicts;
     const today = vs.filter((v) => v.lane === "FILE_NOW" && v.deadlines.capeDaysLeft === 0).length;
     expect(today).toBe(1);
-    expect(run.portfolioNote.headline).toContain("File 7 entries expiring today"); // raw model output, kept as recorded
-    const fixed = guardCounts(run.portfolioNote.headline, vs);
+    // The 2026-10-30 recording's headline has no "N entries expiring today" claim, so the count guard has nothing to correct in it (stripped 0).
+    // The mechanism is pinned on the sentence the earlier recording produced.
+    expect(guardCounts(run.portfolioNote.headline, vs).stripped).toBe(0);
+    const old = "File 7 entries expiring today";
+    const fixed = guardCounts(old, vs);
     expect(fixed.stripped).toBe(1);
     expect(fixed.text).toContain("File 1 entry expiring today");
     expect(guardCounts("File 1 entry expiring today", vs).stripped).toBe(0);
   });
 
-  it("reguardRun (what /api/sample serves): fixes the headline, leaves the 22 clean explanations byte-identical, is idempotent", () => {
-    const once = reguardRun(run);
+  it("reguardRun (what /api/sample serves): fixes a wrong count in the headline, leaves the 22 clean explanations byte-identical, is idempotent", () => {
+    const bad = { ...run, portfolioNote: { ...run.portfolioNote, headline: "File 7 entries expiring today; the rest can wait." } };
+    const once = reguardRun(bad);
     expect(once.portfolioNote.headline).toContain("File 1 entry expiring today");
     expect(once.portfolioNote.guardStripped).toBe(run.portfolioNote.guardStripped + 1);
+    expect(reguardRun(run).portfolioNote).toEqual(run.portfolioNote); // the real recording needs no correction
     for (const id of Object.keys(EX)) expect(once.explanations[id].summary).toBe(EX[id].summary);
     expect(reguardRun(once).portfolioNote).toEqual(once.portfolioNote);
   });
@@ -90,11 +97,11 @@ describe("trap entries", () => {
     expect(g(TFW, "Refundable is $99,999.").unknown).toBe(1);
   });
 
-  it("underpaid 301 trap (recorded): Ultra's $8,000 / $5,600 / $2,400 are right; swapping the labels or inventing a figure is caught", () => {
+  it("underpaid 301 trap: the engine's $8,000 / $5,600 / $2,400 are right (no Ultra text in this recording, it is FILE NOW); swapping the labels or inventing a figure is caught", () => {
     const v = V.get(TU301)!;
     expect(v.money).toMatchObject({ ieepaRefundableCents: 800000, underpaidOtherCents: 560000, netCents: 240000, billCents: 0 });
-    expect(EX[TU301].summary).toContain("$2,400 net refund");
-    expect(g(TU301, EX[TU301].summary).stripped).toBe(0);
+    expect(EX[TU301]).toBeUndefined();
+    expect(g(TU301, "A $2,400 net refund after the $5,600 underpaid 301 duty is netted against the $8,000 refundable IEEPA.").stripped).toBe(0);
     expect(g(TU301, "Net refund is $8,000 after the 301 underpayment.").mislabeled).toBe(1);   // gross presented as net
     expect(g(TU301, "The underpaid 301 duty is $2,400.").mislabeled).toBe(1);                   // net presented as underpaid
     expect(g(TU301, "This entry will produce a bill of $5,600.").mislabeled).toBe(1);           // underpaid presented as a bill (engine bill is $0)
@@ -103,7 +110,7 @@ describe("trap entries", () => {
   });
 
   it("net-bill entry (recorded): a bill is not a refund", () => {
-    const id = "A7K73449900#42";
+    const id = TNB;
     expect(g(id, EX[id].summary).stripped).toBe(0);
     expect(g(id, "Net refund of $2,625.").mislabeled).toBe(0); // net is -$2,625; "net" owns this amount (abs value), so the sign is the engine's job
   });
@@ -119,7 +126,7 @@ describe("guard mechanics", () => {
     expect(r.text).toBe("Net $2,400, bill (amount on board), (see deadlines) ago.");
   });
   it("a days-left claim must equal a computed deadline", () => {
-    const id = "A7K15986055#5"; // recon deadline 21 days away
+    const id = TRECON; // recon deadline 21 days away
     expect(g(id, "Reconciliation deadline is 21 days away.").stripped).toBe(0);
     expect(g(id, "Reconciliation deadline is 12 days away.").badDays).toBe(1);
   });

@@ -1,0 +1,387 @@
+{
+  "provider": "nebius-token-factory",
+  "providerLabel": "Real run on Nebius Token Factory (default provider). Not OpenRouter, not replayed.",
+  "mode": "mini",
+  "startedAt": "2026-10-30T08:11:48.937Z",
+  "ranAt": "2026-10-30T08:12:07.344Z",
+  "host": "api.tokenfactory.nebius.com",
+  "inputs": {
+    "csv": "data/sample-mini.csv (synthetic mini set, 13 rows)",
+    "asOf": "2026-10-29"
+  },
+  "modelsRequested": {
+    "ultra": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "lightning": "nvidia/Nemotron-3_5-Lightning"
+  },
+  "modelsReturnedByApi": {
+    "ultra": [
+      "nvidia/Nemotron-3-Ultra-550b-a55b"
+    ],
+    "lightning": [
+      "nvidia/Nemotron-3_5-Lightning"
+    ]
+  },
+  "wallMs": 18406,
+  "wallSeconds": 18.4,
+  "totals": {
+    "calls": 15,
+    "medianMs": 2129,
+    "p95Ms": 10659,
+    "maxMs": 10659,
+    "promptTokens": 16934,
+    "completionTokens": 8963,
+    "reasoningTokens": 7046,
+    "modelIdsReturned": [
+      "nvidia/Nemotron-3_5-Lightning",
+      "nvidia/Nemotron-3-Ultra-550b-a55b"
+    ],
+    "failedCalls": 1,
+    "estCostUsd": 0.0341
+  },
+  "lightning": {
+    "calls": 10,
+    "medianMs": 1903,
+    "p95Ms": 2417,
+    "maxMs": 2417,
+    "promptTokens": 6574,
+    "completionTokens": 1290,
+    "reasoningTokens": 0,
+    "modelIdsReturned": [
+      "nvidia/Nemotron-3_5-Lightning"
+    ],
+    "failed": 0,
+    "firstError": null
+  },
+  "ultra": {
+    "calls": 5,
+    "medianMs": 3531,
+    "p95Ms": 10659,
+    "maxMs": 10659,
+    "promptTokens": 10360,
+    "completionTokens": 7673,
+    "reasoningTokens": 7046,
+    "modelIdsReturned": [
+      "nvidia/Nemotron-3-Ultra-550b-a55b"
+    ],
+    "failed": 1,
+    "firstError": null,
+    "explanations": 4,
+    "portfolioNote": false
+  },
+  "normalization": {
+    "checked": 90,
+    "agree": 86
+  },
+  "auditor": {
+    "notesChecked": 9,
+    "fabricatedTagsRemovedByCodeVeto": 5,
+    "numberGuardStrippedFromUltraText": 0,
+    "seededConflicts": [
+      {
+        "entry": "A7K80000033",
+        "signal": "drawback_claim",
+        "planted": "note says drawback claim DBK-4410 but drawback_claim=N",
+        "caught": true,
+        "conflictsFinal": [
+          "drawback_claim"
+        ]
+      },
+      {
+        "entry": "A7K80000011",
+        "signal": "protest",
+        "planted": "note says protest filed but protest_status is not Open/Suspended/Denied",
+        "caught": true,
+        "conflictsFinal": [
+          "protest"
+        ]
+      },
+      {
+        "entry": "A7K80000022",
+        "signal": "recon",
+        "planted": "note says Type 09 recon filed but recon_flag=N",
+        "caught": true,
+        "conflictsFinal": [
+          "recon"
+        ]
+      }
+    ],
+    "seededCaught": 3,
+    "seededTotal": 3,
+    "perNote": [
+      {
+        "id": "A7K62224999#1",
+        "note": "HTS end-dated Sept 1; PSC needed to replace.",
+        "rawTags": [
+          "psc_pending",
+          "underpaid_duty"
+        ],
+        "keptTags": [
+          "psc_pending"
+        ],
+        "vetoedTags": [
+          "underpaid_duty"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K15986055#2",
+        "note": "Recon due in 3 weeks; importer asked to file Recon first.",
+        "rawTags": [
+          "recon",
+          "recon_deadline_soon"
+        ],
+        "keptTags": [
+          "recon",
+          "recon_deadline_soon"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K90384188#4",
+        "note": "Liquidated per ES-701 courtesy notice; broker flagged as urgent.",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "other_filer"
+        ],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K80000033#5",
+        "note": "Designated on drawback claim DBK-4410 as of Oct 3.",
+        "rawTags": [
+          "drawback_claim"
+        ],
+        "keptTags": [
+          "drawback_claim"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": [
+          "drawback_claim"
+        ]
+      },
+      {
+        "id": "A7K80000011#6",
+        "note": "Protest filed 10/20 on the classification, awaiting CBP acceptance.",
+        "rawTags": [
+          "protest",
+          "recon_deadline_soon"
+        ],
+        "keptTags": [
+          "protest"
+        ],
+        "vetoedTags": [
+          "recon_deadline_soon"
+        ],
+        "conflictsFinal": [
+          "protest"
+        ]
+      },
+      {
+        "id": "A7K80000022#7",
+        "note": "Type 09 recon entry was filed last month, do not include in CAPE.",
+        "rawTags": [
+          "recon",
+          "recon_deadline_soon"
+        ],
+        "keptTags": [
+          "recon"
+        ],
+        "vetoedTags": [
+          "recon_deadline_soon"
+        ],
+        "conflictsFinal": [
+          "recon"
+        ]
+      },
+      {
+        "id": "A7K21865533#8",
+        "note": "232 underpaid; may net to a bill.",
+        "rawTags": [
+          "underpaid_duty"
+        ],
+        "keptTags": [
+          "underpaid_duty"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K22858255#9",
+        "note": "Designated on drawback claim DBK-3321.",
+        "rawTags": [
+          "drawback_claim"
+        ],
+        "keptTags": [
+          "drawback_claim"
+        ],
+        "vetoedTags": [],
+        "conflictsFinal": []
+      },
+      {
+        "id": "A7K59572888#10",
+        "note": "Temporary import under bond, TIB.",
+        "rawTags": [
+          "other_filer"
+        ],
+        "keptTags": [
+          "none"
+        ],
+        "vetoedTags": [
+          "other_filer"
+        ],
+        "conflictsFinal": []
+      }
+    ],
+    "tagVetoAllEntries": {
+      "tagged": 13,
+      "vetoed": 5,
+      "conflictsBefore": 4,
+      "conflictsAfter": 3,
+      "entriesTouched": 5
+    }
+  },
+  "perCall": [
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-6a0c5fb6",
+      "ms": 2129,
+      "promptTokens": 650,
+      "completionTokens": 118,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-6b1a2976",
+      "ms": 2408,
+      "promptTokens": 667,
+      "completionTokens": 145,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-a7e04a66",
+      "ms": 2417,
+      "promptTokens": 668,
+      "completionTokens": 138,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-cf68e37c",
+      "ms": 1811,
+      "promptTokens": 653,
+      "completionTokens": 124,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-0ee6a591",
+      "ms": 1652,
+      "promptTokens": 650,
+      "completionTokens": 111,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-93bc3553",
+      "ms": 1854,
+      "promptTokens": 654,
+      "completionTokens": 125,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-87510b15",
+      "ms": 1859,
+      "promptTokens": 655,
+      "completionTokens": 132,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-95402ba7",
+      "ms": 2042,
+      "promptTokens": 659,
+      "completionTokens": 132,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-032b82d9",
+      "ms": 2060,
+      "promptTokens": 659,
+      "completionTokens": 135,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "lightning",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "id": "chatcmpl-30173dec",
+      "ms": 1903,
+      "promptTokens": 659,
+      "completionTokens": 130,
+      "reasoningTokens": 0
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-a541bb456ae2355c",
+      "ms": 3531,
+      "promptTokens": 1993,
+      "completionTokens": 1068,
+      "reasoningTokens": 947
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-b180d42cb1f83f01",
+      "ms": 4591,
+      "promptTokens": 1922,
+      "completionTokens": 1289,
+      "reasoningTokens": 1176
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-8988cfb5190d5238",
+      "ms": 3452,
+      "promptTokens": 2036,
+      "completionTokens": 1117,
+      "reasoningTokens": 971
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-813c4095a0426ba0",
+      "ms": 2525,
+      "promptTokens": 1934,
+      "completionTokens": 699,
+      "reasoningTokens": 574
+    },
+    {
+      "role": "ultra",
+      "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "id": "chatcmpl-b8f8c9ab0f4557e2",
+      "ms": 10659,
+      "promptTokens": 2475,
+      "completionTokens": 3500,
+      "reasoningTokens": 3378
+    }
+  ],
+  "note": "estCostUsd uses Nebius list prices x usage (see src/lib/nebius.ts PRICES); latencies are client-side wall time per successful call."
+}

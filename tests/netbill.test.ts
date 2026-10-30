@@ -59,8 +59,19 @@ describe("NET_BILL_RISK is only for entries where other duties wipe out or excee
   });
 });
 
-describe("recorded sample run gets today's lanes at serve time", () => {
-  const run = JSON.parse(fs.readFileSync("data/sample-run.json", "utf8")) as RunResult;
+describe("current recording needs no re-laning; an older recording gets today's lanes at serve time", () => {
+  it("data/sample-run.json was recorded with today's engine: re-laning changes nothing", () => {
+    const cur = JSON.parse(fs.readFileSync("data/sample-run.json", "utf8")) as RunResult;
+    const served = applyFreshLanes(structuredClone(cur), pf);
+    expect(served.portfolio.verdicts.map((v) => [v.id, v.lane])).toEqual(cur.portfolio.verdicts.map((v) => [v.id, v.lane]));
+    expect(Object.keys(served.explanations).length).toBe(Object.keys(cur.explanations).length);
+  });
+});
+
+// tests/fixtures/sample-run.2026-10-29.json is the earlier real Token Factory recording (before the NET_BILL_RISK rule fix). It is kept only to
+// prove that serve-time re-laning still handles a recording made under an older engine. It is not the submission evidence.
+describe("an older recording (fixture) gets today's lanes at serve time", () => {
+  const run = JSON.parse(fs.readFileSync("tests/fixtures/sample-run.2026-10-29.json", "utf8")) as RunResult;
   const before = structuredClone(run);
   const served = applyFreshLanes(structuredClone(run), pf);
   it("changes only lane and filing step of re-laned entries; ids, money, order and AI text stay as recorded", () => {

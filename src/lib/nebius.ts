@@ -65,7 +65,18 @@ export function modelId(k: ModelKey) { return providerName() === "openrouter" ? 
 /** Dev fallback prices are $0 (free tier); the receipt must not show an invented Nebius cost for it. */
 export function costFor(model: ModelKey, p: number, c: number) { return providerName() === "openrouter" ? 0 : costUsd(model, p, c); }
 
+/** Opt-in per-call log (receipt scripts only): model role, latency and tokens of every successful call. Never holds keys or bodies. */
+export interface CallLogEntry { role: ModelKey; modelReturned: string; id: string; ms: number; promptTokens: number; completionTokens: number; reasoningTokens: number; host: string }
+let callLog: CallLogEntry[] | null = null;
+export function startCallLog() { callLog = []; }
+export function takeCallLog(): CallLogEntry[] { const l = callLog ?? []; callLog = null; return l; }
+
 export async function chat(o: ChatOpts): Promise<ChatResult> {
+  const r = await chatInner(o);
+  callLog?.push({ role: o.model, modelReturned: r.model, id: r.id, ms: r.ms, promptTokens: r.promptTokens, completionTokens: r.completionTokens, reasoningTokens: r.reasoningTokens, host: r.host });
+  return r;
+}
+async function chatInner(o: ChatOpts): Promise<ChatResult> {
   if (providerName() === "openrouter") return chatOpenrouter(o);
   const key = process.env.NEBIUS_API_KEY;
   if (!key) throw new Error("NEBIUS_API_KEY is not set");

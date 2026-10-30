@@ -337,6 +337,9 @@ if (process.env.SKIP_LIVE !== "1") {
   console.log(`  live run finished in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   const rc = await page.locator(".receipt").innerText();
   ok(/Lightning/.test(rc) && /Ultra/.test(rc), "receipt shows both models");
+  const hp = await (await fetch(`${BASE}/api/health`)).json();
+  ok(hp.provider === "tokenfactory" && hp.nebius === true, `health reports the real provider: ${hp.provider}, host ${hp.host}`);
+  ok(/tokenfactory\.nebius\.com/.test(rc) && !/openrouter/i.test(rc), "receipt names api.tokenfactory.nebius.com and never OpenRouter");
   ok(await page.locator(".tabs .tab").count() === 4, "live board has 4 lanes");
   await page.screenshot({ path: `${OUT}/live-board-1440.png` });
   await page.locator(".receipt").scrollIntoViewIfNeeded();
