@@ -54,8 +54,10 @@ describe("offer check: the three built-in examples", () => {
     expect(r.extracted.exclusivity).toMatchObject({ termMonths: 12, autoRenew: true, canCancel: true });
   });
 
-  it("every example gets a different verdict, and every flag cites a CBP quote that exists", () => {
-    expect(OFFER_EXAMPLES.map((e) => checkOffer(e.text).verdict)).toEqual(["clean", "review", "high"]);
+  it("every example lands on its expected verdict, and every flag cites a CBP quote that exists", () => {
+    expect(Object.fromEntries(OFFER_EXAMPLES.map((e) => [e.id, checkOffer(e.text).verdict]))).toEqual({
+      clean: "clean", "flat-broker": "clean", borderline: "review", retainer: "review", "ace-login": "review", "bank-redirect": "high", "lock-in": "review", predatory: "high",
+    });
     for (const e of OFFER_EXAMPLES) for (const f of checkOffer(e.text).flags) for (const c of f.cites) expect(CBP_CITES[c], `${f.id} -> ${c}`).toBeTruthy();
   });
 });

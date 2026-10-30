@@ -73,10 +73,20 @@ html body .panel.oc .oc-h3:not(.headline):not(.display){font:480 14px/20px var(-
 .oc-tr .oc-mono::before{display:block;font:480 11px/16px var(--sans);color:var(--muted)}
 .oc-tr [data-testid^=cost-fee]::before{content:"Fee you pay"}
 .oc-tr [data-testid^=cost-keep]::before{content:"You keep"}
-@media (max-width:1100px){.oc-grid{grid-template-columns:1fr}.oc-col-cost{position:static}}
+@media (max-width:1100px){.oc-grid{grid-template-columns:minmax(0,1fr)}.oc-col-cost{position:static}}
 @media (max-width:640px){
   .oc-row{flex-wrap:wrap;row-gap:2px}
   .oc-title{flex:1 1 0;min-width:0;white-space:normal}
   .oc-frag{flex:1 0 100%;order:5}
   .oc-chev{order:4}
 }
+.oc-synth{margin:6px 0 0;font:400 12px/16px var(--mono);color:var(--faint)}
+.oc-terms{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.oc-term{border:1px solid var(--border);border-radius:var(--radius-control);background:var(--surface);padding:8px 12px;min-width:0}
+.oc-term dt{font:480 11px/16px var(--sans);color:var(--faint)}
+.oc-term dd{margin:2px 0 0;font-size:13px;line-height:18px;color:var(--text);overflow-wrap:anywhere}
+.oc-term.warn{border-color:var(--warn-line);background:var(--warn-bg)}
+.oc-term.warn dd{color:var(--warn-text)}
+@media (max-width:1100px){.oc-terms{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.oc-terms{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.oc-cbp svg{display:inline;vertical-align:-1px;margin-left:3px}

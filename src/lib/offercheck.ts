@@ -79,6 +79,7 @@ export interface Extracted {
   noUpfrontStated: boolean;
   flatFeeUsd: number | null;
   perEntryUsd: number | null;
+  minimumFeeUsd: number | null;       // a floor on the fee, owed even when the percentage comes to less
   noRecoveryNoFee: boolean;
   credentials: { password: Hit[]; aceAccess: Hit[]; ssn: Hit[]; bankDetails: Hit[]; neverAsks: boolean };
   poa: { mentioned: boolean; limited: boolean; broad: boolean; licensedBroker: boolean; hit?: Hit };
@@ -151,7 +152,7 @@ function extractMoney(sents: string[]) {
     const flatM = /\bflat\b[^.$]{0,25}\$\s?(\d[\d,]*(?:\.\d{1,2})?)|\$\s?(\d[\d,]*(?:\.\d{1,2})?)\s*flat\b/i.exec(s);
     const timing = UP_STRONG.test(s) || (UP_TIMING.test(s) && /\b(fee|charge|payment|cost|pay)\b/i.test(s));
     if (flatM) flat = usd(flatM[1] ?? flatM[2]);
-    if (amt && timing && !/\bpercent|%/.test(amt.input ?? "")) { upfront += usd(amt[1]); upfrontAny = true; }
+    if (amt && timing && !/%\s*(?:of|on)\s+(?:the\s+)?(?:first\s+)?\$/i.test(s)) { upfront += usd(amt[1]); upfrontAny = true; }
     else if (!amt && UP_STRONG.test(s)) upfrontNoAmount = true;
     else if (flatM && !timing) { /* flat fee with no timing words: priced, but not stated as upfront */ }
   }
@@ -159,10 +160,24 @@ function extractMoney(sents: string[]) {
   return { upfrontUsd: upfrontAny ? upfront : null, upfrontNoAmount: upfrontNoAmount && !upfrontAny, noUpfront: noUpfront && !upfrontAny, flat, perEntry };
 }
 
+const MIN_NEG = /\b(?:no|zero|without|waive[sd]?)\b[^.$]{0,20}\bminimum/i;
+const MIN_NOT_FEE = /\bminimum\s+(?:refund|claim|duty|duties|entries|entry|value|order|volume|amount of (?:refund|duty))/i;
+/** A fee floor: "minimum fee of $5,000", "$2,500 minimum", "at least $3,000 in fees". The largest one stated wins. */
+function extractMinimum(sents: string[]): number | null {
+  let best: number | null = null;
+  for (const s of sents) {
+    if (MIN_NEG.test(s) || MIN_NOT_FEE.test(s) || !/\b(fees?|charge[sd]?|commission|billing|payment|retainer)\b/i.test(s)) continue;
+    const m = /\bminimum\b[^.$]{0,40}\$\s?(\d[\d,]*(?:\.\d{1,2})?)|\$\s?(\d[\d,]*(?:\.\d{1,2})?)\s*minimum\b|\b(?:no less than|at least)\s*\$\s?(\d[\d,]*(?:\.\d{1,2})?)/i.exec(s);
+    const v = m ? usd(m[1] ?? m[2] ?? m[3]) : NaN;
+    if (Number.isFinite(v) && v > 0) best = Math.max(best ?? 0, v);
+  }
+  return best;
+}
+
 function extractCredentials(sents: string[]) {
   const ok = (s: string) => REQUEST.test(s) && !NEG.test(s);
   const password = matching(sents, /\b(passwords?|passcodes?|log-?in credentials|login details|usernames?|credentials)\b/i, (s) => !ok(s));
-  const aceAccess = matching(sents, /\b(\bace\b[^.]{0,70}\b(?:access|account|log-?in|login|portal|credentials)\b|(?:add|invite|make|designate|set up) (?:us|our \w+(?: \w+)?) (?:as|to)[^.]{0,40}\b(?:user|sub-?account|account|trade account owner|tao)\b|\btrade account owner\b|\bTAO\b)/i, (s) => !ok(s) && !/\b(add|invite|make|designate|set up) (us|our)/i.test(s));
+  const aceAccess = matching(sents, /\b(\bace\b[^.]{0,70}\b(?:access|account|log-?in|login|portal|credentials)\b|(?:add|invite|make|designate|set up) (?:us|our \w+(?: \w+)?) (?:as|to)[^.]{0,40}\b(?:user|sub-?account|account|trade account owner|tao)\b|\btrade account owner\b|\bTAO\b)/i, (s) => (!ok(s) && !/\b(add|invite|make|designate|set up) (us|our)/i.test(s)) || (/\b(ach|refund account|routing|bank)\b/i.test(s) && !/\b(password|log-?in|login|credentials|access|username|trade account owner|tao|user)\b/i.test(s)));
   const ssn = matching(sents, /\b(social security|ssn|driver'?s licen[sc]e|passport)\b/i, (s) => !ok(s));
   const bankDetails = matching(sents, /\b(routing number|account number|bank (?:account )?(?:details|information|login|credentials|statements?)|voided check|online banking|banking (?:details|information))\b/i, (s) => !ok(s));
   const neverAsks = sents.some((s) => /\b(never|do not|don'?t|will not|won'?t|no need to)\b[^.]{0,40}\b(ask|request|need|require|share|provide|give)\b[^.]{0,50}\b(password|log-?in|credential|bank|ace)\b/i.test(s));
@@ -255,7 +270,7 @@ export function extractOffer(raw: string): Extracted {
   return {
     feePct: pcts.length ? { low: pcts[0], high: pcts[pcts.length - 1], all: pcts } : null,
     upfrontUsd: money.upfrontUsd, upfrontMentionedNoAmount: money.upfrontNoAmount, noUpfrontStated: money.noUpfront,
-    flatFeeUsd: money.flat, perEntryUsd: money.perEntry,
+    flatFeeUsd: money.flat, perEntryUsd: money.perEntry, minimumFeeUsd: extractMinimum(sents),
     noRecoveryNoFee: sents.some((s) => /\bno (?:recovery|refund|results?|win|success),? no (?:fee|charge|cost)\b|\bno fee unless\b|\bonly (?:pay|charge|paid)[^.]{0,30}\b(?:if|when|after)\b[^.]{0,40}\b(?:refund|recover|paid|receive)/i.test(s)),
     credentials, poa, exclusivity: excl, payment,
     urgency: matching(sents, URGENCY, (s) => /\b(not|no)\b[^.]{0,20}\b(pressure|rush|urgent)/i.test(s)),
@@ -322,6 +337,11 @@ export function buildFlags(x: Extracted): Flag[] {
     f.push({ id: "upfront", severity: "medium", title: "Mentions a retainer or deposit but gives no amount",
       detail: "Ask for the exact amount and when it is due. CBP charges nothing to process a refund.", evidence: [], cites: ["no-fees"] });
   }
+  if (x.minimumFeeUsd !== null) {
+    f.push({ id: "minimum-fee", severity: "medium", title: `Minimum fee of ${fmtUsd(x.minimumFeeUsd)}, owed whatever the refund comes to`,
+      detail: "A fee floor means a small refund can cost proportionally far more than the headline percentage. Ask whether the minimum is due if nothing is recovered, and compare it with filing yourself, which costs CBP nothing. This is our reading, not a CBP rule.",
+      evidence: [], cites: ["no-fees"] });
+  }
   if (x.flatFeeUsd !== null) {
     f.push({ id: "flat-fee", severity: "info", title: `Flat fee of ${fmtUsd(x.flatFeeUsd)} stated`,
       detail: "Included in the example cost below. Check when it is due: before filing counts as upfront.", evidence: [], cites: [] });
@@ -371,7 +391,7 @@ export function buildFlags(x: Extracted): Flag[] {
     f.push({ id: "payee-unclear", severity: "info", title: "Does not say where the refund will be paid",
       detail: "Ask in writing. CBP pays only the Importer of Record or its 4811 notify party, by ACH to a verified bank account.", evidence: [], cites: ["payee"] });
   }
-  if (!x.feePct && x.upfrontUsd === null && x.flatFeeUsd === null) {
+  if (!x.feePct && x.upfrontUsd === null && x.flatFeeUsd === null && x.minimumFeeUsd === null && x.perEntryUsd === null) {
     f.push({ id: "fee-missing", severity: "info", title: "No fee found in the text",
       detail: "We could not find a percentage or a dollar fee. Get the full fee in writing before you sign.", evidence: [], cites: [] });
   }
@@ -432,11 +452,12 @@ export function fmtCents(c: number): string {
 /** Example comparison on a refund amount in cents. Fee cents are rounded per row; nothing here is a quote. */
 export function compareCosts(refundCents: number, x: Extracted): CostRow[] {
   const fixed = Math.round(((x.upfrontUsd ?? 0) + (x.flatFeeUsd ?? 0)) * 100);
-  const hasFee = x.feePct !== null || fixed > 0;
-  const lowFee = hasFee ? fixed + (x.feePct ? Math.round((refundCents * x.feePct.low) / 100) : 0) : null;
-  const highFee = hasFee ? fixed + (x.feePct ? Math.round((refundCents * x.feePct.high) / 100) : 0) : null;
+  const floor = x.minimumFeeUsd !== null && (x.upfrontUsd === null || x.minimumFeeUsd > x.upfrontUsd) ? Math.round(x.minimumFeeUsd * 100) : 0; // a minimum already counted as upfront is not added twice
+  const hasFee = x.feePct !== null || fixed > 0 || floor > 0;
+  const lowFee = hasFee ? fixed + Math.max(floor, x.feePct ? Math.round((refundCents * x.feePct.low) / 100) : 0) : null;
+  const highFee = hasFee ? fixed + Math.max(floor, x.feePct ? Math.round((refundCents * x.feePct.high) / 100) : 0) : null;
   const offerNote = !hasFee ? "No fee found in the offer text, so no cost is shown."
-    : [x.feePct ? (x.feePct.low === x.feePct.high ? `${x.feePct.high}% of the refund` : `${x.feePct.low}% to ${x.feePct.high}% of the refund (tiered)`) : "", x.upfrontUsd ? `${fmtUsd(x.upfrontUsd)} upfront` : "", x.flatFeeUsd ? `${fmtUsd(x.flatFeeUsd)} flat` : "", x.perEntryUsd ? `plus ${fmtUsd(x.perEntryUsd)} per entry, not counted here` : ""].filter(Boolean).join(", ");
+    : [x.feePct ? (x.feePct.low === x.feePct.high ? `${x.feePct.high}% of the refund` : `${x.feePct.low}% to ${x.feePct.high}% of the refund (tiered)`) : "", x.upfrontUsd ? `${fmtUsd(x.upfrontUsd)} upfront` : "", x.flatFeeUsd ? `${fmtUsd(x.flatFeeUsd)} flat` : "", floor ? `${fmtUsd(x.minimumFeeUsd!)} minimum` : "", x.perEntryUsd ? `plus ${fmtUsd(x.perEntryUsd)} per entry, not counted here` : ""].filter(Boolean).join(", ");
   const flatC = PUBLISHED_FLAT_FEE.usd * 100;
   return [
     { id: "offer", label: "This offer", feeLowCents: lowFee, feeHighCents: highFee,

@@ -5,6 +5,7 @@ import { CBP_CITES, CHECKED_ON, checkOffer, compareCosts, fmtCents, parseDollars
 import { OFFER_EXAMPLES } from "@/lib/offercheck-examples";
 import { recordedExplanationFor } from "@/lib/offercheck-ai";
 import { SAMPLE_STATS } from "@/lib/sample-stats";
+import OfferTerms from "./OfferTerms";
 import "./OfferCheck.css";
 
 const SEV_LABEL = { high: "Red flag", medium: "Look closer", info: "Note" } as const;
@@ -82,13 +83,15 @@ export default function OfferCheck() {
     <section className="panel oc" aria-label="Check a recovery firm's offer" data-testid="offercheck" id="offer-check">
       <h2 className="oc-h2">Got an offer from a refund recovery firm?</h2>
       <p className="fine">Paste the email or contract. The check runs in your browser with plain code, so the text is not uploaded anywhere, and no AI is involved. It lists what the offer says about fees, logins, who gets the money and lock-in, next to what CBP says to watch for.</p>
+      <p className="fine oc-cbp" data-testid="offer-cbp-source">CBP&apos;s published position: &ldquo;No. CBP does not charge any fees for processing tariff refunds.&rdquo; <a href={CBP_CITES["no-fees"].url} target="_blank" rel="noreferrer">CBP IEEPA Duty Refunds page, FAQ on fees<ExternalLink size={12} aria-hidden /></a>, read {CHECKED_ON}. CBP also warns about third parties in its <a href={CBP_CITES["only-ace"].url} target="_blank" rel="noreferrer">CAPE Refund Fraud fact sheet<ExternalLink size={12} aria-hidden /></a>.</p>
       <div className="oc-examples" role="group" aria-label="Try an example offer">
-        <span className="oc-eg">Try an example</span>
+        <span className="oc-eg">Try a synthetic example</span>
         {OFFER_EXAMPLES.map((e) => (
           <button key={e.id} type="button" className="btn sm" data-testid={`offer-example-${e.id}`} title={e.blurb}
             onClick={() => { setText(e.text); setExampleId(e.id); }}>{e.label}</button>
         ))}
       </div>
+      {exampleId && <p className="oc-synth" data-testid="offer-synthetic">Synthetic example: invented text, no real firm or person.</p>}
       <label className="oc-label" htmlFor="offer-text">Offer text</label>
       <textarea id="offer-text" data-testid="offer-text" className="oc-text" rows={6} spellCheck={false} value={text}
         placeholder="Paste the firm's email or contract terms here"
@@ -109,6 +112,7 @@ export default function OfferCheck() {
               {counts.info > 0 && <span className="oc-count oc-mono"><b>{counts.info}</b> note{counts.info === 1 ? "" : "s"}</span>}
             </div>
           </div>
+          <OfferTerms x={report.extracted} />
           <div className="oc-grid">
             <div className="oc-col-flags">
               {report.flags.length > 0 && (

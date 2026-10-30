@@ -20,6 +20,7 @@ import Waterfall from "./Waterfall";
 import { AlertTriangle, ChevronDown, Download, FileText, Play, Upload, X } from "lucide-react";
 import { BTN_PRIMARY, BTN_SECONDARY, BTN_TERTIARY, Id } from "./ui";
 import Audience from "./Audience";
+import CostToRecover from "./CostToRecover";
 import Deadlines, { DrawerRoutes } from "./Deadlines";
 import ExportExtras from "./ExportExtras";
 import RuleRescore from "./RuleRescore";
@@ -389,6 +390,7 @@ export default function Desk() {
           </section>
 
           <Deadlines portfolio={board.portfolio} asOf={board.asOf} onOpen={openFirstLane} />
+          <CostToRecover safeCents={board.portfolio.lanes.FILE_NOW.refundCents} safeCount={board.portfolio.lanes.FILE_NOW.count} />
           <RuleWatch />
           <RuleRescore csvText={csvText} asOf={board.asOf} filerCodes={board.filerCodes} isSample={!csvText} />
           <ScoredTest />
