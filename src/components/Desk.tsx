@@ -190,21 +190,19 @@ export default function Desk() {
   return (
     <div className="shell">
       <header className="top">
-        <div className="brand">
+        <div className="head-brand">
           <Mark />
-          <div>
-            <h1>CAPE Refund Desk</h1>
-            <p>Check your tariff refund file before you send it.</p>
-          </div>
+          <h1 className="head-word">CAPE Refund Desk</h1>
+          <p className="head-sub">Check your tariff refund file before you send it.</p>
         </div>
-        <div className="powered"><i className="live-dot" aria-hidden />Nemotron AI models<br />on Nebius Token Factory</div>
+        <p className="powered"><i className="live-dot" aria-hidden />Nemotron AI models on Nebius Token Factory</p>
       </header>
 
-      <div className="bg-amber-50/50 border border-amber-200 text-amber-900 rounded-lg p-4 flex gap-3 items-start text-sm leading-6 mb-6" role="alert">
-        <AlertTriangle className="size-5 shrink-0 mt-0.5 text-amber-600" aria-hidden />
-        <div>
-          <p><strong className="font-semibold">Can&apos;t be undone.</strong> {IRREVERSIBLE_PLAIN}</p>
-          <p className="mt-1 text-xs text-amber-900 font-mono">{PREPARED_FOR_PLAIN}</p>
+      <div className="r6-alert" role="alert">
+        <AlertTriangle className="r6-alert-icon" aria-hidden />
+        <div className="r6-alert-body">
+          <p><strong>Can&apos;t be undone.</strong> {IRREVERSIBLE_PLAIN}</p>
+          <p className="r6-alert-note">{PREPARED_FOR_PLAIN}</p>
         </div>
       </div>
 
@@ -354,7 +352,6 @@ export default function Desk() {
             {Object.entries(SOURCES).map(([k, s], i) => <span key={k}>{i ? ", " : ""}<a href={s.url} target="_blank" rel="noreferrer">{k}</a></span>)}. MIT licensed.
           </p>
         </div>
-        <div className="wordmark" aria-hidden>CAPE Refund Desk</div>
       </footer>
 
       {board && !selV && (
