@@ -3,7 +3,7 @@ import { AlertTriangle } from "lucide-react";
 import "../app/customs.css";
 import { CUSTOMS_SOURCES, type Lockout, type PhaseInfo } from "@/lib/customs-checks";
 import { CAUSES, coverage } from "@/lib/coverage";
-import type { Verdict } from "@/lib/types";
+import type { Lane, Verdict } from "@/lib/types";
 
 const TONE: Record<string, string> = { 1: "p1", 2: "p2", 3: "p3", later: "later", none: "none" };
 
@@ -13,15 +13,21 @@ function SrcLink({ id }: { id: string }) {
 }
 
 /** Small phase pill, used on rows and in the drawer header. */
-export function PhaseChip({ phase, title }: { phase: PhaseInfo; title?: boolean }) {
-  return <span className={`cu-chip ${TONE[String(phase.id)]}`} data-testid="phase-chip" data-phase={String(phase.id)} title={title ? phase.plain : undefined}>{phase.chip}</span>;
+export function PhaseChip({ phase, title, lane }: { phase: PhaseInfo; title?: boolean; lane?: Lane }) {
+  // A phase says when CBP would accept an entry. It is only a "go" signal when the shipment is claimable now.
+  const pending = lane !== undefined && lane !== "FILE_NOW" && (phase.id === 1 || phase.id === 2 || phase.id === 3);
+  const text = pending ? `Would be ${phase.chip}` : phase.chip;
+  const tip = pending
+    ? `Not claimable now. If the issue on this shipment were fixed, ${phase.id === 3 ? "this is the phase it would fall under" : "it would fall under this phase"}. ${phase.plain}`
+    : title ? phase.plain : undefined;
+  return <span className={`cu-chip ${pending ? "pend" : TONE[String(phase.id)]}`} data-testid="phase-chip" data-phase={String(phase.id)} data-pending={pending ? "1" : undefined} title={tip}>{text}</span>;
 }
 
 /** Row meta items: the phase chip first (so row ellipsis never hides it), then a marker for each lock-out. */
 export function rowCustoms(v: Verdict): React.ReactNode[] {
   const c = v.customs;
   if (!c) return [];
-  const out: React.ReactNode[] = [<PhaseChip key="ph" phase={c.phase} title />];
+  const out: React.ReactNode[] = [<PhaseChip key="ph" phase={c.phase} title lane={v.lane} />];
   for (const l of c.lockouts) out.push(<span key={`lo-${l.id}`} className="warn" data-testid="lockout-marker" title={l.plain}>{l.marker}</span>);
   return out;
 }
@@ -48,7 +54,7 @@ export function DrawerCustoms({ v }: { v: Verdict }) {
   return (
     <>
       <section className="d-sect cu-sect" data-testid="phase-section">
-        <h3>Which refund phase <PhaseChip phase={p} /></h3>
+        <h3>Which refund phase <PhaseChip phase={p} lane={v.lane} /></h3>
         <p className="d-body">{p.plain}</p>
         <details className="cu-more">
           <summary>What the source says</summary>

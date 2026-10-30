@@ -43,6 +43,10 @@
 .d-figure{font:480 48px/52px var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--text);margin-top:2px}
 .d-figure.ok{color:var(--go-ink)}
 .d-figure.bill{color:var(--stop-ink)}
+.d-figure.hold{color:var(--hold-ink)}
+.d-money-note{margin-top:8px;font:400 13px/20px var(--sans);color:var(--hold-ink)}
+.d-money-note.bill{color:var(--stop-ink)}
+.wf.pending .wf-bar.r,.wf.pending .wf-bar.n{background:var(--hold)}
 
 .d-break{margin:18px 0 0}
 .d-brk{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid var(--rule)}

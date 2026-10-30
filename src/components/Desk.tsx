@@ -12,7 +12,7 @@ import type { Explanation, PortfolioNote, Receipt, RunEvent, RunResult } from "@
 import type { WatchResult, Change } from "@/lib/rulewatch";
 import type { Lane, Verdict } from "@/lib/types";
 import { PLAIN_FINDING, plainStep, plainTitle, plainVerdict } from "@/lib/plain";
-import { LANES, laneOf } from "@/lib/lanes-ui";
+import { LANES, amountHeader, drawerHero, laneOf } from "@/lib/lanes-ui";
 import Stage from "./Stage";
 import { CountInt, CountMoney, Reveal, TwistCard, Words } from "./motion";
 import Waterfall from "./Waterfall";
@@ -324,7 +324,7 @@ export default function Desk() {
               </div>
               {laneList.length === 0 ? <p className="empty">No shipments in this group.</p> : (
                 <>
-                  <div className="thead"><span /><span>Shipment</span><span>Importer</span><span>What Customs found</span><span className="r">Time left to claim</span><span className="r">{lane === "NET_BILL_RISK" ? "You'd get or owe" : "Refund"}</span></div>
+                  <div className="thead"><span /><span>Shipment</span><span>Importer</span><span>What Customs found</span><span className="r">Time left to claim</span><span className="r">{amountHeader(lane)}</span></div>
                   <ul className="rows" key={lane}>
                     {shown.map((v, i) => (
                       <Row key={v.id} caught={(board.entryInfo[v.id]?.noteConflicts.length ?? 0) > 0} v={v} ex={expl[v.id]} i={i} animate checked={include.has(v.id)} canInclude={canInclude} active={sel === v.id} onToggle={() => toggle(v.id)} onOpen={() => setSel(v.id)} />
@@ -549,6 +549,7 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
   const info = board.entryInfo[v.id];
   const m = v.money; const d = v.deadlines;
   const meta = laneOf(v.lane);
+  const hero = drawerHero(v.lane, m);
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     closeRef.current?.focus();
@@ -563,7 +564,7 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
           <div className="d-bar-l">
             <Id className="d-chip">{v.displayNumber}</Id>
             <span className={`d-status ${meta.tone}`}><i aria-hidden />{meta.title}</span>
-            {v.customs && <PhaseChip phase={v.customs.phase} />}
+            {v.customs && <PhaseChip phase={v.customs.phase} lane={v.lane} />}
           </div>
           <button ref={closeRef} className="x" onClick={onClose} aria-label="Close">{Icon.close}</button>
         </div>
@@ -579,15 +580,16 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
           </div>
         ) : (
         <div className="d-money">
-            <p className="d-money-l">{m.netCents < 0 ? "You'd owe Customs" : "Refund"}</p>
-            <p className={`d-figure ${m.netCents < 0 ? "bill" : "ok"}`}><CountMoney cents={m.netCents} animate dur={1000} delay={150} /></p>
+            <p className="d-money-l" data-testid="hero-label">{hero.label}</p>
+            <p className={`d-figure ${hero.tone}`} data-testid="hero-figure" data-tone={hero.tone}>{money(hero.cents)}</p>
+            {hero.note && <p className={`d-money-note ${hero.tone === "bill" ? "bill" : ""}`} data-testid="hero-note">{hero.note}</p>}
             <dl className="d-break">
               <div className="d-brk"><dt>Struck-down tariff you paid</dt><dd>{money(m.grossIeepaCents)}</dd></div>
               {m.frameworkCarveOutCents > 0 && <div className="d-brk d-brk-sub"><dt>Part kept under a trade deal ({m.frameworkGroups.join("/")})</dt><dd>-{money(m.frameworkCarveOutCents)}</dd></div>}
               <div className="d-brk"><dt>Other duties you underpaid</dt><dd className={m.underpaidOtherCents > 0 ? "bill" : ""}>{m.underpaidOtherCents > 0 ? `-${money(m.underpaidOtherCents)}` : money(0)}</dd></div>
               <div className="d-brk d-brk-net"><dt>Net</dt><dd className={m.netCents < 0 ? "bill" : ""}>{money(m.netCents)}</dd></div>
             </dl>
-            <Waterfall m={m} />
+            <Waterfall m={m} pending={v.lane !== "FILE_NOW"} />
           </div>
         )}
         <p className="d-note">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>

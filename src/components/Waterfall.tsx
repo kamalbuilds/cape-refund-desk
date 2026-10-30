@@ -2,7 +2,7 @@ import { fmtUsd } from "@/lib/money";
 import type { Money } from "@/lib/types";
 
 /** The refund-vs-bill story as flat 6px bars under the money table: what refunds, what comes off, where you land. */
-export default function Waterfall({ m }: { m: Money }) {
+export default function Waterfall({ m, pending = false }: { m: Money; pending?: boolean }) {
   const ref = m.ieepaRefundableCents, under = m.underpaidOtherCents, net = m.netCents;
   const lo = Math.min(0, net), hi = Math.max(ref, 0, net);
   const span = Math.max(hi - lo, 1);
@@ -14,7 +14,7 @@ export default function Waterfall({ m }: { m: Money }) {
   if (under > 0) rows.push({ key: "under", from: ref - under, to: ref, tone: "u" });
   rows.push({ key: "net", from: Math.min(0, net), to: Math.max(0, net), tone: net < 0 ? "n bill" : "n" });
   return (
-    <div className="wf" role="img" aria-label={`Refundable tariff ${fmtUsd(ref)}${under > 0 ? `, minus other duties underpaid ${fmtUsd(under)}` : ""}, leaves ${fmtUsd(net)}.`}>
+    <div className={`wf${pending ? " pending" : ""}`} data-pending={pending ? "1" : undefined} role="img" aria-label={`${pending ? "Not claimable yet. " : ""}Refundable tariff ${fmtUsd(ref)}${under > 0 ? `, minus other duties underpaid ${fmtUsd(under)}` : ""}, leaves ${fmtUsd(net)}${pending ? " once filed" : ""}.`}>
       <div className="wf-zero" style={{ left: `${zero}%` }} aria-hidden />
       {rows.map((r) => {
         const l = x(Math.min(r.from, r.to)), w = Math.max(x(Math.max(r.from, r.to)) - l, 0.8);

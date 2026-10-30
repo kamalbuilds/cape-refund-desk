@@ -3,6 +3,7 @@
 .cu-chip.p1{color:var(--go-ink);border-color:var(--go-line);background:var(--go-bg)}
 .cu-chip.p2{color:var(--decide-ink);border-color:var(--glass-line);background:var(--decide-bg)}
 .cu-chip.p3{color:var(--hold-ink);border-color:var(--warn-line);background:var(--hold-bg)}
+.cu-chip.pend{color:var(--muted);border-style:dashed;border-color:var(--control-hi);background:transparent}
 .cu-chip.later,.cu-chip.none{color:var(--faint)}
 .d-sect h3 .cu-chip{margin-left:8px;vertical-align:2px}
 .cu-sect .d-body{max-width:56ch}

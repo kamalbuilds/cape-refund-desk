@@ -124,6 +124,9 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(/Entry Type Not Allowed/.test(dtext), "drawer shows the exact CBP error string");
   ok(/FAQ|QRG|CSMS|Pub\./.test(dtext), "drawer cites its source");
   ok(/Not claimable/.test(dtext) && !/You.d get back/.test(dtext) && await dr.getByTestId("not-claimable").count() === 1, "excluded entry drawer says Not claimable, not 'You'd get back'");
+  ok(await dr.getByTestId("hero-figure").count() === 0, "blocked drawer has no money hero at all (no $0.00)");
+  const bchip = dr.locator(".d-bar [data-testid=phase-chip]");
+  if (await bchip.count()) ok(!/^Phase \d/.test((await bchip.innerText()).trim()), "blocked drawer chip is not a bare 'Phase N'");
   await page.screenshot({ path: `${OUT}/drawer-${label}.png` });
   await dr.locator(".x").click();
   await dr.waitFor({ state: "detached", timeout: 3000 });
@@ -134,6 +137,34 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   if (await wh.count()) { await wh.locator(".en").click(); const t = await page.locator(".drawer").innerText(); ok(/69127837/.test(t), "warehouse entry 21 cites CSMS 69127837"); await page.locator(".drawer button.x").click(); }
   else ok(false, "warehouse entry 21 card is on the board");
 
+  // --- every lane's drawer: the headline money agrees with the Net row, and green means claimable now
+  {
+    const tabs = page.locator(".tabs .tab"); const seen = [];
+    for (let i = 0; i < await tabs.count(); i++) {
+      await tabs.nth(i).click();
+      const first = page.locator(".row").first();
+      if (!(await first.count())) continue;
+      const rowChips = await page.locator(".row [data-testid=phase-chip]").evaluateAll((els) => els.map((e) => ({ t: e.textContent.trim(), p: e.getAttribute("data-pending") })));
+      const laneName = (await tabs.nth(i).locator(".lane-t").innerText()).trim();
+      await first.locator(".en").click();
+      const d = page.locator(".drawer"); await d.waitFor({ timeout: 5000 });
+      const fig = d.getByTestId("hero-figure");
+      if (await fig.count()) {
+        const tone = await fig.getAttribute("data-tone"); const txt = (await fig.innerText()).trim();
+        ok(txt === (await d.locator(".d-brk-net dd").innerText()).trim(), `${laneName}: hero ${txt} equals the Net row`);
+        ok((tone === "ok") === (laneName === "Safe to claim"), `${laneName}: green hero only in Safe to claim (tone ${tone})`);
+        ok(!(tone !== "ok" && txt === "$0.00" && !(await d.getByTestId("hero-note").count())), `${laneName}: a $0.00 hero always explains why`);
+        ok(laneName === "Safe to claim" || /Claimable today: \$0\.00|not claimable|cost you|owe/i.test(await d.getByTestId("hero-note").innerText()), `${laneName}: non-claimable hero carries a plain 'not claimable yet' note`);
+      } else ok(await d.getByTestId("not-claimable").count() === 1, `${laneName}: no hero means the drawer says Not claimable`);
+      if (laneName !== "Safe to claim") ok(rowChips.every((c) => !/^Phase [123]/.test(c.t)), `${laneName}: row phase chips never read as a bare 'Phase N' (${[...new Set(rowChips.map((c) => c.t))].join(" | ")})`);
+      else ok(rowChips.some((c) => /^Phase 1/.test(c.t) && c.p === null), "Safe to claim rows keep the plain 'Phase 1' chip");
+      seen.push(laneName);
+      await d.locator("button.x").click(); await d.waitFor({ state: "detached", timeout: 3000 });
+    }
+    ok(seen.length === 4, `checked the drawer of all 4 lanes (${seen.join(", ")})`);
+    await tabs.first().click();
+  }
+
   // --- refund phase chip + remedy lock-out warning (customs lane)
   const chips = await page.locator(".row [data-testid=phase-chip]").count();
   ok(chips >= 10, `rows carry a phase chip (${chips} visible)`);
@@ -142,7 +173,20 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   await psc.locator(".en").click();
   const pd = page.locator(".drawer");
   await pd.waitFor({ timeout: 5000 });
-  ok(await pd.locator(".d-bar [data-testid=phase-chip]").count() === 1 && /Phase 1/.test(await pd.locator(".d-bar [data-testid=phase-chip]").innerText()), "drawer header shows the Phase 1 chip");
+  const pchip = pd.locator(".d-bar [data-testid=phase-chip]");
+  ok(await pchip.count() === 1 && /^Would be Phase 1$/.test((await pchip.innerText()).trim()) && await pchip.getAttribute("data-pending") === "1", "fix-first drawer header chip reads 'Would be Phase 1', not a bare claimable-now 'Phase 1'");
+  ok(/not claimable now/i.test(await pchip.getAttribute("title") ?? ""), "the 'Would be Phase 1' chip has a tooltip saying it is not claimable now");
+  // headline money: a fix-first shipment must not show a green $0.00 (or any green) hero
+  const hf = pd.getByTestId("hero-figure");
+  const hfText = (await hf.innerText()).trim();
+  const netRow = (await pd.locator(".d-brk-net dd").innerText()).trim();
+  ok(hfText === netRow && hfText !== "$0.00", `fix-first hero equals the Net row and is not $0.00 (${hfText})`);
+  ok(await hf.getAttribute("data-tone") === "hold", "fix-first hero is the warn tone, not green");
+  ok(await hf.evaluate((el) => { const c = getComputedStyle(el).color; const m = c.match(/\d+/g).map(Number); return !(m[1] > m[0] + 20 && m[1] > m[2] + 10); }), "fix-first hero colour is not green");
+  ok(/Refund once the correction is filed/.test(await pd.getByTestId("hero-label").innerText()) && /Claimable today: \$0\.00/.test(await pd.getByTestId("hero-note").innerText()), "fix-first hero is labelled 'once the correction is filed' and says $0.00 is claimable today");
+  ok(await pd.locator(".wf[data-pending='1']").count() === 1, "fix-first bar is marked pending (warn colour), consistent with the hero");
+  await page.evaluate(() => new Promise((r) => setTimeout(r, 1300)));
+  ok((await hf.innerText()).trim() === hfText, "hero does not count up from $0.00 (static after 1.3s)");
   const lw = pd.locator("[data-testid=lockout-warning]");
   ok(await lw.count() === 1 && /you should file that PSC prior to filing your CAPE Declaration/.test(await lw.innerText()), "drawer shows the PSC lock-out warning with CBP's wording");
   ok(await lw.locator("[data-testid=customs-source]").count() === 1 && /cbp\.gov/.test(await lw.locator("a").first().getAttribute("href")), "lock-out warning links to the CBP page");
