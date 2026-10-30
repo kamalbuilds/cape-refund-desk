@@ -295,32 +295,33 @@ export default function Desk() {
       {board && (
         <>
           {pnote && (
-            <section className="panel analyst">
-              <div className="analyst-h"><span className="spark" aria-hidden /><h2>The reasoning AI&apos;s overview</h2><span className="cid">{pnote.completionId}</span></div>
+            <section className="analyst r6-detail r6-analyst">
+              <h2 className="r6-title">The reasoning AI&apos;s overview</h2>
               <p className="headline2">{pnote.headline}</p>
               <div className="cols">
                 <div>
-                  <h3>Look at these first</h3>
+                  <h3 className="r6-sub">Look at these first</h3>
                   <ul className="prio">{pnote.priorities.map((p) => <li key={p.id}><button className="linkbtn" onClick={() => openFirstLane(p.id)}><Id>{verdicts.find((v) => v.id === p.id)?.displayNumber ?? p.id}</Id></button><span>{p.reason}</span></li>)}</ul>
                 </div>
-                <div><h3>Ask the importer before uploading</h3><ul className="q">{pnote.brokerQuestions.map((q, i) => <li key={i}>{q}</li>)}</ul></div>
+                <div><h3 className="r6-sub">Ask the importer before uploading</h3><ul className="q">{pnote.brokerQuestions.map((q, i) => <li key={i}>{q}</li>)}</ul></div>
               </div>
+              <p className="r6-cid">{pnote.completionId}</p>
             </section>
           )}
 
-          <section className="two">
+          <section className="two r6-two">
             <Export board={board} include={include} incRefund={incRefund} incBill={incBill} files={files} ack={ack} setAck={setAck} />
             <div className="stack">
-              <div className="panel">
-                <h2>What to file, in order</h2>
-                <p className="fine" style={{ marginBottom: 12 }}>Customs&apos; rules say some things must be fixed or filed before others. Code applies them. Click a row for the reason.</p>
+              <div className="r6-detail r6-filing">
+                <h2 className="r6-title">What to file, in order</h2>
+                <p className="r6-fine">Customs&apos; rules say some things must be fixed or filed before others. Code applies them. Click a row for the reason.</p>
                 <ol className="order">
                   {verdicts.filter((v) => v.lane !== "BLOCKED").map((v) => (
                     <li key={v.id} onClick={() => openFirstLane(v.id)}>
                       <span className="n">{v.order}</span>
                       <span className="e"><Id>{v.displayNumber}</Id></span>
                       <span className="s">{plainStep(v.filingStep)}</span>
-                      <span className="m"><Id className={v.money.netCents < 0 ? "text-red-700!" : undefined}>{money(v.money.netCents)}</Id></span>
+                      <span className={`m r6-money${v.money.netCents < 0 ? " r6-owe" : ""}`}>{money(v.money.netCents)}</span>
                     </li>
                   ))}
                 </ol>
@@ -329,12 +330,12 @@ export default function Desk() {
                 </details>
               </div>
               {board.portfolio.iors.length > 0 && (
-                <div className="panel">
-                  <h2>Importers who owe Customs money</h2>
-                  <p className="fine" style={{ marginBottom: 8 }}>Customs can subtract unpaid debts from a refund before paying it (19 CFR 24.72).</p>
+                <div className="r6-detail r6-iors">
+                  <h2 className="r6-title">Importers who owe Customs money</h2>
+                  <p className="r6-fine">Customs can subtract unpaid debts from a refund before paying it (19 CFR 24.72).</p>
                   <table className="tbl num"><thead><tr><th>Importer</th><th>Owes Customs</th><th>Refund</th><th>Likely taken out</th></tr></thead>
-                    <tbody>{board.portfolio.iors.map((i) => <tr key={i.ior}><td><Id>{i.ior}</Id></td><td><Id>{money(i.openDebtCents)}</Id></td><td><Id>{money(i.eligibleRefundCents)}</Id></td><td className="warn"><Id>{money(i.expectedDiversionCents)}</Id></td></tr>)}</tbody></table>
-                  <p className="fine" style={{ marginTop: 10 }}>Customs adds interest to refunds. This tool doesn&apos;t estimate it.</p>
+                    <tbody>{board.portfolio.iors.map((i) => <tr key={i.ior}><td><Id>{i.ior}</Id></td><td className="r6-money">{money(i.openDebtCents)}</td><td className="r6-money">{money(i.eligibleRefundCents)}</td><td className="r6-money r6-owe">{money(i.expectedDiversionCents)}</td></tr>)}</tbody></table>
+                  <p className="r6-fine">Customs adds interest to refunds. This tool doesn&apos;t estimate it.</p>
                 </div>
               )}
             </div>
@@ -443,21 +444,23 @@ function Export({ board, include, incRefund, incBill, files, ack, setAck }: { bo
   const p = board.portfolio;
   const heldWait = p.verdicts.filter((v) => v.lane === "WAIT" && include.has(v.id)).length;
   return (
-    <div className="panel dock">
-      <h2>Your refund file</h2>
-      <p className="text-sm text-zinc-600 mb-4"><b className="font-medium text-zinc-900">{include.size}</b> shipments selected. Estimated refund before interest <Id>{money(incRefund)}</Id>.{incBill > 0 && <> Possible bills in this selection <Id className="text-red-700!">{money(incBill)}</Id>.</>}</p>
+    <div className="dock r6-detail r6-dock">
+      <h2 className="r6-title">Your refund file</h2>
+      <p className="r6-body"><b>{include.size}</b> shipments selected. Estimated refund before interest <span className="r6-money">{money(incRefund)}</span>.{incBill > 0 && <> Possible bills in this selection <span className="r6-money r6-owe">{money(incBill)}</span>.</>}</p>
       {heldWait > 0 && <p className="error" style={{ marginBottom: 12 }}>{heldWait} selected shipments need fixing first.</p>}
       <label className="ack"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /><span>I understand that once Customs accepts this file I can't edit it or remove shipments, and that my licensed customs broker will review the list before it is uploaded.</span></label>
       <div className="btns">
-        {files.map((f) => (
-          <button key={f.name} className={BTN_PRIMARY} disabled={!ack || !f.count} onClick={() => download(f.name, f.content)}>{Icon.down} {f.name} <span className="text-xs font-normal text-zinc-300">{f.count} shipments, {f.bytes} B{f.ok ? "" : ", check this file"}</span></button>
-        ))}
-        <div className="btnrow">
+        <div className="r6-primary-row">
+          {files.map((f, i) => (
+            <button key={f.name} className={`${i === 0 ? BTN_PRIMARY : BTN_SECONDARY}${i === 0 ? " r6-primary" : ""}`} disabled={!ack || !f.count} onClick={() => download(f.name, f.content)}>{Icon.down} <span className="r6-file-name">{f.name}</span> <span className="r6-file-meta">{f.count} shipments, {f.bytes} B{f.ok ? "" : ", check this file"}</span></button>
+          ))}
+        </div>
+        <div className="r6-secondary-row">
           <button className={BTN_SECONDARY} onClick={() => download("cape-broker-handoff.md", handoffNote(p, board.asOf, include), "text/markdown")}>{Icon.down} Note for your broker (.md)</button>
           <button className={BTN_TERTIARY} onClick={() => download("cape-deadlines.csv", deadlineCsv(p))}>{Icon.down} Deadlines (.csv)</button>
         </div>
       </div>
-      <p className="fine" style={{ marginTop: 14 }}>The CSV follows Customs&apos; format: a single &ldquo;Entry Number&rdquo; column, 11 characters, no dashes, at most 9,999 shipments and 1MB per file. {PREPARED_FOR_PLAIN}</p>
+      <p className="r6-fine">The CSV follows Customs&apos; format: a single &ldquo;Entry Number&rdquo; column, 11 characters, no dashes, at most 9,999 shipments and 1MB per file. {PREPARED_FOR_PLAIN}</p>
     </div>
   );
 }
@@ -629,12 +632,12 @@ function RuleWatch() {
   const key = ch.filter((c) => c.key);
   const rest = ch.filter((c) => !c.key);
   return (
-    <section className="watch bg-zinc-50 border border-zinc-200 rounded-xl p-5 mt-8" aria-label="Compliance Status">
-      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Live CBP Check</span>
-      <h2 className="mt-3 text-base font-semibold tracking-tight text-zinc-900">Compliance Status</h2>
-      <p className="mt-1 text-sm font-medium text-zinc-900">Did Customs change the rules since this was built?</p>
-      <p className="fine">Customs publishes the refund rules on a web page. This reads the live page and compares it with a copy saved on 2026-07-11. Every change is quoted from the page (July on the left, now on the right). No AI is involved.</p>
-      <div className="mt-3"><button className={BTN_SECONDARY} disabled={busy} onClick={go}>{busy ? "Reading the page…" : "Check Customs' page now"}</button></div>
+    <section className="watch r6-watch" aria-label="Compliance Status">
+      <span className="r6-badge"><span className="r6-dot"></span> Live CBP Check</span>
+      <h2 className="r6-title mt-3">Compliance Status</h2>
+      <p className="r6-body">Did Customs change the rules since this was built?</p>
+      <p className="r6-fine">Customs publishes the refund rules on a web page. This reads the live page and compares it with a copy saved on 2026-07-11. Every change is quoted from the page (July on the left, now on the right). No AI is involved.</p>
+      <div className="mt-4"><button className={BTN_PRIMARY} disabled={busy} onClick={go}>{busy ? "Reading the page…" : "Check Customs' page now"}</button></div>
       {r && (
         <div className="wr">
           <p className={r.ok ? "" : "error"}>{r.note}</p>
@@ -642,7 +645,7 @@ function RuleWatch() {
             <p><b>{key.length}</b> change{key.length === 1 ? "" : "s"} affect this tool&apos;s checks; {rest.length} more are just for information. The page&apos;s &quot;Last Modified&quot; date: {r.lastModified?.before ?? "none in the July capture"} → <b>{r.lastModified?.after ?? "none"}</b>. {r.noiseDropped} lines of layout and wording noise were filtered.</p>
             <div className="chgs">{key.map((c, i) => <ChangeCard key={i} c={c} />)}</div>
             {rest.length > 0 && <details className="more"><summary>{rest.length} more changes (informational or not modeled)</summary><div className="chgs">{rest.map((c, i) => <ChangeCard key={i} c={c} />)}</div></details>}
-            <p className="fine">Snapshot {r.snapshot.capturedAt.slice(0, 10)} ({r.snapshot.sha256}) vs live {new Date(r.checkedAt).toLocaleString()} ({r.live?.sha256}).</p>
+            <p className="r6-fine">Snapshot {r.snapshot.capturedAt.slice(0, 10)} ({r.snapshot.sha256}) vs live {new Date(r.checkedAt).toLocaleString()} ({r.live?.sha256}).</p>
           </>}
         </div>
       )}
@@ -653,28 +656,28 @@ function RuleWatch() {
 function ReceiptPanel({ receipt, board, mode }: { receipt: Receipt | null; board: Board; mode: string }) {
   const n = board.normalization;
   if (mode === "browser") return null;
-  if (!receipt) return <section className="panel receipt"><h2>What the AI did (receipt)</h2><p className="fine">Appears when the run finishes.</p></section>;
+  if (!receipt) return <section className="receipt r6-detail r6-receipt"><h2 className="r6-title">What the AI did (receipt)</h2><p className="r6-fine">Appears when the run finishes.</p></section>;
   const L = receipt.lightning, U = receipt.ultra;
   const total = L.costUsd + U.costUsd;
   return (
-    <section className="panel receipt">
-      <h2>What the AI did (receipt) <span className="muted">· {receipt.mode === "replay" ? "recorded real run" : "live run"} · {new Date(receipt.ranAt).toLocaleString()}</span></h2>
+    <section className="receipt r6-detail r6-receipt">
+      <h2 className="r6-title">What the AI did (receipt) <span className="r6-meta">· {receipt.mode === "replay" ? "recorded real run" : "live run"} · {new Date(receipt.ranAt).toLocaleString()}</span></h2>
       <div className="rc">
         <div>
-          <h4>Fast AI: Nemotron 3.5 Lightning <small>{L.model}</small></h4>
+          <h4 className="r6-sub">Fast AI: Nemotron 3.5 Lightning <small>{L.model}</small></h4>
           <p><b>{L.calls}</b> calls in parallel · {L.promptTokens.toLocaleString()} in / {L.completionTokens.toLocaleString()} out tokens · avg {L.avgMs} ms · {L.failed} failed</p>
-          <p className="fine">Job: cleaned up each row and tagged the broker&apos;s notes. Double-checked against plain code: <b>{n.agree}/{n.checked}</b> fields agree{n.disagreements.length ? `; code overrode ${n.disagreements.length} disagreement(s):` : "."}</p>
-          {n.disagreements.slice(0, 5).map((d, i) => <p key={i} className="fine mono">{d.entry} · {d.field}: AI said {d.lightning}, code says {d.deterministic}</p>)}
+          <p className="r6-fine">Job: cleaned up each row and tagged the broker&apos;s notes. Double-checked against plain code: <b>{n.agree}/{n.checked}</b> fields agree{n.disagreements.length ? `; code overrode ${n.disagreements.length} disagreement(s):` : "."}</p>
+          {n.disagreements.slice(0, 5).map((d, i) => <p key={i} className="r6-fine r6-mono">{d.entry} · {d.field}: AI said {d.lightning}, code says {d.deterministic}</p>)}
         </div>
         <div>
-          <h4>Reasoning AI: Nemotron 3 Ultra <small>{U.model}</small></h4>
+          <h4 className="r6-sub">Reasoning AI: Nemotron 3 Ultra <small>{U.model}</small></h4>
           <p><b>{U.calls}</b> calls · {U.promptTokens.toLocaleString()} in / {U.completionTokens.toLocaleString()} out tokens ({U.reasoningTokens.toLocaleString()} reasoning) · avg {U.avgMs} ms · {U.failed} failed</p>
-          <p className="fine">Job: explained each tricky case using Customs&apos; own rules. Any dollar figure it writes is deleted unless the code already calculated it.</p>
+          <p className="r6-fine">Job: explained each tricky case using Customs&apos; own rules. Any dollar figure it writes is deleted unless the code already calculated it.</p>
         </div>
         <div>
-          <h4>Total</h4>
+          <h4 className="r6-sub">Total</h4>
           <p><b>~{total < 0.01 ? "<$0.01" : `$${total.toFixed(3)}`}</b> at list price · wall {(receipt.wallMs / 1000).toFixed(1)} s</p>
-          <p className="fine">Estimate: tokens × Nebius list price (Ultra $1.00 in / $3.00 out, Lightning $0.06 / $0.24 per 1M). Host {receipt.host}.</p>
+          <p className="r6-fine">Estimate: tokens × Nebius list price (Ultra $1.00 in / $3.00 out, Lightning $0.06 / $0.24 per 1M). Host {receipt.host}.</p>
         </div>
       </div>
       <details><summary>{L.ids.length + U.ids.length} AI call ids (proof from Token Factory)</summary>

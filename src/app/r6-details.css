@@ -1,1 +1,408 @@
 /* r6 details lane: overrides, loaded last. Follow /DESIGN.md. */
+@layer components{
+
+/* ---------- flat section shell ---------- */
+html body .r6-detail{
+  position:static;
+  background:transparent;
+  border:0;
+  border-top:1px solid var(--border);
+  border-radius:0;
+  box-shadow:none;
+  padding:32px 0 0;
+  margin:80px 0 0;
+}
+html body .r6-detail > h2,
+html body .r6-detail > .r6-title{
+  font:500 16px/24px var(--sans)!important;
+  letter-spacing:0!important;
+  color:var(--text);
+  margin:0 0 8px;
+}
+
+/* ---------- type inside the zone ---------- */
+html body .r6-detail p,
+html body .r6-detail li,
+html body .r6-detail td,
+html body .r6-detail label,
+html body .r6-detail blockquote,
+html body .r6-watch p{
+  font-size:16px;
+  line-height:24px;
+  color:var(--muted);
+}
+html body .r6-detail .r6-sub,
+html body .r6-watch .r6-sub,
+html body .r6-detail .r6-fine,
+html body .r6-watch .r6-fine,
+html body .r6-detail .r6-cid,
+html body .r6-detail .r6-meta,
+html body .r6-watch .r6-badge{
+  font-size:13px!important;
+  line-height:20px!important;
+}
+html body .r6-detail .r6-sub,
+html body .r6-watch .r6-sub{
+  font-weight:500;
+  color:var(--text);
+  margin:0 0 12px;
+}
+html body .r6-detail .r6-fine,
+html body .r6-watch .r6-fine{
+  color:var(--faint);
+  margin-top:12px;
+}
+html body .r6-detail .r6-money,
+html body .r6-watch .r6-money{
+  font-family:var(--mono);
+  font-variant-numeric:tabular-nums;
+  font-size:16px;
+  line-height:24px;
+  color:var(--text);
+  white-space:nowrap;
+}
+html body .r6-detail .r6-owe,
+html body .r6-watch .r6-owe{color:#b91c1c}
+html body .r6-detail .r6-mono{
+  font-family:var(--mono);
+  font-size:13px!important;
+  line-height:20px!important;
+}
+
+/* ---------- overview ---------- */
+html body .r6-analyst .headline2{
+  font:400 16px/24px var(--sans);
+  letter-spacing:0;
+  color:var(--text);
+  max-width:none;
+  margin-top:12px;
+}
+html body .r6-analyst .cols{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:48px;
+  margin-top:32px;
+}
+html body .r6-analyst .cols h3{margin-bottom:12px}
+html body .r6-analyst .prio{margin:0}
+html body .r6-analyst .prio li{
+  grid-template-columns:max-content minmax(0,1fr);
+  gap:16px;
+  padding:12px 0;
+  border-top:1px solid var(--rule);
+  font-size:16px;
+  line-height:24px;
+}
+html body .r6-analyst .cols ul.q{padding-left:20px}
+html body .r6-analyst .cols ul.q li{padding:6px 0}
+html body .r6-analyst .r6-cid{
+  margin:24px 0 0;
+  font-family:var(--mono);
+  color:var(--faint);
+}
+html body .r6-analyst .linkbtn{
+  font-size:13px;
+  color:var(--text);
+}
+
+/* ---------- the two-column pair ---------- */
+html body .r6-two{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:80px;
+  align-items:start;
+  margin-top:80px;
+}
+html body .r6-two > :first-child{position:static;top:auto}
+html body .r6-two > .r6-detail,
+html body .r6-two .stack > .r6-detail{
+  margin-top:0;
+  padding-top:32px;
+  border-top:1px solid var(--border);
+}
+html body .r6-two .stack{
+  display:flex;
+  flex-direction:column;
+  gap:48px;
+}
+
+/* ---------- refund file ---------- */
+html body .r6-dock .r6-body{margin-top:16px;max-width:60ch}
+html body .r6-dock .r6-body b{color:var(--text);font-weight:500}
+html body .r6-dock .error{
+  margin-top:12px;
+  font-size:13px;
+  line-height:20px;
+  color:#b91c1c;
+}
+html body .r6-dock .ack{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  min-height:44px;
+  margin:24px 0;
+  padding:14px 0;
+  border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);
+  font-size:16px;
+  line-height:24px;
+  color:var(--muted);
+  cursor:pointer;
+}
+html body .r6-dock .ack input{
+  width:20px;
+  height:20px;
+  margin:2px 0 0;
+  flex:none;
+  accent-color:var(--accent);
+}
+html body .r6-dock .btns{display:flex;flex-direction:column;gap:16px;align-items:stretch}
+html body .r6-dock .r6-primary-row{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+html body .r6-dock .r6-secondary-row{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
+html body .r6-detail button{
+  border-radius:9999px!important;
+  font-size:16px!important;
+  min-height:44px;
+}
+html body .r6-dock .r6-primary{
+  min-height:52px;
+  height:auto;
+  padding:12px 20px;
+  text-align:left;
+}
+html body .r6-dock .r6-file-name{
+  font-family:var(--mono);
+  font-size:14px;
+  line-height:20px;
+  font-weight:500;
+}
+html body .r6-dock .r6-file-meta{
+  font-size:13px!important;
+  line-height:20px;
+  font-weight:400;
+  color:#a1a1aa;
+}
+
+/* ---------- filing order ---------- */
+html body .r6-filing .order{
+  list-style:none;
+  margin:16px 0 0;
+  padding:0;
+  max-height:520px;
+  overflow:auto;
+  border-top:1px solid var(--rule);
+}
+html body .r6-filing .order li{
+  display:grid;
+  grid-template-columns:32px minmax(0,1fr) auto;
+  grid-template-areas:"n e m" "n s m";
+  gap:2px 16px;
+  align-items:baseline;
+  min-height:48px;
+  padding:12px 0;
+  border-bottom:1px solid var(--rule);
+  cursor:pointer;
+}
+html body .r6-filing .order li:hover{background:var(--ground)}
+html body .r6-filing .order .n{
+  grid-area:n;
+  font:400 13px/20px var(--mono);
+  color:var(--faint);
+}
+html body .r6-filing .order .e{grid-area:e;min-width:0}
+html body .r6-filing .order .s{
+  grid-area:s;
+  font-size:16px;
+  line-height:24px;
+  color:var(--muted);
+  min-width:0;
+}
+html body .r6-filing .order .m{
+  grid-area:m;
+  text-align:right;
+  white-space:nowrap;
+}
+html body .r6-filing .rules{margin-top:16px}
+html body .r6-filing .rules summary{font-size:13px;line-height:20px;color:var(--muted)}
+html body .r6-filing .rules p{font-size:13px;line-height:20px;margin:12px 0 0}
+
+/* ---------- importers table ---------- */
+html body .r6-iors .tbl{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+}
+html body .r6-iors .tbl th{
+  font:500 13px/20px var(--sans);
+  color:var(--faint);
+  text-align:left;
+  padding:0 0 8px;
+  border-bottom:1px solid var(--border);
+}
+html body .r6-iors .tbl td{
+  padding:12px 0;
+  border-bottom:1px solid var(--rule);
+  vertical-align:baseline;
+}
+html body .r6-iors .tbl th:not(:first-child),
+html body .r6-iors .tbl td:not(:first-child){text-align:right}
+html body .r6-iors .tbl td .r6-money{font-size:16px}
+
+/* ---------- compliance status card ---------- */
+html body .r6-watch{
+  background:var(--ground);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:24px;
+  margin-top:80px;
+}
+html body .r6-watch .r6-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:2px 10px 2px 8px;
+  border:1px solid #a7f3d0;
+  border-radius:9999px;
+  background:var(--surface);
+  font-family:var(--mono);
+  font-weight:500;
+  color:#047857;
+}
+html body .r6-watch .r6-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#10b981;
+  flex:none;
+}
+html body .r6-watch > .r6-body{color:var(--text);margin-top:8px}
+html body .r6-watch .chg{
+  border:0;
+  border-top:1px solid var(--border);
+  border-radius:0;
+  background:transparent;
+  padding:20px 0;
+  margin:0;
+}
+html body .r6-watch .chgs{gap:0;margin:16px 0 0}
+html body .r6-watch .chg header{gap:4px 16px;margin-bottom:12px}
+html body .r6-watch .chg .tag{
+  background:transparent;
+  border-radius:0;
+  padding:0;
+  font:500 13px/20px var(--sans);
+  letter-spacing:0;
+  text-transform:none;
+  color:var(--muted);
+}
+html body .r6-watch .chg .fine{color:var(--faint)}
+html body .r6-watch .chg .vs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:32px;
+}
+html body .r6-watch .chg .when{
+  font-size:13px;
+  line-height:20px;
+  color:var(--faint);
+  margin-bottom:6px;
+}
+html body .r6-watch .chg blockquote{
+  background:transparent;
+  border:0;
+  padding:0;
+  font-size:16px;
+  line-height:24px;
+  color:var(--muted);
+}
+html body .r6-watch .chg mark,
+html body .r6-watch .chg mark.del,
+html body .r6-watch .chg mark.ins{
+  background:transparent;
+  color:inherit;
+  padding:0;
+  border-radius:0;
+}
+html body .r6-watch .chg mark.del{color:var(--faint);text-decoration:line-through}
+html body .r6-watch .chg mark.ins{color:var(--text)}
+html body .r6-watch .chg .impact{
+  margin:12px 0 0;
+  font-size:13px;
+  line-height:20px;
+  color:var(--muted);
+}
+html body .r6-watch .chg .impact.lvl0 b,
+html body .r6-watch .chg .impact.lvl1 b,
+html body .r6-watch .chg .impact.lvl3 b{color:var(--text)}
+html body .r6-watch .more summary{margin-top:8px;font-size:13px}
+html body .r6-watch .error{color:#b91c1c;font-size:13px;line-height:20px}
+
+/* ---------- receipt ---------- */
+html body .r6-receipt .r6-meta{
+  font-family:var(--mono);
+  color:var(--faint);
+  font-weight:400;
+}
+html body .r6-receipt .rc{
+  display:grid;
+  grid-template-columns:1.2fr 1.2fr .8fr;
+  margin:24px 0 0;
+  border-top:1px solid var(--border);
+}
+html body .r6-receipt .rc > div{
+  padding:24px 32px 0 0;
+  border-right:1px solid var(--border);
+}
+html body .r6-receipt .rc > div + div{padding-left:32px}
+html body .r6-receipt .rc > div:last-child{border-right:0;padding-right:0}
+html body .r6-receipt .rc .r6-sub{
+  font:500 13px/20px var(--sans);
+  color:var(--faint);
+  margin:0 0 4px;
+}
+html body .r6-receipt .rc .r6-sub small{
+  display:block;
+  margin-top:4px;
+  font:400 13px/20px var(--mono);
+  color:#a1a1aa;
+  overflow-wrap:anywhere;
+}
+html body .r6-receipt .rc p{margin:8px 0 0}
+html body .r6-receipt .rc .r6-fine{margin-top:8px}
+html body .r6-receipt .rc .r6-money{font-size:16px}
+html body .r6-receipt pre,
+html body .r6-receipt .ids{
+  background:var(--ground);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+  font:400 13px/20px var(--mono);
+  color:var(--muted);
+}
+html body .r6-receipt details{margin-top:16px}
+html body .r6-receipt details summary{font-size:13px;line-height:20px;color:var(--muted)}
+
+/* ---------- small screens ---------- */
+@media (max-width:1024px){
+  html body .r6-two{grid-template-columns:1fr;gap:48px}
+  html body .r6-two .stack{gap:48px}
+}
+@media (max-width:640px){
+  html body .r6-detail{padding-top:24px;margin-top:48px}
+  html body .r6-watch{margin-top:48px;padding:20px}
+  html body .r6-analyst .cols{grid-template-columns:1fr;gap:32px}
+  html body .r6-watch .chg .vs{grid-template-columns:1fr;gap:16px}
+  html body .r6-receipt .rc{grid-template-columns:1fr}
+  html body .r6-receipt .rc > div{
+    padding:20px 0!important;
+    border-right:0;
+    border-bottom:1px solid var(--border);
+  }
+  html body .r6-receipt .rc > div:last-child{border-bottom:0}
+  html body .r6-filing .order li{
+    grid-template-columns:24px minmax(0,1fr) auto;
+    grid-template-areas:"n e m" "n s s";
+  }
+  html body .r6-dock .r6-secondary-row{flex-direction:column;align-items:stretch}
+  html body .r6-dock .r6-secondary-row button{justify-content:flex-start}
+}
