@@ -1,5 +1,6 @@
 import type { Verdict } from "./types";
-import { LIMITS, SOURCES } from "./cbp-rules";
+import { SOURCES } from "./cbp-rules";
+import { buildDeclarations, declarationName, type CapeBuild } from "./cape-template";
 import { fmtUsd } from "./money";
 import { csvEscape } from "./parse";
 import type { Portfolio } from "./validate";
@@ -17,24 +18,19 @@ export const PREPARED_FOR_PLAIN = "Not legal or customs advice. Have your licens
 export interface CapeFile { name: string; content: string; count: number; bytes: number; ok: boolean; problems: string[] }
 
 /**
- * CAPE upload CSV: a single column of entry numbers (QRG, "CSV file" section). 11 chars, no dashes,
- * an apostrophe before a leading zero so spreadsheets keep it, max 1MB and 9,999 entries per declaration.
- * Chunked into several files if more than 9,999 are selected.
+ * CAPE upload CSV in CBP's exact template (see cape-template.ts for the quoted sources): header "Entry Number",
+ * one column, 11 characters, no dashes, an apostrophe before a leading zero, max 9,999 entries and under 1MB
+ * per file. Validates first and refuses (one empty file marked not ok, with the reasons) rather than exporting
+ * something CBP would reject.
  */
 export function buildCapeFiles(verdicts: Verdict[], include: Set<string>): CapeFile[] {
-  const chosen = verdicts.filter((v) => include.has(v.id));
-  const files: CapeFile[] = [];
-  for (let i = 0, n = 1; i < chosen.length || (i === 0 && n === 1); i += LIMITS.maxEntriesPerDeclaration, n++) {
-    const slice = chosen.slice(i, i + LIMITS.maxEntriesPerDeclaration);
-    const content = ["Entry Number", ...slice.map((v) => v.csvValue)].join("\r\n") + "\r\n";
-    const bytes = new TextEncoder().encode(content).length;
-    const problems: string[] = [];
-    if (bytes > LIMITS.maxFileBytes) problems.push(`File is ${bytes} bytes; CBP limit is 1MB.`);
-    for (const v of slice) if (v.key.length !== 11) problems.push(`${v.key} is not 11 characters.`);
-    files.push({ name: `cape-declaration-${n}.csv`, content, count: slice.length, bytes, ok: problems.length === 0, problems });
-    if (!chosen.length) break;
-  }
-  return files;
+  const r = buildCapeDeclaration(verdicts, include);
+  if (r.ok) return r.files;
+  return [{ name: declarationName(1, 1), content: "", count: 0, bytes: 0, ok: false, problems: [r.message] }];
+}
+
+export function buildCapeDeclaration(verdicts: Verdict[], include: Set<string>): CapeBuild {
+  return buildDeclarations(verdicts.filter((v) => include.has(v.id)).map((v) => v.csvValue || v.key));
 }
 
 export function defaultInclude(p: Portfolio): Set<string> {

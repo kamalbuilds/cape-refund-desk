@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ERROR_DEFINITIONS, FILING_ORDER_RULES, SOURCES } from "@/lib/cbp-rules";
 import { browserBoard } from "@/lib/browser-board";
-import { buildCapeFiles, deadlineCsv, defaultInclude, DISCLAIMER, handoffNote, IRREVERSIBLE_PLAIN, PREPARED_FOR_PLAIN } from "@/lib/export";
+import { buildCapeDeclaration, buildCapeFiles, deadlineCsv, defaultInclude, DISCLAIMER, handoffNote, IRREVERSIBLE_PLAIN, PREPARED_FOR_PLAIN } from "@/lib/export";
+import { zipFiles } from "@/lib/cape-template";
 import { fmtUsd } from "@/lib/money";
 import { checkUpload } from "@/lib/parse";
 import { vetoStats } from "@/lib/signals";
@@ -29,6 +30,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const money = (c: number) => fmtUsd(c);
 function download(name: string, content: string, type = "text/csv") {
   const url = URL.createObjectURL(new Blob([content], { type: `${type};charset=utf-8` }));
+  const a = document.createElement("a"); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function downloadZip(name: string, files: { name: string; content: string }[]) {
+  const url = URL.createObjectURL(new Blob([zipFiles(files) as BlobPart], { type: "application/zip" }));
   const a = document.createElement("a"); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 const today = () => new Date().toISOString().slice(0, 10);
@@ -487,6 +492,7 @@ function Row({ caught: board_caught, v, ex, i, animate, checked, canInclude, act
 function Export({ board, include, incRefund, incBill, files, ack, setAck, extras }: { extras?: React.ReactNode; board: Board; include: Set<string>; incRefund: number; incBill: number; files: ReturnType<typeof buildCapeFiles>; ack: boolean; setAck: (b: boolean) => void }) {
   const p = board.portfolio;
   const heldWait = p.verdicts.filter((v) => v.lane === "WAIT" && include.has(v.id)).length;
+  const build = useMemo(() => buildCapeDeclaration(p.verdicts, include), [p.verdicts, include]);
   return (
     <div className="dock r6-detail r6-dock">
       <h2 className="r6-title">Your refund file</h2>
@@ -494,10 +500,15 @@ function Export({ board, include, incRefund, incBill, files, ack, setAck, extras
       {heldWait > 0 && <p className="error" style={{ marginBottom: 12 }}>{heldWait} selected shipments need fixing first.</p>}
       <label className="ack"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /><span>I understand that once Customs accepts this file I can't edit it or remove shipments, and that my licensed customs broker will review the list before it is uploaded.</span></label>
       <div className="btns">
+        {!build.ok && <p className="error" role="alert" data-testid="cape-refused">{build.message}</p>}
+        {build.ok && build.files.length > 1 && <p className="r6-body" data-testid="cape-batch-note">{build.note}</p>}
         <div className="r6-primary-row">
-          {files.map((f, i) => (
-            <button key={f.name} className={`${i === 0 ? BTN_PRIMARY : BTN_SECONDARY}${i === 0 ? " r6-primary" : ""}`} disabled={!ack || !f.count} onClick={() => download(f.name, f.content)}>{Icon.down} <span className="r6-file-name">{f.name}</span> <span className="r6-file-meta">{f.count} shipments, {f.bytes} B{f.ok ? "" : ", check this file"}</span></button>
+          {build.ok && files.map((f, i) => (
+            <button key={f.name} className={`${i === 0 ? BTN_PRIMARY : BTN_SECONDARY}${i === 0 ? " r6-primary" : ""}`} disabled={!ack || !f.count} onClick={() => download(f.name, f.content)}>{Icon.down} <span className="r6-file-name">{f.name}</span> <span className="r6-file-meta">{f.count.toLocaleString("en-US")} shipments, {f.bytes.toLocaleString("en-US")} B{f.ok ? "" : ", check this file"}</span></button>
           ))}
+          {build.ok && files.length > 1 && (
+            <button className={BTN_SECONDARY} data-testid="dl-cape-zip" disabled={!ack} title={ack ? undefined : "Tick the box above first"} onClick={() => downloadZip("cape-declarations.zip", files)}>{Icon.down} Download all {files.length} files (.zip)</button>
+          )}
         </div>
         <div className="r6-secondary-row">
           <button className={BTN_SECONDARY} disabled={!ack} title={ack ? undefined : "Tick the box above first"} onClick={() => download("cape-broker-handoff.md", handoffNote(p, board.asOf, include), "text/markdown")}>{Icon.down} Note for your broker (.md)</button>
@@ -505,7 +516,7 @@ function Export({ board, include, incRefund, incBill, files, ack, setAck, extras
         </div>
         {extras}
       </div>
-      <p className="r6-fine">The CSV follows Customs&apos; format: a single &ldquo;Entry Number&rdquo; column, 11 characters, no dashes, at most 9,999 shipments and 1MB per file. {PREPARED_FOR_PLAIN}</p>
+      <p className="r6-fine">The CSV follows Customs&apos; upload template: a single &ldquo;Entry Number&rdquo; column, 11 characters, no dashes, a leading zero kept with an apostrophe, and at most 9,999 shipments and 1MB per file. Longer lists are split into numbered files automatically. {PREPARED_FOR_PLAIN}</p>
     </div>
   );
 }
