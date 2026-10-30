@@ -1,0 +1,28 @@
+/* Phase chip, lock-out warning and coverage line. Dark Mercury tokens only (see DESIGN.md). */
+.cu-chip{display:inline-block;padding:0 8px;border:1px solid var(--border);border-radius:999px;font:480 12px/18px var(--sans);color:var(--muted);background:var(--wash-1);white-space:nowrap;vertical-align:baseline}
+.cu-chip.p1{color:var(--go-ink);border-color:var(--go-line);background:var(--go-bg)}
+.cu-chip.p2{color:var(--decide-ink);border-color:var(--glass-line);background:var(--decide-bg)}
+.cu-chip.p3{color:var(--hold-ink);border-color:var(--warn-line);background:var(--hold-bg)}
+.cu-chip.later,.cu-chip.none{color:var(--faint)}
+.d-sect h3 .cu-chip{margin-left:8px;vertical-align:2px}
+.cu-sect .d-body{max-width:56ch}
+.cu-alert{margin-top:12px}
+.cu-alert>div{min-width:0}
+.cu-alert .cu-title{font:480 14px/20px var(--sans);color:var(--text)}
+.cu-alert p+p{margin-top:4px}
+.cu-quote{margin:8px 0 0;padding:2px 0 2px 12px;border-left:2px solid var(--control);color:var(--muted);font:400 13px/20px var(--sans)}
+.cu-src{font:400 13px/20px var(--sans);color:var(--faint);margin-top:8px}
+.cu-src a{color:var(--soft)}
+.cu-more{margin-top:12px}
+.cu-more summary{width:fit-content;font:400 13px/20px var(--sans);color:var(--faint);cursor:pointer;padding:4px 0}
+.cu-cov{margin:48px 0 0;padding:24px;border:1px solid var(--border);border-radius:var(--radius-card);background:var(--surface)}
+.cu-cov-h{font:480 20px/28px var(--sans);color:var(--text)}
+.cu-cov-p{margin-top:8px;font:400 16px/24px var(--sans);color:var(--muted);max-width:68ch}
+.cu-list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.cu-list li{font:400 14px/20px var(--sans);color:var(--muted)}
+.cu-list b{font-weight:480;color:var(--text)}
+.cu-mark{display:inline-block;padding:0 6px;border-radius:4px;font:480 12px/18px var(--sans);color:var(--go-ink);background:var(--go-bg)}
+.cu-mark.export{color:var(--decide-ink);background:var(--decide-bg)}
+.cu-mark.none{color:var(--hold-ink);background:var(--hold-bg)}
+.cu-how{color:var(--faint)}
+@media (max-width:640px){.cu-cov{padding:16px;margin-top:32px}}

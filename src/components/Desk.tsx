@@ -1,4 +1,5 @@
 "use client";
+import { CoverageLine, DrawerCustoms, PhaseChip, rowCustoms } from "./CustomsPanel";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ERROR_DEFINITIONS, FILING_ORDER_RULES, SOURCES } from "@/lib/cbp-rules";
 import { browserBoard } from "@/lib/browser-board";
@@ -397,6 +398,7 @@ export default function Desk() {
       <OfferCheck />
 
       <Sources />
+      <CoverageLine />
 
       <footer className="foot">
         <div className="foot-grid">
@@ -469,6 +471,7 @@ function Row({ caught: board_caught, v, ex, i, animate, checked, canInclude, act
   const amtC = isNet ? v.money.netCents : v.money.ieepaRefundableCents;
   const win = d.capeDaysLeft !== null && d.capeDaysLeft >= 0 ? d.capeDaysLeft : null;
   const meta: React.ReactNode[] = [];
+  meta.push(...rowCustoms(v));
   if (v.diversionRisk) meta.push(<span key="d" className="warn">Owes Customs money, may be taken out</span>);
   if (v.money.frameworkGroups.length > 0) meta.push(<span key="f">Trade-deal rate ({v.money.frameworkGroups.join("/")})</span>);
   if (v.leadingZeroFix) meta.push(<span key="z">leading zero kept in the CSV</span>);
@@ -557,6 +560,7 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
           <div className="d-bar-l">
             <Id className="d-chip">{v.displayNumber}</Id>
             <span className={`d-status ${meta.tone}`}><i aria-hidden />{meta.title}</span>
+            {v.customs && <PhaseChip phase={v.customs.phase} />}
           </div>
           <button ref={closeRef} className="x" onClick={onClose} aria-label="Close">{Icon.close}</button>
         </div>
@@ -585,6 +589,8 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
         )}
         <p className="d-note">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>
         {v.diversionRisk && <p className="d-alert"><AlertTriangle size={16} aria-hidden /><span>This importer owes Customs money from before. Customs may subtract it from the refund (19 CFR 24.72).</span></p>}
+
+        <DrawerCustoms v={v} />
 
         {ex && (
           <section className="d-sect">

@@ -119,6 +119,36 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   if (await wh.count()) { await wh.locator(".en").click(); const t = await page.locator(".drawer").innerText(); ok(/69127837/.test(t), "warehouse entry 21 cites CSMS 69127837"); await page.locator(".drawer .x").click(); }
   else ok(false, "warehouse entry 21 card is on the board");
 
+  // --- refund phase chip + remedy lock-out warning (customs lane)
+  const chips = await page.locator(".row [data-testid=phase-chip]").count();
+  ok(chips >= 10, `rows carry a phase chip (${chips} visible)`);
+  ok(await page.locator(".row [data-testid=lockout-marker]").count() >= 1, "rows carry a remedy lock-out marker");
+  const psc = await findRow(/A7K-?5314569/);
+  await psc.locator(".en").click();
+  const pd = page.locator(".drawer");
+  await pd.waitFor({ timeout: 5000 });
+  ok(await pd.locator(".d-bar [data-testid=phase-chip]").count() === 1 && /Phase 1/.test(await pd.locator(".d-bar [data-testid=phase-chip]").innerText()), "drawer header shows the Phase 1 chip");
+  const lw = pd.locator("[data-testid=lockout-warning]");
+  ok(await lw.count() === 1 && /you should file that PSC prior to filing your CAPE Declaration/.test(await lw.innerText()), "drawer shows the PSC lock-out warning with CBP's wording");
+  ok(await lw.locator("[data-testid=customs-source]").count() === 1 && /cbp\.gov/.test(await lw.locator("a").first().getAttribute("href")), "lock-out warning links to the CBP page");
+  ok(await lw.evaluate((el) => el.classList.contains("d-alert") && getComputedStyle(el).borderTopStyle === "solid"), "lock-out warning uses the bordered .d-alert style");
+  ok(/Which refund phase/.test(await pd.innerText()), "drawer explains which phase in plain words");
+  await pd.evaluate((el) => { el.scrollTop = 0; });
+  const vp0 = page.viewportSize();
+  if (label === "1440") await page.setViewportSize({ width: 1440, height: 1500 });
+  await page.screenshot({ path: `${OUT}/customs-drawer-${label}.png` });
+  await page.setViewportSize(vp0);
+  await pd.locator(".x").click();
+  await pd.waitFor({ state: "detached", timeout: 3000 });
+  const p3 = await findRow(/A7K-?5047642/);
+  await p3.locator(".en").click();
+  await page.locator(".drawer .cu-more summary").first().click();
+  const p3t = await page.locator(".drawer").innerText();
+  ok(/Phase 3/.test(p3t) && /Court has ordered reliquidation/.test(p3t) && /not describe Phase 3|does not describe Phase 3/.test(p3t), "final-liquidation entry shows Phase 3 and says CBP's page does not describe it");
+  await page.locator(".drawer .x").click();
+  const covLine = page.getByTestId("coverage-line");
+  ok(await covLine.count() === 1 && /Catches \d+ of \d+ published CAPE rejection causes/.test(await covLine.innerText()), `coverage line is on the page: ${await covLine.innerText()}`);
+
   // --- exports (must be gated on the acknowledgement)
   const capeBtn = page.getByRole("button", { name: /^cape-declaration/ }).first();
   await capeBtn.scrollIntoViewIfNeeded();

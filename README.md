@@ -68,6 +68,45 @@ Token Factory credit was exhausted (HTTP 402) when this was written, so the **mi
 - Live runs send the CSV to this server, which forwards entry data to Token Factory and keeps nothing (no database, no accounts, no logs of file content).
 - Sample data is synthetic: `data/sample-es003.csv`, 69 made-up entries shaped like ES-003 + ES-701 with seeded traps (duplicates, a 10-character entry, wrong filer code, 80/81-day edge, leading zeros, framework-agreement entries, underpaid duty, recon-flagged, drawback, suspension, IOR with debt, a bonded-warehouse entry type 21 that CBP now rejects, and the warehouse withdrawal type 31 that it accepts).
 
+## What it catches, and what it does not
+
+**Catches 23 of 28 published CAPE rejection causes.** The 28 are counted from CBP's own two tables, "File Validation Errors" and "Entry Validation Errors", on [the IEEPA Duty Refunds page](https://www.cbp.gov/trade/programs-administration/trade-remedies/ieepa-duty-refunds) (the file table is also in the [ACE quick reference guide](https://www.cbp.gov/sites/default/files/2026-05/ace_portal_-_cape_declarations_and_error_definitions_508c_0.pdf)). "Entry Summary Not Found or Archived in ACE" is in both tables and is counted once. 19 are checked from the ACE report columns, 4 cannot happen with the file this tool writes, and 5 cannot be checked from a report at all. The same line is shown in the app, under the sources. The counts are asserted in `tests/customs.test.ts`.
+
+| CBP's error text | Table | What this tool does | How |
+|---|---|---|---|
+| CSV content is empty or missing the header | File Validation | ruled out by how the upload file is built | The exported file always starts with the "Entry Number" header row. |
+| Not a CSV file | File Validation | ruled out by how the upload file is built | Exports are written as .csv files. |
+| The file size exceeds 1mb. Please split the data into smaller files before reuploading | File Validation | ruled out by how the upload file is built | File size is measured and the list is split before it can pass 1 MB. |
+| The file is deemed unsafe. Please correct the file data before reuploading | File Validation | **not checkable from this file** | ACE scans the upload itself and says nothing about what trips it. |
+| The file exceeds the maximum 10,000 allowed entry numbers per file | File Validation | ruled out by how the upload file is built | Lists are split at 9,999 entries per file (the FAQ limit; the error table says 10,000, so the lower number is used). |
+| Filer Code not matching | File Validation | checked from your ACE report | Compares the first 3 characters with the filer codes you give. |
+| Duplicate Entry | File Validation | checked from your ACE report | Strips dashes, then flags repeats. |
+| Not 11 characters long | File Validation | checked from your ACE report | Counts characters after dashes are removed. |
+| Account Mismatch | File Validation | **not checkable from this file** | needs the importer behind your ACE account. The filer-code check is the closest thing. |
+| Entry Summary Not Found or Archived in ACE | Both tables | checked from your ACE report | Flags entries whose summary status is Not Found. |
+| Entry on Drawback | Entry Validation | checked from your ACE report | Drawback-claim column. |
+| Recon Already Filed for Entry Summary | Entry Validation | checked from your ACE report | Recon flag with a Type 09 on file. |
+| Entry Summary is Cancelled/Rejected | Entry Validation | checked from your ACE report | Summary status other than Accepted. |
+| Entry Summary is in Final Liquidation Status | Entry Validation | checked from your ACE report | Liquidation date more than 80 days before the as-of date. |
+| Entry Summary is in Trade Control | Entry Validation | checked from your ACE report | Control status other than CBP. |
+| Entry Summary is Subject to Court Injunction | Entry Validation | checked from your ACE report | Injunction flag. |
+| Entry Summary Pending Liquidation or Not Liquidated and Has Suspension Record | Entry Validation | checked from your ACE report | Pending or not-liquidated status together with a suspension record. |
+| Entry Summary Under Review | Entry Validation | checked from your ACE report | Adjusted-status flag. |
+| Entry Type Not Allowed | Entry Validation | checked from your ACE report | Entry types 08, 09, 23, 47, plus warehouse 21 and 22 (CSMS 69127837). |
+| Value Not Allowed on HTS | Entry Validation | checked from your ACE report | Goods value above $0.00 on a chapter 99 line. |
+| No IEEPA HTS on Entry | Entry Validation | checked from your ACE report | No line with IEEPA duty. |
+| Protest on Entry | Entry Validation | checked from your ACE report | Open or Suspended protest, or Denied with the AFR box checked. |
+| Statement Processing Not Complete | Entry Validation | checked from your ACE report | Statement-pending flag. |
+| Invalid HTS | Entry Validation | checked from your ACE report | Line action date outside the HTS begin/end dates. |
+| HTS Relationship Mismatch | Entry Validation | checked from your ACE report | Add/replace/derived HTS without its pair. |
+| Unable to Calculate Duty-'X' Duty Comp Code | Entry Validation | **not checkable from this file** | needs ACE's duty computation codes per line. |
+| Unexpected Error-try Again | Entry Validation | **not checkable from this file** | it is a system error, not a property of the entry. |
+| SPI or Additional HTS Required | Entry Validation | **not checkable from this file** | the report has no special-program-indicator column. |
+
+Things people often assume CBP checks that are **not** in either error table, so they are not counted and not claimed: direct-deposit (ACH) setup, anti-dumping/countervailing duty flags, and a protest-form lane.
+
+**Refund phase and remedy lock-outs.** Each shipment carries a plain-words Phase 1, 2 or 3 chip. Phases 1 and 2 are CBP's wording from the refunds page. Phase 3 (finally liquidated entries, only for importers who sued at the Court of International Trade and hold a reliquidation order) is *not* on that page; it comes from CBP's sworn declaration to the court (Lord, 15 Sep 2026, para. 8) and a law-firm alert, and the app labels it that way. Today the engine still blocks entries liquidated more than 80 days ago, as CBP's page says; the chip tells a plaintiff importer that a separate court-ordered route exists. Lock-out warnings follow CBP's FAQ answer that PSCs and protests cannot be filed on entries after they are on a CAPE declaration, and its drawback guidance.
+
 ## CBP sources the checks mirror
 
 - FAQ and error tables: https://www.cbp.gov/trade/programs-administration/trade-remedies/ieepa-duty-refunds

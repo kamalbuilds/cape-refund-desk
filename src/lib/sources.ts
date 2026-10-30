@@ -2,7 +2,7 @@
  * Every authority the app relies on, with a link. Each URL was fetched and returned HTTP 200 on 2026-10-30
  * (`node scripts/check-sources.mjs` re-checks them), and the two CSMS pages and the CBP page were read for the claim made here.
  */
-export interface SourceRow { id: string; kind: "CBP page" | "CBP guide" | "CSMS" | "19 CFR" | "19 U.S.C."; label: string; url: string; use: string }
+export interface SourceRow { id: string; kind: "CBP page" | "CBP guide" | "CBP court filing" | "Law firm" | "CSMS" | "19 CFR" | "19 U.S.C."; label: string; url: string; use: string }
 export const VERIFIED_ON = "2026-10-30";
 
 export const SOURCE_PANEL: SourceRow[] = [
@@ -16,6 +16,10 @@ export const SOURCE_PANEL: SourceRow[] = [
     use: "From 7 Jul 2026 warehouse entry types 21 and 22 are rejected with ENTRY TYPE NOT ALLOWED. Drives the rule re-score demo." },
   { id: "CSMS-69056483", kind: "CSMS", label: "CSMS 69056483: update to entry-level validations for CAPE declarations", url: "https://content.govdelivery.com/accounts/USDHSCBP/bulletins/41db7e3",
     use: "The HTS and value validations behind the PSC-first rule." },
+  { id: "PHASE3", kind: "CBP court filing", label: "CBP declaration to the Court of International Trade, 15 Sep 2026 (Brandon Lord)", url: "https://capeportalguide.com/docs/cit/cit-lord-declaration-phase-3-october-6-september-15-2026.pdf",
+    use: "Phase 3 (finally liquidated entries, court-ordered plaintiffs only). It is not on CBP's refunds page. Paragraph 8." },
+  { id: "PHASE3_LAW", kind: "Law firm", label: "Phillips Lytle: CBP Opens Phase 3 of CAPE for IEEPA Refunds (12 Oct 2026)", url: "https://phillipslytle.com/cbp-opens-phase-3-of-cape-for-ieepa-refunds/",
+    use: "Who can use Phase 3 (a CIT plaintiff with a reliquidation order) and the Phase 1 to 3 dates. A secondary source, labelled as one." },
   { id: "19CFR24.72", kind: "19 CFR", label: "19 CFR 24.72: claims; set-off", url: "https://www.ecfr.gov/current/title-19/section-24.72",
     use: "Why an importer's open debt can absorb a refund (the diversion warning)." },
   { id: "19CFR159.9", kind: "19 CFR", label: "19 CFR 159.9: notice of liquidation and date of liquidation", url: "https://www.ecfr.gov/current/title-19/section-159.9",

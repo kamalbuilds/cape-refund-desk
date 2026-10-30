@@ -3,6 +3,7 @@ import { ENTRY_ERRORS, FILE_ERRORS, LIMITS } from "./cbp-rules";
 import { addDays, diffDays } from "./dates";
 import { computeMoney } from "./money";
 import { normalizeEntryNumber } from "./parse";
+import { customsFor } from "./customs-checks";
 
 export interface IorSummary {
   ior: string;
@@ -197,6 +198,7 @@ export function validateEntries(entries: Entry[], opts: ValidationOptions): Port
       order: i + 1,
       leadingZeroFix: leadingZero,
       diversionRisk: (iorDebt.get(p.entry.ior) ?? 0) > 0,
+      customs: customsFor(p.entry, p.deadlines, { windowDays: opts.rules?.windowDays, warehouseBlocked: opts.rules?.warehouseBlocked }),
     };
   });
 

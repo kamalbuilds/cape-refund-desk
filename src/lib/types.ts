@@ -1,3 +1,4 @@
+import type { CustomsInfo } from "./customs-checks";
 export type Lane = "FILE_NOW" | "WAIT" | "BLOCKED" | "NET_BILL_RISK";
 export type Disposition = "block" | "wait";
 
@@ -103,6 +104,8 @@ export interface Verdict {
   order: number;
   leadingZeroFix: boolean;
   diversionRisk: boolean; // IOR has an open non-IEEPA debt CBP may offset (19 CFR 24.72)
+  /** CAPE refund phase and remedy lock-outs. Optional so older recorded runs still load. */
+  customs?: CustomsInfo;
 }
 
 /** Rule overrides used by rule-watch re-scoring. Omitted = the rules as CBP publishes them today. */
