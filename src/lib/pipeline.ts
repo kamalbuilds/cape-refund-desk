@@ -239,7 +239,7 @@ async function portfolioNote(p: Portfolio, ctx: string, receipt: ModelReceipt): 
     const { c, j } = await ultraJson<{ headline?: string; priorities?: { id: string; reason: string }[]; broker_questions?: string[] }>({
       model: "ultra", thinking: true, json: true, maxTokens: 3500, timeoutMs: 150000,
       system: ULTRA_SYSTEM(ctx),
-      user: `Give the broker a short portfolio read. Return JSON exactly like:\n{"headline": "<=40 words, plain English, for a small business owner: what to do first and what must not be uploaded blindly",\n "priorities": [{"id": "an id from candidates_in_filing_order", "reason": "<=25 words, plain English"}] (max 5),\n "broker_questions": ["3 short plain-English questions to ask the importer before upload"]}\n\nPORTFOLIO (deterministic results):\n${packet}`,
+      user: `Give the broker a short portfolio read. Return JSON exactly like:\n{"headline": "<=40 words, plain English, for a small business owner: what to do first and what must not be uploaded blindly. Any count you state must be a lane total from PORTFOLIO.lanes. No em dashes",\n "priorities": [{"id": "an id from candidates_in_filing_order", "reason": "<=25 words, plain English"}] (max 5),\n "broker_questions": ["3 short plain-English questions to ask the importer before upload"]}\n\nPORTFOLIO (deterministic results):\n${packet}`,
     }, receipt);
     if (!j) return null;
     const allowed = allowedMoney(packet);

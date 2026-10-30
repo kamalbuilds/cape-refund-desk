@@ -47,16 +47,30 @@ export function figuresFor(v: Verdict): EntryFigures {
 }
 
 /**
- * Count claims in portfolio text. "N entries expiring today" is checked against the engine (entries with 0 days left in the
- * CAPE window, not blocked). A wrong count is replaced with the engine's count, so the sentence stays readable and true.
+ * Count claims in portfolio text, checked against the engine's lanes. A wrong count is replaced with the engine's count, so the
+ * sentence stays readable and true:
+ *   "N entries expiring today"          -> entries with 0 days left in the CAPE window, not blocked
+ *   "File N shipments/entries now"      -> the Safe to claim (FILE_NOW) total
+ *   "N need(s) a correction first"      -> entries whose first step is a post-summary correction
+ *   "N need(s) reconciliation first"    -> entries whose first step is a reconciliation
+ * Em dashes in model text become semicolons: the board's copy uses none.
  */
 export function guardCounts(text: string, vs: Verdict[]): { text: string; stripped: number } {
   const today = vs.filter((v) => v.lane !== "BLOCKED" && v.deadlines.capeDaysLeft === 0).length;
+  const fileNow = vs.filter((v) => v.lane === "FILE_NOW").length;
+  const psc = vs.filter((v) => /PSC first/i.test(v.filingStep)).length;
+  const recon = vs.filter((v) => /Recon first/i.test(v.filingStep)).length;
   let stripped = 0;
-  const out = text.replace(/(\d+)(\s+(?:\w+\s+){0,2}?)(entries|entry)(\s+(?:expiring|closing|expire|close|due)\s+today)/gi, (m, n: string, mid: string, _noun: string, tail: string) => {
-    if (Number(n) === today) return m;
-    stripped++; return `${today}${mid}${today === 1 ? "entry" : "entries"}${tail}`;
-  });
+  const fix = (n: string, want: number) => { if (Number(n) === want) return n; stripped++; return String(want); };
+  const out = text
+    .replace(/\s*\u2014\s*/g, "; ")
+    .replace(/(\d+)(\s+(?:\w+\s+){0,2}?)(entries|entry)(\s+(?:expiring|closing|expire|close|due)\s+today)/gi, (m, n: string, mid: string, _noun: string, tail: string) => {
+      if (Number(n) === today) return m;
+      stripped++; return `${today}${mid}${today === 1 ? "entry" : "entries"}${tail}`;
+    })
+    .replace(/\b(file\s+)(\d+)(\s+(?:shipments?|entries|entry)\s+(?:now|today|first))/gi, (_m, a: string, n: string, b: string) => a + fix(n, fileNow) + b)
+    .replace(/\b(\d+)(\s+(?:shipments?\s+|entries\s+|entry\s+)?needs?\s+(?:a\s+)?(?:post[\s-]summary\s+)?corrections?\s+first)/gi, (_m, n: string, b: string) => fix(n, psc) + b)
+    .replace(/\b(\d+)(\s+(?:shipments?\s+|entries\s+|entry\s+)?needs?\s+(?:a\s+)?reconciliation\s+first)/gi, (_m, n: string, b: string) => fix(n, recon) + b);
   return { text: out, stripped };
 }
 

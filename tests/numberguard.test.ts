@@ -49,9 +49,7 @@ describe("number guard on the recorded Ultra run", () => {
     const vs: Verdict[] = run.portfolio.verdicts;
     const today = vs.filter((v) => v.lane === "FILE_NOW" && v.deadlines.capeDaysLeft === 0).length;
     expect(today).toBe(1);
-    // The 2026-10-30 recording's headline has no "N entries expiring today" claim, so the count guard has nothing to correct in it (stripped 0).
     // The mechanism is pinned on the sentence the earlier recording produced.
-    expect(guardCounts(run.portfolioNote.headline, vs).stripped).toBe(0);
     const old = "File 7 entries expiring today";
     const fixed = guardCounts(old, vs);
     expect(fixed.stripped).toBe(1);
@@ -64,8 +62,33 @@ describe("number guard on the recorded Ultra run", () => {
     const once = reguardRun(bad);
     expect(once.portfolioNote.headline).toContain("File 1 entry expiring today");
     expect(once.portfolioNote.guardStripped).toBe(run.portfolioNote.guardStripped + 1);
-    expect(reguardRun(run).portfolioNote).toEqual(run.portfolioNote); // the real recording needs no correction
     for (const id of Object.keys(EX)) expect(once.explanations[id].summary).toBe(EX[id].summary);
+    expect(reguardRun(once).portfolioNote).toEqual(once.portfolioNote);
+  });
+});
+
+describe("FOUND IN THE 2026-10-30 RECORDING: Ultra's headline said 'File 7 shipments now'; the engine's Safe to claim lane holds 39", () => {
+  const vs: Verdict[] = run.portfolio.verdicts;
+  it("the raw recording carries the wrong count, and the guard rewrites it to the engine's lanes", () => {
+    expect(vs.filter((v) => v.lane === "FILE_NOW").length).toBe(39);
+    expect(run.portfolioNote.headline).toMatch(/^File 7 shipments now; 4 need a correction first, 1 needs reconciliation first/);
+    const g = guardCounts(run.portfolioNote.headline, vs);
+    expect(g.stripped).toBe(1);
+    expect(g.text).toMatch(/^File 39 shipments now; 4 need a correction first, 1 needs reconciliation first; don't upload those 5 blindly\./);
+    expect(g.text).not.toContain("\u2014");
+  });
+  it("wrong correction and reconciliation counts are caught too, correct ones pass untouched", () => {
+    expect(vs.filter((v) => /PSC first/.test(v.filingStep)).length).toBe(4);
+    expect(vs.filter((v) => /Recon first/.test(v.filingStep)).length).toBe(1);
+    const g = guardCounts("File 39 entries now; 9 need a correction first, 3 need reconciliation first.", vs);
+    expect(g.stripped).toBe(2);
+    expect(g.text).toBe("File 39 entries now; 4 need a correction first, 1 need reconciliation first.");
+    expect(guardCounts("File 39 shipments now; 4 need a correction first, 1 needs reconciliation first.", vs).stripped).toBe(0);
+  });
+  it("what /api/sample serves: no em dash and no count that disagrees with 39 / 4 / 1, idempotent", () => {
+    const once = reguardRun(run);
+    expect(once.portfolioNote.headline.startsWith("File 39 shipments now")).toBe(true);
+    for (const t of [once.portfolioNote.headline, ...once.portfolioNote.priorities.map((p: { reason: string }) => p.reason), ...once.portfolioNote.brokerQuestions]) expect(t).not.toContain("\u2014");
     expect(reguardRun(once).portfolioNote).toEqual(once.portfolioNote);
   });
 });
