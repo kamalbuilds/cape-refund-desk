@@ -50,6 +50,21 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(/High risk/.test(await page.getByTestId("offer-verdict").innerText()), "offer check: predatory example is High risk");
   const pf = await flagIds();
   for (const f of ["impersonation", "credentials", "payee-firm", "upfront", "fee-pct", "lock-in", "urgency"]) ok(pf.includes(f), `offer check: predatory example flags ${f}`);
+  { // every finding's one-line layout holds: quote fragment and chevron stay inside their row, the title never wraps
+    const bad = await page.getByTestId("offer-flag").evaluateAll((els) => els.flatMap((li) => {
+      const r = li.getBoundingClientRect(); const out = [];
+      const inside = (n) => { const b = n.getBoundingClientRect(); return b.left >= r.left - 0.5 && b.right <= r.right + 0.5 && b.top >= r.top - 0.5 && b.bottom <= r.bottom + 0.5; };
+      for (const sel of ["[data-testid=offer-frag]", ".oc-chev", ".oc-title", ".oc-sev"]) { const n = li.querySelector(sel); if (n && !inside(n)) out.push(`${li.dataset.flag}:${sel}`); }
+      return out;
+    }));
+    ok(bad.length === 0, `offer check: every finding's fragment, chevron, title and chip sit inside its row (${bad.join(", ") || "all inside"})`);
+    const wrapped = await page.locator(".oc-title").evaluateAll((els) => els.filter((e) => e.getBoundingClientRect().height > 24 && getComputedStyle(e).whiteSpace === "nowrap").length);
+    ok(wrapped === 0, "offer check: no finding title wraps to a second line when it is on one line by design");
+    const nfrag = await page.getByTestId("offer-frag").count();
+    ok(nfrag >= 6, `offer check: predatory example still shows quote fragments (${nfrag})`);
+    const orphan = await page.getByTestId("offer-frag").evaluateAll((els) => { const cost = document.querySelector(".oc-col-cost").getBoundingClientRect(); return els.filter((e) => { const b = e.getBoundingClientRect(); return b.width > 0 && b.left >= cost.left && b.top >= cost.top && b.top <= cost.bottom && cost.left > 0 && getComputedStyle(document.querySelector(".oc-grid")).gridTemplateColumns.split(" ").length > 1; }).length; });
+    ok(orphan === 0, "offer check: no fragment is rendered under the cost-comparison card");
+  }
   ok(await page.getByTestId("offer-cite").count() >= 5 && (await page.getByTestId("offer-cite").first().locator("a").getAttribute("href")).startsWith("https://"), "offer check: flags carry CBP quotes with https links");
   // compact view: one row per finding, details closed until clicked, counts at the top, comparison visible without scrolling past the flags
   const nFlags = await page.getByTestId("offer-flag").count();
@@ -136,6 +151,13 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   const wh = await findRow(/A7K-?9828170/);
   if (await wh.count()) { await wh.locator(".en").click(); const t = await page.locator(".drawer").innerText(); ok(/69127837/.test(t), "warehouse entry 21 cites CSMS 69127837"); await page.locator(".drawer button.x").click(); }
   else ok(false, "warehouse entry 21 card is on the board");
+
+  // --- section headings: every section h2 shares one font-size (16px, DESIGN.md heading size)
+  {
+    const hs = await page.locator("h2:visible").evaluateAll((els) => els.filter((e) => !e.classList.contains("headline") && !e.classList.contains("cu-cov-h")).map((e) => [e.textContent.trim().slice(0, 36), getComputedStyle(e).fontSize]));
+    const sizes = [...new Set(hs.map((h) => h[1]))];
+    ok(hs.length >= 8 && sizes.length === 1 && sizes[0] === "16px", `all ${hs.length} section h2s are 16px (${sizes.join(", ")}${sizes.length > 1 ? "; odd: " + hs.filter((h) => h[1] !== "16px").map((h) => h[0]).join(" | ") : ""})`);
+  }
 
   // --- every lane's drawer: the headline money agrees with the Net row, and green means claimable now
   {

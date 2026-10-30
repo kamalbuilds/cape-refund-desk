@@ -198,3 +198,13 @@
   html body button { font-size: 14px !important; }
   html body .prio li span, html body .prio li { font-size: 14px; }
 }
+
+/* Section headings: every section h2 on the page is 16px / 24px (DESIGN.md heading size).
+   Not the 48px page headline, and not the 20px coverage statement line (.cu-cov-h), which is a claim, not a section title. */
+html body :is(.panel, .notice, .sect, .watch, .analyst, .ultra, .r6-detail) h2:not(.headline):not(.display):not(.cu-cov-h),
+html body h2.r6-title,
+html body h2.dl-title,
+html body h2.oc-h2 {
+  font: 480 16px/24px var(--sans) !important;
+  letter-spacing: 0 !important;
+}

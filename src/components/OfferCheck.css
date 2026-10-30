@@ -48,8 +48,8 @@ html body .panel.oc .oc-h3:not(.headline):not(.display){font:480 14px/20px var(-
 .oc-high .oc-sev{color:var(--stop-ink);border-color:var(--stop-line);background:var(--stop-bg)}
 .oc-medium .oc-sev{color:var(--hold-ink);border-color:var(--warn-line);background:var(--warn-bg)}
 .oc-info .oc-sev{color:var(--muted)}
-.oc-title{flex:0 0 auto;max-width:100%;font-weight:480;font-size:14px;line-height:20px}
-.oc-frag{flex:1 1 0;min-width:48px;font:400 12px/16px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc-title{flex:0 1 auto;min-width:96px;font-weight:480;font-size:14px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc-frag{flex:1 1 0;min-width:0;font:400 12px/16px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .oc-chev{flex:none;margin-left:auto;color:var(--muted);transition:transform .15s}
 .oc-flag details[open] .oc-chev{transform:rotate(180deg)}
 .oc-flag details[open] .oc-row{border-bottom:1px solid var(--rule)}
@@ -76,7 +76,7 @@ html body .panel.oc .oc-h3:not(.headline):not(.display){font:480 14px/20px var(-
 @media (max-width:1100px){.oc-grid{grid-template-columns:1fr}.oc-col-cost{position:static}}
 @media (max-width:640px){
   .oc-row{flex-wrap:wrap;row-gap:2px}
-  .oc-title{flex:1 1 0;min-width:0}
+  .oc-title{flex:1 1 0;min-width:0;white-space:normal}
   .oc-frag{flex:1 0 100%;order:5}
   .oc-chev{order:4}
 }

@@ -22,7 +22,7 @@ function FlagItem({ f }: { f: Flag }) {
       <details>
         <summary className="oc-row" data-testid="offer-flag-toggle">
           <span className="oc-sev">{SEV_LABEL[f.severity]}</span>
-          <b className="oc-title">{f.title}</b>
+          <b className="oc-title" title={f.title}>{f.title}</b>
           {frag && <q className="oc-frag" data-testid="offer-frag">{frag}</q>}
           <ChevronDown className="oc-chev" size={16} aria-hidden />
         </summary>
