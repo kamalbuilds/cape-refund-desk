@@ -45,6 +45,16 @@ export function plainStep(step: string, asOf?: string): string {
   return step;
 }
 
+/**
+ * For a shipment that still nets a refund but has other duties Customs may recalculate as owed: that amount comes off the refund.
+ * (Shipments where it wipes out the refund are in "Your broker decides" instead.) Null when there is nothing to say.
+ */
+export function otherDutyNote(v: Verdict): string | null {
+  const m = v.money;
+  if (v.lane === "BLOCKED" || m.underpaidOtherCents <= 0 || m.netCents <= 0) return null;
+  return `Customs may also bill ${fmtUsd(m.underpaidOtherCents)} of other duties, which comes off this refund.`;
+}
+
 /** One sentence a non-expert can act on. Figures come from the deterministic engine only. */
 export function plainVerdict(v: Verdict): string {
   const m = v.money;
@@ -54,11 +64,12 @@ export function plainVerdict(v: Verdict): string {
     case "NET_BILL_RISK":
       return m.netCents < 0
         ? `Claiming this one would cost you ${fmtUsd(-m.netCents)}, not refund you.`
-        : `Claiming this one refunds about ${fmtUsd(m.netCents)}, but Customs may also bill you ${fmtUsd(m.underpaidOtherCents)} for other duties you underpaid. Your broker should decide.`;
+        : `Claiming this one would refund nothing: the ${fmtUsd(m.underpaidOtherCents)} of other duties Customs may bill cancels the whole refund. Your broker should decide.`;
     case "FILE_NOW": {
       const left = v.deadlines.capeDaysLeft;
       const late = left !== null && left >= 0 && left <= 14 ? ` The window closes in ${left} day${left === 1 ? "" : "s"}.` : "";
-      return `Safe to claim: about ${fmtUsd(m.ieepaRefundableCents)} back, and Customs' checks found nothing wrong.${late}`;
+      const bill = otherDutyNote(v);
+      return `Safe to claim: about ${fmtUsd(m.netRefundCents)} back, and Customs' checks found nothing wrong.${bill ? ` ${bill}` : ""}${late}`;
     }
     case "WAIT":
       return `Don't claim this yet. ${title}. Fix that first, then it can go in.`;

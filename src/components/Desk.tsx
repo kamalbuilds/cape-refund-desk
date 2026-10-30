@@ -11,7 +11,7 @@ import { vetoStats } from "@/lib/signals";
 import type { Explanation, PortfolioNote, Receipt, RunEvent, RunResult } from "@/lib/pipeline";
 import type { WatchResult, Change } from "@/lib/rulewatch";
 import type { Lane, Verdict } from "@/lib/types";
-import { PLAIN_FINDING, plainStep, plainTitle, plainVerdict } from "@/lib/plain";
+import { PLAIN_FINDING, otherDutyNote, plainStep, plainTitle, plainVerdict } from "@/lib/plain";
 import { LANES, amountHeader, drawerHero, laneOf } from "@/lib/lanes-ui";
 import Stage from "./Stage";
 import { CountInt, CountMoney, Reveal, TwistCard, Words } from "./motion";
@@ -471,10 +471,11 @@ function Row({ caught: board_caught, v, ex, i, animate, checked, canInclude, act
   const f = v.findings[0];
   const d = v.deadlines;
   const isNet = v.lane === "NET_BILL_RISK";
-  const amtC = isNet ? v.money.netCents : v.money.ieepaRefundableCents;
+  const amtC = isNet || v.lane === "FILE_NOW" ? v.money.netCents : v.money.ieepaRefundableCents;
   const win = d.capeDaysLeft !== null && d.capeDaysLeft >= 0 ? d.capeDaysLeft : null;
   const meta: React.ReactNode[] = [];
   meta.push(...rowCustoms(v));
+  if (otherDutyNote(v)) meta.push(<span key="od" className="warn" data-testid="other-duty-row">{otherDutyNote(v)}</span>);
   if (v.diversionRisk) meta.push(<span key="d" className="warn">Owes Customs money, may be taken out</span>);
   if (v.money.frameworkGroups.length > 0) meta.push(<span key="f">Trade-deal rate ({v.money.frameworkGroups.join("/")})</span>);
   if (v.leadingZeroFix) meta.push(<span key="z">leading zero kept in the CSV</span>);
@@ -592,6 +593,7 @@ function Drawer({ v, board, ex, onClose, included, onToggle }: { v: Verdict; boa
             <Waterfall m={m} pending={v.lane !== "FILE_NOW"} />
           </div>
         )}
+        {otherDutyNote(v) && <p className="d-alert" data-testid="other-duty-note"><AlertTriangle size={16} aria-hidden /><span>{otherDutyNote(v)}</span></p>}
         <p className="d-note">Plain code worked this out to the cent. When Customs recalculates a shipment, it can also bill duties that were underpaid (under other tariff programs, 232/301/201), and that comes off the refund.</p>
         {v.diversionRisk && <p className="d-alert"><AlertTriangle size={16} aria-hidden /><span>This importer owes Customs money from before. Customs may subtract it from the refund (19 CFR 24.72).</span></p>}
 

@@ -6,6 +6,7 @@ import { parseEs003 } from "../src/lib/parse";
 import { rescore, SCENARIOS } from "../src/lib/rescore";
 import { guardStats, stageRows, stageTotals } from "../src/lib/receipt-stages";
 import { defaultInclude } from "../src/lib/export";
+import { applyFreshLanes } from "../src/lib/sample-relane";
 import { validateEntries } from "../src/lib/validate";
 import type { RunResult } from "../src/lib/pipeline";
 
@@ -138,9 +139,10 @@ import { SOURCE_PANEL } from "../src/lib/sources";
 import { SOURCES } from "../src/lib/cbp-rules";
 
 describe("impact copy cannot drift from the engine", () => {
-  it("SAMPLE_STATS equals the recorded board", () => {
-    const l = run.portfolio.lanes;
-    expect(SAMPLE_STATS.entries).toBe(run.portfolio.verdicts.length);
+  it("SAMPLE_STATS equals the board as served (recorded run with today's lane rules applied)", () => {
+    const served = applyFreshLanes(structuredClone(run), pf);
+    const l = served.portfolio.lanes;
+    expect(SAMPLE_STATS.entries).toBe(served.portfolio.verdicts.length);
     expect(SAMPLE_STATS.safeCount).toBe(l.FILE_NOW.count);
     expect(SAMPLE_STATS.safeRefundCents).toBe(l.FILE_NOW.refundCents);
     expect(SAMPLE_STATS.holdCount).toBe(l.WAIT.count);

@@ -28,7 +28,11 @@ describe("sample dataset", () => {
     expect(wh.findings[0].cbpError).toBe(ENTRY_ERRORS.TYPE_NOT_ALLOWED);
     expect(wh.findings[0].sourceId).toBe("CSMS-69127837");
     expect(lane("Warehouse withdrawal for consumption").lane).toBe("FILE_NOW");
-    expect(lane("Importer says 301 was declared on both lines").lane).not.toBe("FILE_NOW");
+    // Underpaid 301 of $11,332.36 against a $28,998 IEEPA refund still nets +$17,665.64: stays claimable, with a note (not a bill).
+    const u = lane("Importer says 301 was declared on both lines");
+    expect(u.lane).toBe("FILE_NOW");
+    expect(u.money.underpaidOtherCents).toBeGreaterThan(0);
+    expect(u.money.netCents).toBeGreaterThan(0);
   });
   it("leading zero gets an apostrophe; csv value is 11 chars + apostrophe", () => {
     const v = lane("Filer code starts with zero");

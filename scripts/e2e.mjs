@@ -36,7 +36,7 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   ok(overflow <= 1, `landing: no horizontal overflow (${overflow}px)`);
   await page.screenshot({ path: `${OUT}/landing-${label}.png` });
-  ok(await page.getByTestId("audience").count() === 1 && /\$441,345\.20/.test(await page.getByTestId("sample-safe-total").innerText()), "landing leads with the audience and the sample's safe-to-file dollars");
+  ok(await page.getByTestId("audience").count() === 1 && /\$467,490\.84/.test(await page.getByTestId("sample-safe-total").innerText()), "landing leads with the audience and the sample's safe-to-file dollars");
   const probe = await (await fetch(`${BASE}/api/run`)).json();
   if (probe.live === false) ok(await page.getByTestId("live-note").count() === 1 && /paused|key|unavailable|credit/i.test(await page.getByTestId("live-note").innerText()), `live AI is down (${probe.reason}), so the page says so and does not offer a dead button`);
   else ok(await page.getByTestId("live-note").count() === 0, "live AI is up, no pause note");
@@ -66,7 +66,7 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(ocH2 === "16px", `offer check: h2 is the design's 16px section heading, as in the receipt and deadline panels (got ${ocH2})`);
   ok(await page.getByTestId("offer-compare").isVisible(), "offer check: cost comparison is visible with the flags");
   if (process.env.OFFER_SHOT) { await page.getByTestId("offercheck").scrollIntoViewIfNeeded(); await page.getByTestId("offercheck").screenshot({ path: process.env.OFFER_SHOT + "-" + label + ".png" }); }
-  ok(/\$441,345\.20/.test(await page.getByTestId("offer-amount").inputValue().then((v) => "$" + v)) && /\$/.test(await page.getByTestId("cost-fee-flat").innerText()), "offer check: comparison defaults to the sample's safe total and shows the published flat fee");
+  ok(/\$467,490\.84/.test(await page.getByTestId("offer-amount").inputValue().then((v) => "$" + v)) && /\$/.test(await page.getByTestId("cost-fee-flat").innerText()), "offer check: comparison defaults to the sample's safe total and shows the published flat fee");
   ok(await page.getByTestId("offer-compare").getByText(/published prices as of 2026-10-30/).count() === 1, "offer check: flat-fee row is dated");
   ok(await page.getByTestId("offer-ai").count() === 0, "offer check: no AI explanation shown without a recorded one");
   await page.getByTestId("offer-amount").fill("100000");
@@ -204,6 +204,14 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   await page.locator(".drawer .cu-more summary").first().click();
   const p3t = await page.locator(".drawer").innerText();
   ok(/Phase 3/.test(p3t) && /Court has ordered reliquidation/.test(p3t) && /not describe Phase 3|does not describe Phase 3/.test(p3t), "final-liquidation entry shows Phase 3 and says CBP's page does not describe it");
+  await page.locator(".drawer button.x").click();
+  // --- other-duty note: an underpayment that still nets a refund stays claimable, with a visible note (not "Your broker decides")
+  const od = await findRow(/A7K-?5393587-?7/);
+  ok(await od.count() === 1 && await od.getByTestId("other-duty-row").count() === 1 && /Customs may also bill \$11,332\.36 of other duties, which comes off this refund/.test(await od.getByTestId("other-duty-row").innerText()), "row for a net-positive underpayment carries the other-duty note");
+  await od.locator(".en").click();
+  const odd = page.locator(".drawer");
+  ok(await odd.getByTestId("other-duty-note").count() === 1 && /comes off this refund/.test(await odd.getByTestId("other-duty-note").innerText()) && !/Your broker decides/.test(await odd.innerText()), "drawer shows the other-duty note and does not say 'Your broker decides'");
+  if (label === "1440") await page.screenshot({ path: `${OUT}/otherduty-drawer-1440.png` });
   await page.locator(".drawer button.x").click();
   const covLine = page.getByTestId("coverage-line");
   ok(await covLine.count() === 1 && /Catches \d+ of \d+ published CAPE rejection causes/.test(await covLine.innerText()), `coverage line is on the page: ${await covLine.innerText()}`);

@@ -448,7 +448,7 @@ export function compareCosts(refundCents: number, x: Extracted): CostRow[] {
   ];
 }
 
-/** Parses the dollar box. Accepts "$441,345.20", "441345.2", "12k" is NOT accepted. Returns cents or null. */
+/** Parses the dollar box. Accepts "$467,490.84", "467490.84", "12k" is NOT accepted. Returns cents or null. */
 export function parseDollarsToCents(s: string): number | null {
   const t = s.replace(/[$,\s]/g, "");
   if (!/^\d+(?:\.\d{1,2})?$/.test(t)) return null;

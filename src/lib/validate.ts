@@ -151,7 +151,8 @@ export function validateEntries(entries: Entry[], opts: ValidationOptions): Port
     let lane: Lane;
     if (findings.some((x) => x.disposition === "block")) lane = "BLOCKED";
     else if (findings.some((x) => x.disposition === "wait")) lane = "WAIT";
-    else if (money.netCents < 0 || money.underpaidOtherCents > 0) lane = "NET_BILL_RISK";
+    // Only when other duties Customs may recalculate wipe out or exceed the IEEPA refund (net <= 0). An entry that still nets a refund stays FILE_NOW and carries a note instead (see otherDutyNote).
+    else if (money.underpaidOtherCents > 0 && money.netCents <= 0) lane = "NET_BILL_RISK";
     else lane = "FILE_NOW";
     return { entry, idx, key, deadlines, findings, money, lane };
   });

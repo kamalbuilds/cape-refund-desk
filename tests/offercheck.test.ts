@@ -159,7 +159,7 @@ describe("offer check: extractor edge cases", () => {
 describe("offer check: example comparison", () => {
   const safe = SAMPLE_STATS.safeRefundCents;
   it("defaults to the sample's safe total, and each row's maths is exact to the cent", () => {
-    expect(fmtCents(safe)).toBe("$441,345.20");
+    expect(fmtCents(safe)).toBe("$467,490.84");
     const rows = compareCosts(safe, extractOffer(ex("predatory")));
     const offer = rows.find((r) => r.id === "offer")!;
     expect(offer.feeLowCents).toBe(Math.round(safe * 0.35) + 250000);
@@ -180,7 +180,7 @@ describe("offer check: example comparison", () => {
     expect(flat.published).toMatchObject({ asOf: "2026-10-30", url: expect.stringMatching(/^https:\/\//) });
   });
   it("parses the dollar box strictly", () => {
-    expect(parseDollarsToCents("$441,345.20")).toBe(44134520);
+    expect(parseDollarsToCents("$467,490.84")).toBe(46749084);
     expect(parseDollarsToCents("1000")).toBe(100000);
     for (const bad of ["", "abc", "-5", "1.234", "12k", "1e5"]) expect(parseDollarsToCents(bad)).toBeNull();
   });

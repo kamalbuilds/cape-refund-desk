@@ -4,11 +4,11 @@
  */
 export const SAMPLE_STATS = {
   entries: 69,
-  safeCount: 36,
-  safeRefundCents: 44134520,
+  safeCount: 39,
+  safeRefundCents: 46749084,
   holdCount: 13,
   holdRefundCents: 17637200,
-  billRiskCount: 5,
+  billRiskCount: 2,
   billRiskBillCents: 562500,
   blockedCount: 15,
   blockedRefundCents: 16966900,
