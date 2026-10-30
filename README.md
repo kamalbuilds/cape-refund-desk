@@ -30,6 +30,10 @@ Built for the Nebius Global AI Hackathon, Best Apps and Agents track.
 
 The program is called **CAPE**. The struck-down tariffs are **IEEPA** tariffs. The customs authority is **CBP**. An **entry** is one shipment's customs filing, **IOR** is the importer of record (the importer), **liquidation** is Customs finalizing a shipment, **PSC** is a post-summary correction, a **protest** is an appeal, and **ACE** is the Customs portal. The app says "shipment", "importer", "finalized by Customs", "correction" and "appeal" instead, and keeps the exact Customs terms only as small print.
 
+## Scored test history
+
+The scored test (`/api/score`, `scripts/score.mjs`, the "Scored test" panel) checks the rules engine against 69 hand labels in `data/sample-truth.json`, written without reading the engine. Its first run scored **66 of 69 (95.7%) strict**. The three misses (#62, #64, #67) were one rule mismatch the test exposed: any positive other-duty underpayment (232/301/201) was routed to NET_BILL_RISK ("Your broker decides"), but that lane's own text is for shipments where those duties could cost more than the refund. All three still net a refund (+$17,665.64, +$2,400.00, +$6,080.00). The engine rule was fixed in commit `e701c1e`: NET_BILL_RISK is now only for entries where the underpayment wipes out or exceeds the IEEPA refund (net of zero or less, per entry), and an entry that still nets a refund stays in its normal lane with a note. The engine now scores **69 of 69 strict and lenient**. The labels were not edited to get there. The sample is built to exercise the rules, so this shows the engine follows its own rules, not how it does on a real file. `data/sample-run.json` is a recorded AI run that was not re-run: the lane rule is applied to it at serve time (`src/lib/sample-relane.ts`), so its AI-written text for those three shipments may still say "broker decides".
+
 ## How it works (technical)
 
 

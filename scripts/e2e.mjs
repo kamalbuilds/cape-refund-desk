@@ -284,6 +284,8 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(/Rules engine/.test(rulesRow) && /\d+(\.\d)?%/.test(rulesRow) && /of 69/.test(rulesRow), `scored test shows the rules engine with real numbers: ${rulesRow.replace(/\s+/g, " ")}`);
   const aiRow = await page.getByTestId("arm-ai").innerText();
   ok(/AI alone/.test(aiRow) && /Pending credit/.test(aiRow) && !/\d/.test(aiRow), "scored test shows AI alone as Pending credit with no numbers");
+  const hist = await page.getByTestId("scored-history").innerText();
+  ok(/66 of 69 \(95\.7%\)/.test(hist) && /fixed in commit [0-9a-f]{7}/.test(hist) && /scores 69 of 69/.test(hist), `scored test says honestly what it found and when it was fixed: ${hist.replace(/\s+/g, " ").slice(0, 120)}`);
   ok(await page.getByTestId("confusion-matrix").count() === 0, "confusion matrix is hidden until asked for");
   await page.getByTestId("scored-toggle").click();
   ok(await page.getByTestId("confusion-matrix").locator("tbody tr").count() === 4, "confusion matrix opens with four rows");

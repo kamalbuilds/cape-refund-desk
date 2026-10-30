@@ -4,7 +4,7 @@ import { laneOf } from "@/lib/lanes-ui";
 import { LANE_ORDER, pct, type Scored } from "@/lib/score-metrics";
 import { BTN_TERTIARY, Id } from "./ui";
 
-interface Payload { asOf: string; method: string; rules: Scored; aiAlone: { label: string; note: string; status: string } }
+interface Payload { asOf: string; method: string; rules: Scored; aiAlone: { label: string; note: string; status: string }; history: { commit: string; before: { correct: number; total: number; accuracy: number }; entries: readonly number[] } }
 const title = (l: (typeof LANE_ORDER)[number]) => laneOf(l).title;
 
 export default function ScoredTest() {
@@ -30,6 +30,10 @@ export default function ScoredTest() {
           </table>
         </div>
         <p className="fine" style={{ marginTop: 8 }}>{d.aiAlone.note} The AI arm will be scored on the same labels once Token Factory credit is back.</p>
+
+        <p className="fine" style={{ marginTop: 12 }} data-testid="scored-history">
+          What this test found: the first run scored the engine {d.history.before.correct} of {d.history.before.total} ({pct(d.history.before.accuracy)}) on the strict count. The misses were shipments {d.history.entries.map((n) => `#${n}`).join(", ")}: the engine sent any other-duty underpayment to &ldquo;{title("NET_BILL_RISK")}&rdquo;, even when the shipment still netted a refund. That rule was fixed in commit <Id>{d.history.commit}</Id>, and the engine now scores {s.correct} of {s.total} ({pct(s.accuracy)}). None of the {s.total} labels were changed to get there.
+        </p>
 
         <h3 className="r6-sub" style={{ marginTop: 16 }}>Where the engine disagrees with the labels ({s.mismatches.length})</h3>
         {s.mismatches.length === 0 ? <p className="fine">No disagreements.</p> : (

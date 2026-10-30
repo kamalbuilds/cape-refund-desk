@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseEs003 } from "../src/lib/parse";
 import { LANE_ORDER, scoreArm, type Truth } from "../src/lib/score-metrics";
-import { AI_ALONE_ARM, scoreRulesEngine } from "../src/lib/scored-test";
+import { AI_ALONE_ARM, RULE_FIX_HISTORY, scoreRulesEngine } from "../src/lib/scored-test";
 import type { Lane } from "../src/lib/types";
 
 const meta = JSON.parse(fs.readFileSync("data/sample-meta.json", "utf8"));
@@ -90,5 +90,18 @@ describe("AI-alone arm", () => {
     expect(AI_ALONE_ARM.note).toMatch(/Pending credit/);
     expect(Object.keys(AI_ALONE_ARM).sort()).toEqual(["id", "label", "note", "status"]);
     expect(JSON.stringify(AI_ALONE_ARM)).not.toMatch(/\d/);
+  });
+});
+
+describe("history of the rule fix", () => {
+  const meta = JSON.parse(fs.readFileSync("data/sample-meta.json", "utf8"));
+  const truth = JSON.parse(fs.readFileSync("data/sample-truth.json", "utf8")) as Truth;
+  const { strict, lenient } = scoreRulesEngine(fs.readFileSync("data/sample-es003.csv", "utf8"), meta, truth);
+  it("records the before score and the fix commit, and the engine now agrees with every unchanged label", () => {
+    expect(RULE_FIX_HISTORY.before).toMatchObject({ correct: 66, total: 69 });
+    expect(RULE_FIX_HISTORY.commit).toMatch(/^[0-9a-f]{7}$/);
+    expect(strict.correct).toBe(69);
+    expect(lenient.correct).toBe(69);
+    expect(truth.entries.filter((e) => (RULE_FIX_HISTORY.entries as readonly number[]).includes(e.n)).map((e) => e.lane)).toEqual(["FILE_NOW", "FILE_NOW", "FILE_NOW"]);
   });
 });

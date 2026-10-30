@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { AI_ALONE_ARM, scoreRulesEngine } from "@/lib/scored-test";
+import { AI_ALONE_ARM, RULE_FIX_HISTORY, scoreRulesEngine } from "@/lib/scored-test";
 import type { Truth } from "@/lib/score-metrics";
 export const runtime = "nodejs";
 
@@ -11,5 +11,5 @@ export async function GET() {
   const truth = JSON.parse(fs.readFileSync(path.join(dir, "sample-truth.json"), "utf8")) as Truth;
   const csv = fs.readFileSync(path.join(dir, "sample-es003.csv"), "utf8");
   const rules = scoreRulesEngine(csv, meta, truth);
-  return Response.json({ asOf: meta.asOf, method: truth.method, laneDefinitions: truth.laneDefinitions, rules, aiAlone: AI_ALONE_ARM }, { headers: { "cache-control": "public, max-age=300" } });
+  return Response.json({ asOf: meta.asOf, method: truth.method, laneDefinitions: truth.laneDefinitions, rules, aiAlone: AI_ALONE_ARM, history: RULE_FIX_HISTORY }, { headers: { "cache-control": "public, max-age=300" } });
 }
