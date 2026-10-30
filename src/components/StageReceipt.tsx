@@ -1,5 +1,6 @@
 "use client";
 import type { Explanation, PortfolioNote, Receipt } from "@/lib/pipeline";
+import { OPENROUTER_LABEL } from "@/lib/provider";
 import { stageRows, stageTotals } from "@/lib/receipt-stages";
 
 const usd = (n: number) => (n === 0 ? "$0" : n < 0.001 ? "<$0.001" : `$${n.toFixed(3)}`);
@@ -12,7 +13,8 @@ export default function StageReceipt({ receipt, explanations, portfolioNote, mod
   return (
     <section className="panel" aria-label="Run receipt by stage" data-testid="stage-receipt">
       <h2>Run receipt, stage by stage</h2>
-      <p className="fine">{replay ? "Recorded run: real logged values from the live Nebius Token Factory run, replayed here. Nothing below is estimated or typed in by hand." : "Live run: values logged from this run's own calls."} Cost is tokens times Nebius list price.</p>
+      {receipt.provider === "openrouter" && <p className="fine warn" data-testid="dev-provider-badge-stage"><b>{OPENROUTER_LABEL}.</b> provider=openrouter. Free tier, cost $0.</p>}
+      <p className="fine">{receipt.provider === "openrouter" ? "Dev run: values logged from this run's own OpenRouter calls." : replay ? "Recorded run: real logged values from the live Nebius Token Factory run, replayed here. Nothing below is estimated or typed in by hand." : "Live run: values logged from this run's own calls."} {receipt.provider === "openrouter" ? "" : "Cost is tokens times Nebius list price."}</p>
       <div style={{ overflowX: "auto" }}>
         <table className="tbl" style={{ marginTop: 10 }}>
           <thead><tr><th>Stage</th><th>Model</th><th className="num">Calls</th><th className="num">Tokens in / out</th><th className="num">Avg ms</th><th className="num">Cost</th></tr></thead>

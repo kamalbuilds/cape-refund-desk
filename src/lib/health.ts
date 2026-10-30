@@ -1,4 +1,5 @@
 import { chat, hasKey, modelErrorKind } from "./nebius";
+import { OPENROUTER_LABEL, providerName } from "./provider";
 
 export type LiveReason = "ok" | "disabled" | "credit" | "auth" | "error";
 export interface LiveHealth { live: boolean; reason: LiveReason; note: string; checkedAt: string }
@@ -23,12 +24,13 @@ const TTL_MS = 60_000;
 export async function probeLive(opts: { force?: boolean; run?: () => Promise<unknown>; keyPresent?: boolean } = {}): Promise<LiveHealth> {
   const now = Date.now();
   if (!opts.force && !opts.run && cache && now - cache.at < TTL_MS) return cache.value;
-  const mk = (reason: LiveReason): LiveHealth => ({ live: reason === "ok", reason, note: LIVE_NOTES[reason], checkedAt: new Date().toISOString() });
+  const dev = providerName() === "openrouter";
+  const mk = (reason: LiveReason): LiveHealth => ({ live: reason === "ok", reason, note: dev ? `${OPENROUTER_LABEL}. ${LIVE_NOTES[reason]}` : LIVE_NOTES[reason], checkedAt: new Date().toISOString() });
   let value: LiveHealth;
   if (!(opts.keyPresent ?? hasKey())) value = mk("disabled");
   else {
     try {
-      await (opts.run ? opts.run() : chat({ model: "lightning", user: "Reply with the single word ok.", maxTokens: 1, thinking: false, timeoutMs: 8000 }));
+      await (opts.run ? opts.run() : chat({ model: "lightning", user: "Reply with the single word ok.", maxTokens: 1, thinking: false, timeoutMs: dev ? 60000 : 8000 }));
       value = mk("ok");
     } catch (e) { value = mk(classifyProbeError(String(e instanceof Error ? e.message : e))); }
   }

@@ -2,7 +2,8 @@ import { applyCodeVeto, vetoSignals } from "./signals";
 import { MONEY_RE, figuresFor, guardCounts, guardDays, guardEntryText, portfolioDays } from "./numberguard";
 import { ERROR_DEFINITIONS, FILING_ORDER_RULES, LIMITS, SOURCES } from "./cbp-rules";
 import { fmtUsd } from "./money";
-import { ModelUnavailableError, chat, costUsd, hasKey, modelErrorKind, parseJson, type ChatResult, type ModelKey } from "./nebius";
+import { ModelUnavailableError, chat, costFor, hasKey, modelId, modelErrorKind, parseJson, type ChatResult, type ModelKey } from "./nebius";
+import { providerName, providerStamp, OPENROUTER_LABEL } from "./provider";
 import { normalizeEntryNumber, parseEs003 } from "./parse";
 import { validateEntries, type Portfolio } from "./validate";
 import type { Entry, Verdict } from "./types";
@@ -23,7 +24,9 @@ export interface Explanation {
 }
 export interface PortfolioNote { headline: string; priorities: { id: string; reason: string }[]; brokerQuestions: string[]; guardStripped: number; completionId: string }
 export interface ModelReceipt { model: string; calls: number; failed: number; promptTokens: number; completionTokens: number; reasoningTokens: number; costUsd: number; avgMs: number; ids: string[]; firstError?: string }
-export interface Receipt { lightning: ModelReceipt; ultra: ModelReceipt; /** Ultra calls that wrote the broker memo, a subset of `ultra`. Absent on runs logged before per-stage tracking. */ memo?: ModelReceipt; wallMs: number; host: string; mode: "live" | "replay"; ranAt: string }
+export interface Receipt { lightning: ModelReceipt; ultra: ModelReceipt; /** Ultra calls that wrote the broker memo, a subset of `ultra`. Absent on runs logged before per-stage tracking. */ memo?: ModelReceipt; wallMs: number; host: string; mode: "live" | "replay"; ranAt: string;
+  /** Absent on recorded Token Factory runs. "openrouter" = DEV-ONLY free-tier fallback, never a Nebius run. */
+  provider?: "tokenfactory" | "openrouter"; providerLabel?: string; devOnly?: true }
 export interface RunResult {
   asOf: string; filerCodes: string[]; label: string; parseIssues: string[];
   portfolio: Portfolio;
@@ -55,7 +58,7 @@ const errText = (e: unknown) => String(e instanceof Error ? e.message : e).slice
 const emptyReceipt = (model: string): ModelReceipt => ({ model, calls: 0, failed: 0, promptTokens: 0, completionTokens: 0, reasoningTokens: 0, costUsd: 0, avgMs: 0, ids: [] });
 function track(r: ModelReceipt, key: ModelKey, c: ChatResult) {
   r.calls++; r.promptTokens += c.promptTokens; r.completionTokens += c.completionTokens; r.reasoningTokens += c.reasoningTokens;
-  r.costUsd += costUsd(key, c.promptTokens, c.completionTokens); r.avgMs += c.ms; if (c.id) r.ids.push(c.id);
+  r.costUsd += costFor(key, c.promptTokens, c.completionTokens); r.avgMs += c.ms; if (c.id) r.ids.push(c.id);
 }
 const fin = (r: ModelReceipt) => { r.avgMs = r.calls ? Math.round(r.avgMs / r.calls) : 0; r.costUsd = Math.round(r.costUsd * 1e6) / 1e6; return r; };
 
@@ -257,9 +260,9 @@ export interface RunOptions { asOf: string; filerCodes: string[]; label?: string
 export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent) => void = () => {}): Promise<RunResult> {
   const t0 = Date.now();
   const { entries, issues } = parseEs003(csv);
-  const lr = emptyReceipt("nvidia/Nemotron-3_5-Lightning");
-  const ur = emptyReceipt("nvidia/Nemotron-3-Ultra-550b-a55b");
-  const mr = emptyReceipt("nvidia/Nemotron-3-Ultra-550b-a55b"); // broker memo only; merged into `ur` at the end
+  const lr = emptyReceipt(modelId("lightning"));
+  const ur = emptyReceipt(modelId("ultra"));
+  const mr = emptyReceipt(modelId("ultra")); // broker memo only; merged into `ur` at the end
   const live = hasKey();
   emit({ type: "start", entries: entries.length, lightningTotal: live ? entries.length : 0 });
 
@@ -305,7 +308,7 @@ export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent
     };
     entryInfo[v.id] = applyCodeVeto(entryInfo[v.id]);
   }
-  const base = { asOf: o.asOf, filerCodes: o.filerCodes, label: o.label ?? "", parseIssues: issues, portfolio, entryInfo, normalization: normal };
+  const base = { asOf: o.asOf, filerCodes: o.filerCodes, label: providerName() === "openrouter" ? `${OPENROUTER_LABEL}. ${o.label ?? ""}`.trim() : (o.label ?? ""), parseIssues: issues, portfolio, entryInfo, normalization: normal };
   emit({ type: "board", result: base });
 
   // 3. Ultra (reasoning, CBP rules in context)
@@ -329,7 +332,7 @@ export async function runPipeline(csv: string, o: RunOptions, emit: (e: RunEvent
   ur.reasoningTokens += mr.reasoningTokens; ur.costUsd += mr.costUsd; ur.avgMs += mr.avgMs; ur.ids.push(...mr.ids); ur.firstError ??= mr.firstError;
   const result: RunResult = {
     ...base, explanations, portfolioNote: pNote,
-    receipt: { lightning: fin(lr), ultra: fin(ur), memo: fin(mr), wallMs: Date.now() - t0, host: "api.tokenfactory.nebius.com", mode: "live", ranAt: new Date().toISOString() },
+    receipt: { lightning: fin(lr), ultra: fin(ur), memo: fin(mr), wallMs: Date.now() - t0, host: providerName() === "openrouter" ? "openrouter.ai" : "api.tokenfactory.nebius.com", mode: "live", ranAt: new Date().toISOString(), ...(providerName() === "openrouter" ? providerStamp() : {}) },
   };
   emit({ type: "done", result });
   return result;

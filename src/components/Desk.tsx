@@ -1,4 +1,5 @@
 "use client";
+import { OPENROUTER_LABEL } from "@/lib/provider";
 import { CoverageLine, DrawerCustoms, PhaseChip, rowCustoms } from "./CustomsPanel";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ERROR_DEFINITIONS, FILING_ORDER_RULES, SOURCES } from "@/lib/cbp-rules";
@@ -231,7 +232,7 @@ export default function Desk() {
           <h1 className="head-word">CAPE Refund Desk</h1>
           <p className="head-sub">Check your tariff refund file before you send it.</p>
         </div>
-        <p className="powered"><i className="live-dot" aria-hidden />Nemotron AI models on Nebius Token Factory</p>
+        <p className="powered"><i className="live-dot" aria-hidden />{receipt?.provider === "openrouter" ? OPENROUTER_LABEL : "Nemotron AI models on Nebius Token Factory"}</p>
       </header>
 
       <div className="r6-alert" role="alert">
@@ -759,7 +760,8 @@ function ReceiptPanel({ receipt, board, mode }: { receipt: Receipt | null; board
   const total = L.costUsd + U.costUsd;
   return (
     <section className="receipt r6-detail r6-receipt">
-      <h2 className="r6-title">What the AI did (receipt) <span className="r6-meta">· {receipt.mode === "replay" ? "recorded real run" : "live run"} · {new Date(receipt.ranAt).toLocaleString()}</span></h2>
+      {receipt.provider === "openrouter" && <p className="r6-fine warn" data-testid="dev-provider-badge" role="status"><b>{OPENROUTER_LABEL}.</b> provider=openrouter. Dev only: not for the submission or video.</p>}
+      <h2 className="r6-title">What the AI did (receipt) <span className="r6-meta">· {receipt.provider === "openrouter" ? "DEV run via OpenRouter" : receipt.mode === "replay" ? "recorded real run" : "live run"} · {new Date(receipt.ranAt).toLocaleString()}</span></h2>
       <div className="rc">
         <div>
           <h4 className="r6-sub">Fast AI: Nemotron 3.5 Lightning <small>{L.model}</small></h4>
@@ -776,10 +778,10 @@ function ReceiptPanel({ receipt, board, mode }: { receipt: Receipt | null; board
         <div>
           <h4 className="r6-sub">Total</h4>
           <p><b>~{total < 0.01 ? "<$0.01" : `$${total.toFixed(3)}`}</b> at list price · wall {(receipt.wallMs / 1000).toFixed(1)} s</p>
-          <p className="r6-fine">Estimate: tokens × Nebius list price (Ultra $1.00 in / $3.00 out, Lightning $0.06 / $0.24 per 1M). Host {receipt.host}.</p>
+          <p className="r6-fine">{receipt.provider === "openrouter" ? `Free tier, no cost estimated. Provider openrouter, host ${receipt.host}.` : `Estimate: tokens × Nebius list price (Ultra $1.00 in / $3.00 out, Lightning $0.06 / $0.24 per 1M). Host ${receipt.host}.`}</p>
         </div>
       </div>
-      <details><summary>{L.ids.length + U.ids.length} AI call ids (proof from Token Factory)</summary>
+      <details><summary>{L.ids.length + U.ids.length} AI call ids ({receipt.provider === "openrouter" ? "from OpenRouter, dev run" : "proof from Token Factory"})</summary>
         <pre className="ids">{[...L.ids.map((i) => `fast AI      ${i}`), ...U.ids.map((i) => `reasoning AI ${i}`)].join("\n")}</pre></details>
     </section>
   );

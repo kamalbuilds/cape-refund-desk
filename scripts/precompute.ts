@@ -2,6 +2,7 @@
 // (with completion ids) so the demo can replay it in seconds. Live mode stays available in the UI.
 import fs from "node:fs";
 import { runPipeline } from "../src/lib/pipeline";
+if ((process.env.NEMOTRON_PROVIDER ?? "tokenfactory").toLowerCase() !== "tokenfactory") { console.error("precompute writes the committed data/sample-run.json and must be a Token Factory run. Unset NEMOTRON_PROVIDER."); process.exit(1); }
 const meta = JSON.parse(fs.readFileSync("data/sample-meta.json", "utf8"));
 const csv = fs.readFileSync("data/sample-es003.csv", "utf8");
 async function main() {
