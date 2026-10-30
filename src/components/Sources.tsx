@@ -8,7 +8,7 @@ export default function Sources() {
       <p className="fine">Each link was opened and returned HTTP 200 on {VERIFIED_ON}. Rule-watch re-checks the CBP FAQ page for changes.</p>
       <ul className="mt-3 space-y-2">
         {SOURCE_PANEL.map((s) => (
-          <li key={s.id} className="text-sm text-zinc-600"><span className="inline-block rounded-full border border-zinc-200 px-2 text-xs mr-2">{s.kind}</span><a className="src" data-testid="source-link" href={s.url} target="_blank" rel="noreferrer">{s.label}</a>. {s.use}</li>))}
+          <li key={s.id} className="text-sm text-[var(--muted)]"><span className="inline-block rounded-full border border-[var(--border)] px-2 text-xs mr-2">{s.kind}</span><a className="src" data-testid="source-link" href={s.url} target="_blank" rel="noreferrer">{s.label}</a>. {s.use}</li>))}
       </ul>
     </section>
   );

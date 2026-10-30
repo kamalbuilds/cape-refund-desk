@@ -11,7 +11,7 @@
     font-family: var(--sans);
     text-transform: none;
     letter-spacing: 0;
-    font-weight: 500;
+    font-weight: 480;
   }
   html body .thead,
   html body .tag,
@@ -29,20 +29,20 @@
 
   html body .headline {
     font-size: 30px;
-    font-weight: 500;
+    font-weight: 480;
     line-height: 1.15;
     letter-spacing: -0.02em;
     font-family: var(--sans);
   }
   html body .display {
     font-size: 30px;
-    font-weight: 500;
+    font-weight: 480;
     line-height: 1.15;
     letter-spacing: -0.02em;
   }
   html body .twist-num b {
     font-size: 30px;
-    font-weight: 500;
+    font-weight: 480;
     line-height: 1.15;
     letter-spacing: -0.02em;
     font-family: var(--mono);
@@ -50,7 +50,7 @@
   }
   html body .story-n {
     font-size: 30px;
-    font-weight: 500;
+    font-weight: 480;
     line-height: 1.15;
     letter-spacing: -0.02em;
     font-family: var(--mono);
@@ -58,7 +58,7 @@
   }
   html body .kpi b {
     font-size: 30px;
-    font-weight: 500;
+    font-weight: 480;
     line-height: 1.15;
     letter-spacing: -0.02em;
     font-family: var(--mono);
@@ -92,7 +92,7 @@
   }
   html body .verdict {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 480;
   }
 
   html body .fine,
@@ -109,7 +109,7 @@
   }
   html body .pill {
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 480;
   }
 
   html body .panel h2:not(.headline):not(.display),
@@ -134,7 +134,7 @@
   html body .ultra h3:not(.headline):not(.display),
   html body .ultra h4:not(.headline):not(.display) {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 480;
     line-height: 20px;
     letter-spacing: 0;
   }
@@ -146,7 +146,7 @@
   html body .font-medium,
   html body b,
   html body strong {
-    font-weight: 500 !important;
+    font-weight: 480 !important;
   }
 
   /* remaining 600 weights -> 500 */
@@ -155,17 +155,17 @@
   html body .amt,
   html body .order .m,
   html body .rc h4 {
-    font-weight: 500;
+    font-weight: 480;
   }
 
   html body .neg,
   html body .wf-h b.neg,
   html body .tab-m b.neg {
-    color: #b91c1c;
+    color: var(--stop-ink);
   }
 
   /* round 1 audit: pull the last off-scale sizes onto 30 / 14 / 12 */
-  html body .brand h1 { font: 500 14px/20px var(--sans); letter-spacing: 0; }
+  html body .brand h1 { font: 480 14px/20px var(--sans); letter-spacing: 0; }
   html body .brand p,
   html body .twist-top .mono,
   html body .row2 .in,
@@ -191,10 +191,10 @@
   html body .sect td,
   html body summary,
   html body .analyst-h h2,
-  html body .analyst-h h3 { font-size: 14px !important; font-weight: 500; line-height: 20px; letter-spacing: 0; }
+  html body .analyst-h h3 { font-size: 14px !important; font-weight: 480; line-height: 20px; letter-spacing: 0; }
   html body .note-q,
   html body .q li { font-weight: 400 !important; }
-  html body .drawer .verdict { font: 500 14px/20px var(--sans); letter-spacing: 0; max-width: none; text-wrap: pretty; }
+  html body .drawer .verdict { font: 480 14px/20px var(--sans); letter-spacing: 0; max-width: none; text-wrap: pretty; }
   html body button { font-size: 14px !important; }
   html body .prio li span, html body .prio li { font-size: 14px; }
 }

@@ -19,14 +19,14 @@ export default function StageReceipt({ receipt, explanations, portfolioNote, mod
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} data-testid={`stage-row-${r.id}`}>
-                <td><b className="font-medium text-zinc-900">{r.stage}</b><br /><span className="fine">{r.note}</span></td>
+                <td><b className="font-medium text-[var(--text)]">{r.stage}</b><br /><span className="fine">{r.note}</span></td>
                 <td className="mono" style={{ fontSize: 12 }}>{r.model}</td>
                 <td className="num">{r.calls || "-"}</td>
                 <td className="num">{r.calls ? `${r.promptTokens.toLocaleString()} / ${r.completionTokens.toLocaleString()}` : "-"}</td>
                 <td className="num">{r.avgMs === null ? "-" : r.avgMs.toLocaleString()}</td>
                 <td className="num">{usd(r.costUsd)}</td>
               </tr>))}
-            <tr><td><b className="font-medium text-zinc-900">Total</b></td><td /><td className="num">{t.calls}</td><td className="num">{t.promptTokens.toLocaleString()} / {t.completionTokens.toLocaleString()}</td><td className="num">wall {(receipt.wallMs / 1000).toFixed(1)} s</td><td className="num">{usd(t.costUsd)}</td></tr>
+            <tr><td><b className="font-medium text-[var(--text)]">Total</b></td><td /><td className="num">{t.calls}</td><td className="num">{t.promptTokens.toLocaleString()} / {t.completionTokens.toLocaleString()}</td><td className="num">wall {(receipt.wallMs / 1000).toFixed(1)} s</td><td className="num">{usd(t.costUsd)}</td></tr>
           </tbody>
         </table>
       </div>

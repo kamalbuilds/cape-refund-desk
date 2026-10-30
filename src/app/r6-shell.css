@@ -3,7 +3,7 @@
 @layer components {
   /* ---------- page rhythm ---------- */
   html body {
-    background: #fafafa;
+    background: var(--ground);
   }
 
   html body .shell {
@@ -33,7 +33,7 @@
     min-height: 64px;
     margin: 0;
     padding: 0;
-    border-bottom: 1px solid #e4e4e7;
+    border-bottom: 1px solid var(--border);
     flex-wrap: nowrap;
   }
 
@@ -53,16 +53,16 @@
 
   html body .head-word {
     margin: 0;
-    font: 500 16px/24px var(--sans);
+    font: 480 16px/24px var(--sans);
     letter-spacing: -0.01em;
-    color: #18181b;
+    color: var(--text);
     white-space: nowrap;
   }
 
   html body .head-sub {
     margin: 0;
     font: 400 13px/20px var(--sans);
-    color: #71717a;
+    color: var(--faint);
     white-space: nowrap;
   }
 
@@ -73,7 +73,7 @@
     margin: 0;
     padding: 0;
     font: 400 13px/20px var(--sans);
-    color: #71717a;
+    color: var(--faint);
     text-align: right;
     white-space: nowrap;
   }
@@ -83,7 +83,7 @@
     height: 6px;
     margin: 0;
     flex: none;
-    background: #047857;
+    background: var(--go);
     animation: none;
     box-shadow: none;
   }
@@ -150,10 +150,10 @@
     gap: 12px;
     margin: 24px 0 0;
     padding: 20px;
-    background: #fffbeb;
-    border: 1px solid #fcd34d;
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-line);
     border-radius: 12px;
-    color: #451a03;
+    color: var(--warn-text);
     font: 400 16px/24px var(--sans);
   }
 
@@ -162,7 +162,7 @@
     height: 16px;
     flex: none;
     margin-top: 4px;
-    color: #b45309;
+    color: var(--hold-ink);
   }
 
   html body .r6-alert-body {
@@ -175,21 +175,21 @@
   }
 
   html body .r6-alert strong {
-    font-weight: 500;
+    font-weight: 480;
   }
 
   html body .r6-alert .r6-alert-note {
     margin-top: 4px;
     font: 400 13px/20px var(--sans);
-    color: #451a03;
+    color: var(--warn-text);
   }
 
   /* ---------- footer ---------- */
   html body .foot {
     margin-top: 80px;
     padding-top: 48px;
-    border-top: 1px solid #e4e4e7;
-    color: #71717a;
+    border-top: 1px solid var(--border);
+    color: var(--faint);
     font: 400 13px/20px var(--sans);
     overflow: visible;
   }
@@ -203,17 +203,17 @@
   html body .foot p {
     margin: 0;
     max-width: 62ch;
-    color: #71717a;
+    color: var(--faint);
     font: 400 13px/20px var(--sans);
   }
 
   html body .foot b {
-    color: #52525b;
-    font-weight: 500;
+    color: var(--muted);
+    font-weight: 480;
   }
 
   html body .foot a {
-    color: #52525b;
+    color: var(--muted);
     text-decoration: none;
   }
 

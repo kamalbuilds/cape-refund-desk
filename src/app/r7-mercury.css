@@ -1,0 +1,55 @@
+/* r7 Mercury dark theme layer. Loaded last, so it wins ties with the older layers. Tokens live in globals.css :root. Follow /DESIGN.md. */
+@layer components {
+  html { color-scheme: dark; background: var(--ground); }
+  html body { background: var(--ground); color: var(--text); }
+  html body::before { display: none; }
+
+  /* headlines: light weight, Mercury runs 480 on a lighter face; Hanken needs a touch less */
+  html body .headline, html body .hero-headline, html body .display { font-weight: 440; letter-spacing: -0.005em; }
+  html body .twist-num b, html body .story-n, html body .kpi b { font-weight: 440; }
+  html body ::placeholder { color: var(--faint); opacity: 1; }
+
+  /* form controls: tonal fill, hairline control border, indigo focus */
+  html body input:not([type="checkbox"]):not([type="file"]),
+  html body select,
+  html body textarea {
+    background: var(--raised);
+    color: var(--text);
+    border: 1px solid var(--control);
+    border-radius: 8px;
+  }
+  html body input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    flex: none;
+    margin: 0;
+    border: 1.5px solid var(--control-hi);
+    border-radius: 4px;
+    background: var(--raised);
+    display: inline-grid;
+    place-content: center;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
+  }
+  html body input[type="checkbox"]:checked {
+    background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fcfcff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E") center / 14px no-repeat;
+    border-color: var(--accent);
+  }
+  html body input:focus-visible, html body select:focus-visible, html body textarea:focus-visible,
+  html body button:focus-visible, html body a:focus-visible, html body [role="tab"]:focus-visible, html body summary:focus-visible {
+    outline: 2px solid var(--periwinkle);
+    outline-offset: 2px;
+  }
+
+  /* header and footer are always night (Mercury) */
+  html body .top { background: var(--ground); }
+  html body .head-brand .mark { border-radius: 9px; }
+
+  /* disabled primaries keep their hue, only lose weight */
+  html body .btn:disabled, html body button:disabled { opacity: .6; }
+
+  /* chrome is indigo or periwinkle; green, amber and red appear on product data only */
+  html body .fill { background: var(--primary); }
+  html body .eyebrow .dot { background: var(--periwinkle); }
+}

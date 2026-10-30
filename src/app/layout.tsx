@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Hanken_Grotesk, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./polish-lanes.css";
 import "./polish-type.css";
@@ -9,8 +9,9 @@ import "./r6-hero.css";
 import "./r6-board.css";
 import "./r6-drawer.css";
 import "./r6-details.css";
+import "./r7-mercury.css";
 
-const sans = Geist({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--f-sans", display: "swap" });
+const sans = Hanken_Grotesk({ subsets: ["latin"], variable: "--f-sans", display: "swap" });
 const mono = Geist_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--f-mono", display: "swap" });
 
 export const metadata: Metadata = {

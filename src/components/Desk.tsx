@@ -42,7 +42,7 @@ const Icon = {
 };
 function Mark() {
   return (
-    <svg className="mark" viewBox="0 0 64 64" aria-hidden><rect width="64" height="64" rx="16" fill="var(--text)" /><g fill="var(--ground)"><rect x="13" y="22" width="5" height="20" rx="1" /><rect x="22" y="14" width="5" height="36" rx="1" /><rect x="31" y="26" width="5" height="12" rx="1" /><rect x="40" y="14" width="5" height="36" rx="1" /><rect x="49" y="22" width="3" height="20" rx="1" /></g></svg>
+    <svg className="mark" viewBox="0 0 64 64" aria-hidden><rect width="64" height="64" rx="16" fill="var(--accent)" /><g fill="var(--accent-ink)"><rect x="13" y="22" width="5" height="20" rx="1" /><rect x="22" y="14" width="5" height="36" rx="1" /><rect x="31" y="26" width="5" height="12" rx="1" /><rect x="40" y="14" width="5" height="36" rx="1" /><rect x="49" y="22" width="3" height="20" rx="1" /></g></svg>
   );
 }
 
@@ -206,8 +206,8 @@ export default function Desk() {
     </div>
   ) : (
     <div className="zone-in">
-      <p className="text-sm font-medium text-zinc-900">Checking the file</p>
-      <h2 className="headline text-3xl font-semibold tracking-tight text-zinc-900">Sorting {total || 69} shipments into four groups.</h2>
+      <p className="text-sm font-medium text-[var(--text)]">Checking the file</p>
+      <h2 className="headline text-3xl font-semibold tracking-tight text-[var(--text)]">Sorting {total || 69} shipments into four groups.</h2>
       <Progress prog={prog} stage={stage} />
     </div>
   );
@@ -239,7 +239,7 @@ export default function Desk() {
                 Check the refund file<br />before you send it.
               </h2>
               <p className="hero-lead">
-                US importers are owed money back for tariffs that were struck down. To get it, they upload one file to Customs, and it can&apos;t be undone. One wrong shipment can turn a refund into a bill. <b className="font-medium text-zinc-900">This checks the file first.</b>
+                US importers are owed money back for tariffs that were struck down. To get it, they upload one file to Customs, and it can&apos;t be undone. One wrong shipment can turn a refund into a bill. <b className="font-medium text-[var(--text)]">This checks the file first.</b>
               </p>
               <div className="cta mt-6 flex flex-wrap items-center gap-3">
                 <button className="hero-btn-primary" disabled={running} onClick={replay}>{Icon.play} Run the sample</button>
@@ -300,8 +300,8 @@ export default function Desk() {
                   <h2><span className={`ldot ${laneMeta.tone}`} aria-hidden /><span>{laneMeta.title}</span> <span className="muted">{laneList.length} shipments</span></h2>
                   <p>{laneMeta.sub}</p>
                 </div>
-                {laneList.length > 1 && <label className="flex items-center gap-2 text-sm text-zinc-600">Sort by
-                  <select className="bg-white border border-zinc-300 text-zinc-900 rounded-lg px-2 py-1.5 text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as "order" | "amount" | "time")} aria-label="Sort shipments">
+                {laneList.length > 1 && <label className="flex items-center gap-2 text-sm text-[var(--muted)]">Sort by
+                  <select className="bg-[var(--raised)] border border-[var(--control)] text-[var(--text)] rounded-lg px-2 py-1.5 text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as "order" | "amount" | "time")} aria-label="Sort shipments">
                     <option value="order">Filing order</option><option value="amount">Largest amount</option><option value="time">Least time left</option>
                   </select></label>}
                 {canInclude && laneList.length > 0 && <button className={`${BTN_SECONDARY} !py-1.5 text-sm`} onClick={() => setLaneInclude(!allIn)}>{allIn ? "Take this group out of the file" : "Add this group to the file"}</button>}
@@ -472,7 +472,7 @@ function Row({ caught: board_caught, v, ex, i, animate, checked, canInclude, act
         <span className="l2">{meta.map((m, k) => <span key={k}>{k ? " · " : ""}{m}</span>)}{win !== null && <span className="m-only"> · {win}d left</span>}</span>
       </span>
       <span className={`win r ${win !== null && win <= 7 ? "hot" : ""}`}>{win !== null ? `${win} day${win === 1 ? "" : "s"} left` : "n/a"}</span>
-      <span className={`amt ${amtC < 0 ? "neg" : ""}`}><Id className={amtC < 0 ? "text-red-700!" : undefined}>{money(amtC)}</Id>{isNet && <small>{amtC < 0 ? "you owe" : "net"}</small>}</span>
+      <span className={`amt ${amtC < 0 ? "neg" : ""}`}><Id className={amtC < 0 ? "text-[var(--stop-ink)]!" : undefined}>{money(amtC)}</Id>{isNet && <small>{amtC < 0 ? "you owe" : "net"}</small>}</span>
     </li>
   );
 }

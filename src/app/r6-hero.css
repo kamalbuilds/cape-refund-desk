@@ -16,12 +16,12 @@
   html body .hero-headline {
     font-size: 32px !important;
     line-height: 36px !important;
-    font-weight: 500 !important;
+    font-weight: 480 !important;
     letter-spacing: -0.02em !important;
     font-family: var(--sans) !important;
     max-width: 560px;
     margin: 0;
-    color: #18181b;
+    color: var(--text);
   }
   @media (min-width: 640px) {
     html body .hero-headline {
@@ -34,7 +34,7 @@
     font-size: 16px !important;
     line-height: 24px !important;
     font-weight: 400 !important;
-    color: #52525b !important;
+    color: var(--muted) !important;
     max-width: 520px;
     margin-top: 16px;
   }
@@ -47,15 +47,15 @@
     height: 40px;
     padding: 0 20px;
     border-radius: 9999px;
-    background: #18181b;
-    color: #ffffff;
+    background: var(--accent);
+    color: var(--accent-ink);
     font-size: 16px !important;
-    font-weight: 500 !important;
+    font-weight: 480 !important;
     line-height: 24px !important;
     border: 0;
     cursor: pointer;
   }
-  html body .hero-btn-primary:hover:not(:disabled) { background: #27272a; }
+  html body .hero-btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
   html body .hero-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
   html body .hero-btn-secondary {
@@ -66,32 +66,32 @@
     height: 40px;
     padding: 0 20px;
     border-radius: 9999px;
-    background: #ffffff;
-    color: #18181b;
+    background: var(--surface);
+    color: var(--text);
     font-size: 16px !important;
-    font-weight: 500 !important;
+    font-weight: 480 !important;
     line-height: 24px !important;
-    border: 1px solid #d4d4d8;
+    border: 1px solid var(--control);
     cursor: pointer;
   }
-  html body .hero-btn-secondary:hover:not(:disabled) { background: #fafafa; }
+  html body .hero-btn-secondary:hover:not(:disabled) { background: var(--raised); }
 
   html body .hero-disclosure {
     font-size: 13px !important;
     line-height: 20px !important;
     font-weight: 400 !important;
-    color: #71717a !important;
+    color: var(--faint) !important;
     margin-top: 12px;
     max-width: 520px;
   }
 
   /* TwistCard restyle */
   html body .twist {
-    background: #ffffff !important;
-    border: 1px solid #e4e4e7 !important;
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 16px !important;
     padding: 32px !important;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / .04) !important;
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,.2) !important;
     min-height: auto !important;
     display: flex;
     flex-direction: column;
@@ -109,15 +109,15 @@
     font-size: 13px !important;
     line-height: 20px !important;
     font-weight: 400 !important;
-    color: #71717a !important;
+    color: var(--faint) !important;
   }
   html body .twist-id {
     font-family: var(--mono) !important;
     font-size: 13px !important;
     line-height: 20px !important;
-    font-weight: 500 !important;
-    color: #3f3f46 !important;
-    background: #f4f4f5 !important;
+    font-weight: 480 !important;
+    color: var(--soft) !important;
+    background: var(--raised2) !important;
     border-radius: 6px !important;
     padding: 2px 6px !important;
     border: 0 !important;
@@ -130,11 +130,11 @@
     font-variant-numeric: tabular-nums !important;
     font-size: 48px !important;
     line-height: 52px !important;
-    font-weight: 500 !important;
+    font-weight: 480 !important;
     letter-spacing: -0.02em !important;
-    color: #18181b;
+    color: var(--text);
   }
-  html body .twist.bill .twist-num b { color: #b91c1c !important; }
+  html body .twist.bill .twist-num b { color: var(--stop-ink) !important; }
   html body .twist-breakdown {
     display: flex;
     flex-direction: column;
@@ -145,29 +145,29 @@
     justify-content: space-between;
     gap: 12px;
     padding: 8px 0;
-    border-bottom: 1px solid #f4f4f5;
+    border-bottom: 1px solid var(--rule);
     font-size: 13px !important;
     line-height: 20px !important;
   }
   html body .twist-row span {
-    color: #52525b !important;
+    color: var(--muted) !important;
     font-size: 13px !important;
   }
   html body .twist-row b {
     font-family: var(--mono) !important;
     font-variant-numeric: tabular-nums !important;
     font-size: 13px !important;
-    font-weight: 500 !important;
-    color: #18181b !important;
+    font-weight: 480 !important;
+    color: var(--text) !important;
   }
   html body .twist-row.twist-net {
     border-bottom: 0;
-    border-top: 1px solid #e4e4e7;
+    border-top: 1px solid var(--border);
     margin-top: 4px;
     padding-top: 10px;
   }
-  html body .twist-row.twist-net span { color: #18181b !important; font-weight: 500 !important; }
-  html body .twist-row.twist-net b { color: #b91c1c !important; }
+  html body .twist-row.twist-net span { color: var(--text) !important; font-weight: 480 !important; }
+  html body .twist-row.twist-net b { color: var(--stop-ink) !important; }
   html body .twist-bar {
     position: relative;
     height: 24px;
@@ -178,8 +178,8 @@
     height: 6px;
     border-radius: 3px;
   }
-  html body .twist-bar .r { top: 0; left: 20%; width: 80%; background: #047857; transform-origin: left; }
-  html body .twist-bar .u { top: 12px; left: 0; width: 100%; background: #b91c1c; transform-origin: right; }
+  html body .twist-bar .r { top: 0; left: 20%; width: 80%; background: var(--go); transform-origin: left; }
+  html body .twist-bar .u { top: 12px; left: 0; width: 100%; background: var(--stop); transform-origin: right; }
   html body .twist-bar::before {
     content: "";
     position: absolute;
@@ -187,32 +187,32 @@
     top: -4px;
     bottom: -4px;
     width: 1px;
-    background: #d4d4d8;
+    background: var(--control-hi);
   }
   html body .twist-base {
     font-size: 13px !important;
     line-height: 20px !important;
-    color: #71717a !important;
+    color: var(--faint) !important;
     margin-top: 2px;
   }
   html body .twist-cap {
     font-size: 13px !important;
     line-height: 20px !important;
-    color: #71717a !important;
+    color: var(--faint) !important;
     margin-top: 4px;
   }
 
   /* How it works */
   html body .how-it-works {
-    border-top: 1px solid #e4e4e7;
+    border-top: 1px solid var(--border);
     padding-top: 32px;
     margin-top: 48px;
   }
   html body .how-title {
     font-size: 13px !important;
     line-height: 20px !important;
-    font-weight: 500 !important;
-    color: #18181b !important;
+    font-weight: 480 !important;
+    color: var(--text) !important;
     margin: 0 0 12px;
   }
   html body .how-rows {
@@ -221,21 +221,21 @@
   }
   html body .how-row {
     padding: 12px 0;
-    border-bottom: 1px solid #f4f4f5;
+    border-bottom: 1px solid var(--rule);
   }
   html body .how-row:last-child { border-bottom: 0; }
   html body .how-h {
     font-size: 13px !important;
     line-height: 20px !important;
-    font-weight: 500 !important;
-    color: #18181b !important;
+    font-weight: 480 !important;
+    color: var(--text) !important;
     margin: 0 0 2px;
   }
   html body .how-p {
     font-size: 13px !important;
     line-height: 20px !important;
     font-weight: 400 !important;
-    color: #52525b !important;
+    color: var(--muted) !important;
     margin: 0;
   }
 
@@ -246,17 +246,17 @@
     font-size: 13px !important;
     line-height: 20px !important;
     font-weight: 400 !important;
-    color: #71717a !important;
+    color: var(--faint) !important;
   }
   html body .run-input {
     height: 40px !important;
     border-radius: 8px !important;
-    border: 1px solid #d4d4d8 !important;
+    border: 1px solid var(--control) !important;
     padding: 0 12px !important;
     font-size: 16px !important;
     line-height: 24px !important;
-    background: #ffffff !important;
-    color: #18181b !important;
+    background: var(--surface) !important;
+    color: var(--text) !important;
   }
-  html body .run-input:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
+  html body .run-input:focus-visible { outline: 2px solid var(--warn-line); outline-offset: 2px; }
 }

@@ -14,7 +14,7 @@ html body .r6-detail{
 }
 html body .r6-detail > h2,
 html body .r6-detail > .r6-title{
-  font:500 16px/24px var(--sans)!important;
+  font:480 16px/24px var(--sans)!important;
   letter-spacing:0!important;
   color:var(--text);
   margin:0 0 8px;
@@ -43,7 +43,7 @@ html body .r6-watch .r6-badge{
 }
 html body .r6-detail .r6-sub,
 html body .r6-watch .r6-sub{
-  font-weight:500;
+  font-weight:480;
   color:var(--text);
   margin:0 0 12px;
 }
@@ -62,7 +62,7 @@ html body .r6-watch .r6-money{
   white-space:nowrap;
 }
 html body .r6-detail .r6-owe,
-html body .r6-watch .r6-owe{color:#b91c1c}
+html body .r6-watch .r6-owe{color:var(--stop-ink)}
 html body .r6-detail .r6-mono{
   font-family:var(--mono);
   font-size:13px!important;
@@ -128,12 +128,12 @@ html body .r6-two .stack{
 
 /* ---------- refund file ---------- */
 html body .r6-dock .r6-body{margin-top:16px;max-width:60ch}
-html body .r6-dock .r6-body b{color:var(--text);font-weight:500}
+html body .r6-dock .r6-body b{color:var(--text);font-weight:480}
 html body .r6-dock .error{
   margin-top:12px;
   font-size:13px;
   line-height:20px;
-  color:#b91c1c;
+  color:var(--stop-ink);
 }
 html body .r6-dock .ack{
   display:flex;
@@ -174,13 +174,13 @@ html body .r6-dock .r6-file-name{
   font-family:var(--mono);
   font-size:14px;
   line-height:20px;
-  font-weight:500;
+  font-weight:480;
 }
 html body .r6-dock .r6-file-meta{
   font-size:13px!important;
   line-height:20px;
   font-weight:400;
-  color:#a1a1aa;
+  color:var(--faint);
 }
 
 /* ---------- filing order ---------- */
@@ -233,7 +233,7 @@ html body .r6-iors .tbl{
   margin-top:16px;
 }
 html body .r6-iors .tbl th{
-  font:500 13px/20px var(--sans);
+  font:480 13px/20px var(--sans);
   color:var(--faint);
   text-align:left;
   padding:0 0 8px;
@@ -261,18 +261,18 @@ html body .r6-watch .r6-badge{
   align-items:center;
   gap:6px;
   padding:2px 10px 2px 8px;
-  border:1px solid #a7f3d0;
+  border:1px solid var(--go-line);
   border-radius:9999px;
   background:var(--surface);
   font-family:var(--mono);
-  font-weight:500;
-  color:#047857;
+  font-weight:480;
+  color:var(--go-ink);
 }
 html body .r6-watch .r6-dot{
   width:6px;
   height:6px;
   border-radius:50%;
-  background:#10b981;
+  background:var(--go);
   flex:none;
 }
 html body .r6-watch > .r6-body{color:var(--text);margin-top:8px}
@@ -290,7 +290,7 @@ html body .r6-watch .chg .tag{
   background:transparent;
   border-radius:0;
   padding:0;
-  font:500 13px/20px var(--sans);
+  font:480 13px/20px var(--sans);
   letter-spacing:0;
   text-transform:none;
   color:var(--muted);
@@ -335,7 +335,7 @@ html body .r6-watch .chg .impact.lvl0 b,
 html body .r6-watch .chg .impact.lvl1 b,
 html body .r6-watch .chg .impact.lvl3 b{color:var(--text)}
 html body .r6-watch .more summary{margin-top:8px;font-size:13px}
-html body .r6-watch .error{color:#b91c1c;font-size:13px;line-height:20px}
+html body .r6-watch .error{color:var(--stop-ink);font-size:13px;line-height:20px}
 
 /* ---------- receipt ---------- */
 html body .r6-receipt .r6-meta{
@@ -356,7 +356,7 @@ html body .r6-receipt .rc > div{
 html body .r6-receipt .rc > div + div{padding-left:32px}
 html body .r6-receipt .rc > div:last-child{border-right:0;padding-right:0}
 html body .r6-receipt .rc .r6-sub{
-  font:500 13px/20px var(--sans);
+  font:480 13px/20px var(--sans);
   color:var(--faint);
   margin:0 0 4px;
 }
@@ -364,7 +364,7 @@ html body .r6-receipt .rc .r6-sub small{
   display:block;
   margin-top:4px;
   font:400 13px/20px var(--mono);
-  color:#a1a1aa;
+  color:var(--faint);
   overflow-wrap:anywhere;
 }
 html body .r6-receipt .rc p{margin:8px 0 0}
@@ -417,7 +417,7 @@ html body .r6-receipt details summary{font-size:13px;line-height:20px;color:var(
   html body [data-testid="sources"] {
     background: transparent;
     border: 0;
-    border-top: 1px solid #e4e4e7;
+    border-top: 1px solid var(--border);
     border-radius: 0;
     box-shadow: none;
     padding: 32px 0 0;
@@ -428,16 +428,16 @@ html body .r6-receipt details summary{font-size:13px;line-height:20px;color:var(
   html body [data-testid="rescore"] h2, html body [data-testid="rescore"] h3,
   html body [data-testid="stage-receipt"] h2, html body [data-testid="stage-receipt"] h3,
   html body [data-testid="sources"] h2, html body [data-testid="sources"] h3 {
-    font: 500 16px/24px var(--sans);
-    color: #18181b;
+    font: 480 16px/24px var(--sans);
+    color: var(--text);
     margin: 0 0 8px;
   }
   html body [data-testid="audience"] p,
   html body [data-testid="why-llm"] p, html body [data-testid="why-llm"] li,
-  html body [data-testid="sources"] li { font-size: 16px; line-height: 24px; color: #52525b; }
+  html body [data-testid="sources"] li { font-size: 16px; line-height: 24px; color: var(--muted); }
   html body [data-testid="audience"] .grid > div { border-radius: 16px; padding: 16px; }
   html body [data-testid="audience"] .grid > div > div { font-size: 13px; line-height: 20px; }
-  html body [data-testid="audience"] .grid > div > div:nth-child(2) { font: 500 16px/24px var(--mono); font-variant-numeric: tabular-nums; color: #18181b; }
+  html body [data-testid="audience"] .grid > div > div:nth-child(2) { font: 480 16px/24px var(--mono); font-variant-numeric: tabular-nums; color: var(--text); }
   @media (max-width: 640px) {
     html body [data-testid="audience"], html body [data-testid="why-llm"], html body [data-testid="rescore"],
     html body [data-testid="stage-receipt"], html body [data-testid="sources"] { margin-top: 48px; }
