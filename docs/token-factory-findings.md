@@ -17,11 +17,11 @@ Probe: `scripts/smoke.mjs` (raw results in `docs/smoke-raw.json`), 14 calls per 
 - **Lightning, thinking off, JSON mode**: one call per entry to normalize messy columns (entry number, dates, amounts, IOR, HTS, flags) and broker notes. Its output is cross-checked field by field against the deterministic parser; disagreements are shown in the receipt and the deterministic value wins.
 - **Ultra, thinking on**: explains and ranks the entries that need judgment and writes the portfolio note. A number guard replaces or strips any dollar figure, day count or portfolio count that does not match the engine. Ultra never decides eligibility and never produces a number.
 
-## Recorded real run (data/sample-run.json, 69 synthetic entries, as-of 2026-10-29, host api.tokenfactory.nebius.com)
+## Recorded real run (data/sample-run.json, recorded 2026-10-30, 69 synthetic entries, as-of 2026-10-29, host api.tokenfactory.nebius.com)
 
 | | Calls | Failed | Prompt tok | Completion tok | Est. cost | Avg latency |
 |---|---|---|---|---|---|---|
-| Lightning | 69 | 1 | 26,813 | 7,996 | $0.0035 | 3,672 ms |
-| Ultra | 23 (22 entries + 1 portfolio note) | 0 | 42,017 | 17,613 (15,139 reasoning) | $0.0949 | 5,534 ms |
+| Lightning | 69 | 0 | 44,737 | 8,096 | $0.0046 | 2,293 ms avg (median 2,060, p95 3,533) |
+| Ultra | 23 (22 entries + 1 portfolio note) | 0 | 45,866 | 23,174 (20,124 reasoning) | $0.1154 | 4,297 ms avg (median 4,307, p95 6,245) |
 
-Wall clock for the whole run: 157 s. Normalization agreement: 609 of 612 fields (the 3 disagreements are shown in the receipt and the deterministic value won each time). Estimated cost uses list prices above.
+Wall clock for the whole run: 29.5 s (2026-10-30, 08:13 UTC; model ids returned by the API match the ones requested). Full receipt with every call id: `docs/receipts/tokenfactory-full.json`. Normalization agreement: 618 of 621 fields (the 3 disagreements are shown in the receipt and the deterministic value won each time). Estimated cost uses list prices above.

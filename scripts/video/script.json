@@ -91,8 +91,8 @@
    "title": "Number guard",
    "sentences": [
     {
-     "say": "Models slip. In our recording, Ultra wrote that seven entries expire today.",
-     "cap": "Models slip. In our recording, Ultra wrote that 7 entries expire today."
+     "say": "Models slip. In an earlier recording, Ultra wrote that seven entries expire today.",
+     "cap": "Models slip. In an earlier recording, Ultra wrote that 7 entries expire today."
     },
     {
      "say": "The engine counted one. A number guard corrected it before Maya saw it.",
@@ -137,8 +137,8 @@
      "cap": "Each run leaves a Token Factory receipt."
     },
     {
-     "say": "Lightning did all sixty-nine entries for a third of a cent. Ultra's reasoning cost under ten cents.",
-     "cap": "Lightning did all 69 entries for a third of a cent. Ultra's reasoning cost under ten cents."
+     "say": "Lightning did all sixty-nine entries for about half a cent. Ultra's reasoning cost about eleven cents.",
+     "cap": "Lightning did all 69 entries for about half a cent. Ultra's reasoning cost about 11 cents."
     }
    ]
   },

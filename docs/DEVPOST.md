@@ -59,7 +59,7 @@ A rule-watch panel reads Customs' live refunds page, compares it with a copy fro
 
 **The engine is code.** A deterministic TypeScript rules engine checks each entry against CBP's published rules and error table, orders the filing steps by CBP's sequencing rules, and computes every amount in integer cents. The models never decide eligibility and never produce a dollar figure.
 
-**Nemotron Lightning (`nvidia/Nemotron-3_5-Lightning`) normalizes.** One call per entry, thinking off (`chat_template_kwargs: {"enable_thinking": false}`), JSON mode. It turns messy columns and free-text broker notes into fields: entry number, dates, amounts, IOR, HTS, flags. Its output is compared field by field to the deterministic parser, and the parser wins any disagreement. In the recorded run that is 609 of 612 fields in agreement, and the 3 disagreements (two entry numbers missing their last digit, one drawback flag) are listed in the receipt.
+**Nemotron Lightning (`nvidia/Nemotron-3_5-Lightning`) normalizes.** One call per entry, thinking off (`chat_template_kwargs: {"enable_thinking": false}`), JSON mode. It turns messy columns and free-text broker notes into fields: entry number, dates, amounts, IOR, HTS, flags. Its output is compared field by field to the deterministic parser, and the parser wins any disagreement. In the recorded run that is 618 of 621 fields in agreement, and the 3 disagreements (all entry numbers with a digit added or dropped) are listed in the receipt.
 
 **Nemotron Ultra (`nvidia/Nemotron-3-Ultra-550b-a55b`) reasons.** Thinking on. It receives the engine's verdict packet for the entries that need judgment (broker-decision, hold and a few blocked) and writes a short explanation, a broker next step and a "why this order", with citations restricted to valid ids. It also writes the portfolio note: the priorities and the questions to ask the importer before upload. The reasoning trace comes back in `reasoning_content` and the drawer shows it.
 
@@ -79,24 +79,24 @@ The primary job of the screen is "which entries do I hold before I press upload"
 
 ### Challenges we ran into
 
-**The model's headline was wrong and a check had to catch it.** In our own recorded run, Ultra's portfolio headline says "File 7 entries expiring today". The engine says 1. The dollar guard could not see it because there is no dollar sign in that sentence. We added a count check that rewrites "N entries expiring today" to the engine's number, and a test that pins this exact recorded sentence. The raw recording is kept as it came back.
+**The model's headline was wrong and a check had to catch it.** In our first recorded run (an earlier Token Factory recording, kept at `tests/fixtures/sample-run.2026-10-29.json`), Ultra's portfolio headline said "File 7 entries expiring today". The engine says 1. The dollar guard could not see it because there is no dollar sign in that sentence. We added a count check that rewrites "N entries expiring today" to the engine's number, and a test that pins that sentence. The current recording (2026-10-30) did not repeat that sentence, so the count guard changed nothing in it. It has a softer fault the guard does not catch: its headline says "File 7 shipments now", which counts the top candidates Ultra was shown, not the 39 shipments in the file-now group. We left the raw model output as it came back and say so here.
 
-**A guard that flags the right things.** Our first dollar regex swallowed the trailing comma in "$2,400," and failed to match the engine's figure. Our first label check treated the bare word "refund" as a label and flagged "netting $6,080 refund" as a mislabel. We removed bare "refund" from the labels, counted "netting" and "netted" as net, and made "refundable $X" on a framework-group entry fail when $X is the gross. Tests run all 22 recorded Ultra explanations through the guard unchanged, then run tampered copies of them and require a flag.
+**A guard that flags the right things.** Our first dollar regex swallowed the trailing comma in "$2,400," and failed to match the engine's figure. Our first label check treated the bare word "refund" as a label and flagged "netting $6,080 refund" as a mislabel. We removed bare "refund" from the labels, counted "netting" and "netted" as net, and made "refundable $X" on a framework-group entry fail when $X is the gross. Tests run all 22 recorded Ultra explanations through the guard unchanged (the number guard stripped nothing from this recording), then run tampered copies of them and require a flag.
 
-**A seeded trap the model never saw.** The 81-day entry and the Framework EU entry have no Ultra explanation in the recording, because Ultra only explains the entries that need judgment. Rather than claim the guard was tested on them, the tests assert the engine's facts for those entries and feed fabricated model text against them. The underpaid-301 entry has real recorded Ultra text, and that one passes as recorded.
+**A seeded trap the model never saw.** The 81-day entry, the Framework EU entry and the underpaid-301 entry have no Ultra explanation in the 2026-10-30 recording, because Ultra only explains the entries that need judgment (and caps the file-now group). Rather than claim the guard was tested on them, the tests assert the engine's facts for those entries and feed fabricated model text against them. The net-bill entry has real recorded Ultra text, and that one passes as recorded.
 
 **Credit ran out mid-hackathon.** Token Factory started answering HTTP 402 `credit_balance_exhausted`. The first version of the app showed an empty board. Now a 402, 401 or 403 stops the run after the first wave of calls (a test caps it at 12 API calls), shows what happened in plain words, and offers the recorded real run with its completion ids. We checked it in a browser against a local server that returns 402, and again on the hosted URL.
 
 **cbp.gov is not reachable from everywhere.** The rule-watch needed a second path (Tavily Extract) for hosts that cbp.gov blocks, and the diff had to run the same HTML-to-text path on both sides or every line differs. The July capture comes from the Wayback Machine, and the cross-check script builds that URL from the capture's own timestamp.
 
-**Reasoning tokens are billed.** Thinking is on by default and the trace counts as completion tokens. We turned it off for Lightning and kept it on for Ultra. In the recorded run, 15,139 of Ultra's 17,613 completion tokens are reasoning.
+**Reasoning tokens are billed.** Thinking is on by default and the trace counts as completion tokens. We turned it off for Lightning and kept it on for Ultra. In the recorded run, 20,124 of Ultra's 23,174 completion tokens are reasoning.
 
 ### Accomplishments that we're proud of
 
 - The product never lets a model's number reach the screen unchecked, and there is a test that proves it on real recorded output, including a case where the model was wrong.
 - Rule-watch is real: the live page is fetched on the hosted site, diffed against a dated capture, and each change is quoted with an independent extractor agreeing. It is not a mock-up.
 - The CAPE CSV is validated against CBP's published file format in code and in a browser test, and cited in the README.
-- A run costs about ten cents. The recorded run was $0.0035 for Lightning and $0.0949 for Ultra at list prices.
+- A run costs about ten cents. The recorded run (2026-10-30) was $0.0046 for Lightning and $0.1154 for Ultra at list prices, 92 calls in 29.5 seconds, none failed.
 
 ### Other tools
 
@@ -113,7 +113,7 @@ We are not the only pre-flight. Saxum Systems sells a manual "CAPE Refund Prefli
 - Put a broker in front of it. Nobody outside the team has used it yet, and the rules engine needs a licensed broker's review before it is anything more than a pre-flight check.
 - Read ACE's own ES-003 export from a report scheduler instead of an upload.
 - Deploy the container to Nebius Serverless AI, next to Token Factory.
-- Re-record the sample run after the account has credit again.
+- Run the AI-alone arm of the scored test now that the account has credit (it is still marked pending).
 
 ### Built with
 
@@ -130,15 +130,15 @@ Voiceover is first person plural, plain, no hype. Times are cumulative.
 |---|---|---|---|---|
 | 1 | 0:00 to 0:15 | Landing, top of page | Header, the red "Irreversible." banner, the broker-review line | "CBP's CAPE portal refunds IEEPA tariffs from a CSV. Once the declaration is accepted you cannot amend it or remove an entry. Small importers get one attempt. This is the check that runs before they press upload." |
 | 2 | 0:15 to 0:30 | Pan to the intro panel | "The models never decide eligibility or touch a dollar figure." and the "synthetic sample" line | "Deterministic code checks each entry against CBP's published rules and computes the money in cents. Nemotron Lightning normalizes the messy columns. Nemotron Ultra explains and ranks. The sample is synthetic. We never ask for ACE credentials or bank details." |
-| 3 | 0:30 to 0:45 | Click "Run the sample (recorded real run)" | Progress counter, then the four lane totals | "This replays a real run we recorded on Nebius Token Factory: 69 entries, 69 Lightning calls and 23 Ultra calls. The receipt at the bottom has the completion ids." |
+| 3 | 0:30 to 0:45 | Click "Run the sample (recorded real run)" | Progress counter, then the four lane totals | "This replays a real run we recorded on Nebius Token Factory on October 30: 69 entries, 69 Lightning calls and 23 Ultra calls, none failed, 29 seconds end to end. The receipt at the bottom has the completion ids." |
 | 4 | 0:45 to 1:15 | Hold on the four lane totals, scroll the board slowly | Lane counts (39 / 13 / 2 / 15) and dollars per lane | "Thirty-nine cleared to file, thirteen to hold, two that need a broker decision, fifteen that ACE would reject. Each card shows the exact CBP error string, days left in the window and the filing step. The urgent one is at the top: zero days left." |
 | 5 | 1:15 to 1:55 | Click the broker-decision card A7K-7344990-0 | Drawer: Ultra explanation, then the money table ($10,500 refundable, $13,125 underpaid, -$2,625 net), then the lines and the broker note | "This is the trap. The line shows ten and a half thousand dollars of refundable IEEPA duty, but thirteen thousand of other duties that Customs may bill back wipe it out, so the real net is a $2,625 bill, and the importer has open debt CBP may offset. Ultra explains why this one needs a broker before it goes in. Notice what Ultra did not write: every dollar figure here comes from the engine." |
-| 6 | 1:55 to 2:15 | Expand "Ultra's reasoning trace", then close the drawer | The reasoning trace, the guard note under the explanation | "The reasoning trace is the real one. A guard checks every figure and day count in the model's text against the engine. In our own recording Ultra wrote 'file 7 entries expiring today'. The engine says one. The guard corrects it, and there is a test for that sentence." |
+| 6 | 1:55 to 2:15 | Expand "Ultra's reasoning trace", then close the drawer | The reasoning trace, the guard line under the explanation | "The reasoning trace is the real one. A guard checks every figure and day count in the model's text against the engine. In this recording it found nothing to strip. In an earlier recording Ultra wrote 'file 7 entries expiring today'. The engine says one. The guard corrects it, and there is a test for that sentence." |
 | 7 | 2:15 to 2:30 | Scroll to the Export panel, tick the acknowledgement, click the CAPE CSV download | The acknowledgement text, the downloaded filename, the CSV in the OS preview (one `Entry Number` column, apostrophes on leading zeros) | "Export sits behind an acknowledgement that the declaration is irreversible. The CSV follows CBP's published format. Your broker uploads it. We do not." |
 | 8 | 2:30 to 2:42 | Scroll to Rule-watch, click "Check CBP now" | "4 changes touch checks this tool runs; 7 more are informational", the warehouse 21/22 change with July and October quotes, the "Tavily agrees" badge | "Rule-watch reads CBP's live page, compares it to a July capture and quotes four changes that touch our checks, such as warehouse entries now being rejected. Tavily Extract reads the page independently and agrees." |
 | 9 | 2:42 to 2:45 | Back to the top | Title and URL | "CAPE Refund Desk. A free pre-flight check before an irreversible upload." |
 
-Optional shot, only if the account has credit again, replace the second half of shot 3: click "Run live on Token Factory" and let the Lightning and Ultra progress run for about 15 seconds, then cut to the board. The last full live run took 157 seconds, so do not wait through it on camera.
+Optional shot (the account has credit again as of 2026-10-30), replace the second half of shot 3: click "Run live on Token Factory" and let the Lightning and Ultra progress run for about 15 seconds, then cut to the board. The last full live run (2026-10-30) took 29.5 seconds end to end, so it fits on camera.
 
 Recording checklist:
 
@@ -155,14 +155,15 @@ Recording checklist:
 | Claim | Where |
 |---|---|
 | 69 entries; lanes 39 / 13 / 2 / 15 | `data/sample-run.json` (`portfolio.lanes`) re-derived by the engine at serve time (`src/lib/sample-relane.ts`); visible on the board; pinned in `tests/numbers-audit.test.ts` |
-| 69 Lightning calls, 1 failed; 23 Ultra calls | `data/sample-run.json` `receipt`, shown in the receipt panel |
-| Cost $0.0035 Lightning, $0.0949 Ultra | same, list prices in `docs/token-factory-findings.md` |
-| 609 of 612 fields agree; 3 disagreements | `data/sample-run.json` `normalization` |
-| 15,139 reasoning tokens of 17,613 | `receipt.ultra` |
-| Full recorded run took 157 s | `receipt.wallMs` |
+| 69 Lightning calls, 0 failed; 23 Ultra calls, 0 failed; 92 calls, median 2.2 s, p95 5.3 s | `data/sample-run.json` `receipt`, shown in the receipt panel; per-call latency in `docs/receipts/tokenfactory-full.json` |
+| Cost $0.0046 Lightning, $0.1154 Ultra (about $0.12 per run) | same, list prices in `docs/token-factory-findings.md` |
+| 618 of 621 fields agree; 3 disagreements | `data/sample-run.json` `normalization` |
+| 20,124 reasoning tokens of 23,174 | `receipt.ultra` |
+| Full recorded run took 29.5 s (wall clock) | `receipt.wallMs`, `docs/receipts/tokenfactory-full.json` |
+| Seeded-conflict check on `data/sample-mini.csv` (3 planted note conflicts): 3 of 3 caught, 4 fabricated tags removed, 17.6 s, 0 failed calls | `docs/receipts/tokenfactory-mini.json` (`auditor.seededConflicts`). The first attempt, `tokenfactory-mini-run1-memo-cut-off.json`, lost the portfolio memo when Ultra's reasoning used the whole token budget; Ultra calls now retry once at double the budget, and the receipt of that failed attempt is kept |
 | Net-bill entry: $10,500 refundable, $13,125 underpaid, -$2,625 net | drawer for A7K-7344990-0 and the hero card; `tests/numbers-audit.test.ts` |
 | Underpaid-301 entry: $8,000, $5,600, $2,400 (still nets a refund, so Safe to claim with a note) | drawer for A7K-5130944-4; `tests/numberguard.test.ts` |
-| "7 entries expiring today" vs 1 | `portfolioNote.headline` in the recording; pinned in `tests/numberguard.test.ts` |
+| "7 entries expiring today" vs 1 | the earlier recording, `tests/fixtures/sample-run.2026-10-29.json`; pinned in `tests/numberguard.test.ts`. Not repeated in the current recording |
 | 4 key changes, 7 informational, 11 of 11 confirmed | `GET /api/rulewatch` on the hosted URL; `data/rulewatch-recorded.json`; `node scripts/treg-crosscheck.mjs` |
 | 402 notice | click "Run live on Token Factory" on the hosted URL while the account has no credit; `tests/credit.test.ts` |
 | CSV format | `src/lib/export.ts` and `src/lib/validate.ts` cite CBP's QRG; `scripts/e2e.mjs` validates the download |
