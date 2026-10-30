@@ -1,1 +1,262 @@
 /* r6 hero lane: overrides, loaded last. Follow /DESIGN.md. */
+@layer components {
+  html body .hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 48px;
+    align-items: start;
+    padding: 48px 0 64px;
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+  @media (min-width: 1024px) {
+    html body .hero { grid-template-columns: 1fr 1fr; gap: 48px; }
+  }
+
+  html body .hero-headline {
+    font-size: 32px !important;
+    line-height: 36px !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.02em !important;
+    font-family: var(--sans) !important;
+    max-width: 560px;
+    margin: 0;
+    color: #18181b;
+  }
+  @media (min-width: 640px) {
+    html body .hero-headline {
+      font-size: 48px !important;
+      line-height: 52px !important;
+    }
+  }
+
+  html body .hero-lead {
+    font-size: 16px !important;
+    line-height: 24px !important;
+    font-weight: 400 !important;
+    color: #52525b !important;
+    max-width: 520px;
+    margin-top: 16px;
+  }
+
+  html body .hero-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 9999px;
+    background: #18181b;
+    color: #ffffff;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    line-height: 24px !important;
+    border: 0;
+    cursor: pointer;
+  }
+  html body .hero-btn-primary:hover:not(:disabled) { background: #27272a; }
+  html body .hero-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  html body .hero-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 9999px;
+    background: #ffffff;
+    color: #18181b;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    line-height: 24px !important;
+    border: 1px solid #d4d4d8;
+    cursor: pointer;
+  }
+  html body .hero-btn-secondary:hover:not(:disabled) { background: #fafafa; }
+
+  html body .hero-disclosure {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 400 !important;
+    color: #71717a !important;
+    margin-top: 12px;
+    max-width: 520px;
+  }
+
+  /* TwistCard restyle */
+  html body .twist {
+    background: #ffffff !important;
+    border: 1px solid #e4e4e7 !important;
+    border-radius: 16px !important;
+    padding: 32px !important;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / .04) !important;
+    min-height: auto !important;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  html body .twist::before,
+  html body .twist::after { display: none !important; }
+  html body .twist-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  html body .twist-lbl {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 400 !important;
+    color: #71717a !important;
+  }
+  html body .twist-id {
+    font-family: var(--mono) !important;
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 500 !important;
+    color: #3f3f46 !important;
+    background: #f4f4f5 !important;
+    border-radius: 6px !important;
+    padding: 2px 6px !important;
+    border: 0 !important;
+  }
+  html body .twist-num {
+    margin: 0 !important;
+  }
+  html body .twist-num b {
+    font-family: var(--mono) !important;
+    font-variant-numeric: tabular-nums !important;
+    font-size: 48px !important;
+    line-height: 52px !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.02em !important;
+    color: #18181b;
+  }
+  html body .twist.bill .twist-num b { color: #b91c1c !important; }
+  html body .twist-breakdown {
+    display: flex;
+    flex-direction: column;
+  }
+  html body .twist-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f4f4f5;
+    font-size: 13px !important;
+    line-height: 20px !important;
+  }
+  html body .twist-row span {
+    color: #52525b !important;
+    font-size: 13px !important;
+  }
+  html body .twist-row b {
+    font-family: var(--mono) !important;
+    font-variant-numeric: tabular-nums !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #18181b !important;
+  }
+  html body .twist-row.twist-net {
+    border-bottom: 0;
+    border-top: 1px solid #e4e4e7;
+    margin-top: 4px;
+    padding-top: 10px;
+  }
+  html body .twist-row.twist-net span { color: #18181b !important; font-weight: 500 !important; }
+  html body .twist-row.twist-net b { color: #b91c1c !important; }
+  html body .twist-bar {
+    position: relative;
+    height: 24px;
+    margin: 4px 0;
+  }
+  html body .twist-bar i {
+    position: absolute;
+    height: 6px;
+    border-radius: 3px;
+  }
+  html body .twist-bar .r { top: 0; left: 20%; width: 80%; background: #047857; transform-origin: left; }
+  html body .twist-bar .u { top: 12px; left: 0; width: 100%; background: #b91c1c; transform-origin: right; }
+  html body .twist-bar::before {
+    content: "";
+    position: absolute;
+    left: 20%;
+    top: -4px;
+    bottom: -4px;
+    width: 1px;
+    background: #d4d4d8;
+  }
+  html body .twist-base {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    color: #71717a !important;
+    margin-top: 2px;
+  }
+  html body .twist-cap {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    color: #71717a !important;
+    margin-top: 4px;
+  }
+
+  /* How it works */
+  html body .how-it-works {
+    border-top: 1px solid #e4e4e7;
+    padding-top: 32px;
+    margin-top: 48px;
+  }
+  html body .how-title {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 500 !important;
+    color: #18181b !important;
+    margin: 0 0 12px;
+  }
+  html body .how-rows {
+    display: flex;
+    flex-direction: column;
+  }
+  html body .how-row {
+    padding: 12px 0;
+    border-bottom: 1px solid #f4f4f5;
+  }
+  html body .how-row:last-child { border-bottom: 0; }
+  html body .how-h {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 500 !important;
+    color: #18181b !important;
+    margin: 0 0 2px;
+  }
+  html body .how-p {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 400 !important;
+    color: #52525b !important;
+    margin: 0;
+  }
+
+  /* RunControls */
+  html body .run-file { display: block; }
+  html body .run-field { display: flex; flex-direction: column; gap: 4px; }
+  html body .run-label {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 400 !important;
+    color: #71717a !important;
+  }
+  html body .run-input {
+    height: 40px !important;
+    border-radius: 8px !important;
+    border: 1px solid #d4d4d8 !important;
+    padding: 0 12px !important;
+    font-size: 16px !important;
+    line-height: 24px !important;
+    background: #ffffff !important;
+    color: #18181b !important;
+  }
+  html body .run-input:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
+}
