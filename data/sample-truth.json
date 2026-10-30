@@ -1,0 +1,432 @@
+{
+ "asOf": "2026-10-29",
+ "method": "Hand-labelled from CBP's published CAPE rules (IEEPA Duty Refunds page FAQ and error tables, ACE QRG Pub. 5552-0526, CSMS 69127837) by reading each entry's raw ES-003 row in data/sample-es003.csv, plus date arithmetic and refund netting done on the raw columns. The labelling did not call, read or copy src/lib/validate.ts or its output. Each label has a one-line reason. 'alsoDefensible' marks entries where CBP's text permits a second lane; strict scoring ignores it, lenient scoring accepts it.",
+ "laneDefinitions": {
+  "FILE_NOW": "CBP's checks would pass and the entry nets to a refund",
+  "WAIT": "a CBP error or sequencing step must be cleared first (PSC, protest, status), after which the entry can go",
+  "BLOCKED": "CBP rejects the entry and no fix makes it eligible this phase",
+  "NET_BILL_RISK": "the entry nets to a bill (other duties owed exceed the IEEPA refund), so a broker decides"
+ },
+ "entries": [
+  {
+   "n": 1,
+   "entryNumber": "A7K50232977",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 2,
+   "entryNumber": "A7K23931066",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 3,
+   "entryNumber": "A7K38430633",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 4,
+   "entryNumber": "A7K53232500",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 5,
+   "entryNumber": "A7K96289466",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 6,
+   "entryNumber": "A7K68080633",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 7,
+   "entryNumber": "A7K28964777",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 8,
+   "entryNumber": "A7K32905622",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 9,
+   "entryNumber": "A7K53653799",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 10,
+   "entryNumber": "A7K91442644",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 11,
+   "entryNumber": "A7K57459799",
+   "lane": "FILE_NOW",
+   "reason": "Liquidated 12 days before 2026-10-29, inside CBP's 80-day Phase 1 window (FAQ: liquidated within the preceding 80 days); nothing else blocks it."
+  },
+  {
+   "n": 12,
+   "entryNumber": "A7K76870099",
+   "lane": "FILE_NOW",
+   "reason": "Liquidated 25 days before 2026-10-29, inside CBP's 80-day Phase 1 window (FAQ: liquidated within the preceding 80 days); nothing else blocks it."
+  },
+  {
+   "n": 13,
+   "entryNumber": "A7K78529799",
+   "lane": "FILE_NOW",
+   "reason": "Liquidated 40 days before 2026-10-29, inside CBP's 80-day Phase 1 window (FAQ: liquidated within the preceding 80 days); nothing else blocks it."
+  },
+  {
+   "n": 14,
+   "entryNumber": "A7K51577533",
+   "lane": "FILE_NOW",
+   "reason": "Liquidated 55 days before 2026-10-29, inside CBP's 80-day Phase 1 window (FAQ: liquidated within the preceding 80 days); nothing else blocks it."
+  },
+  {
+   "n": 15,
+   "entryNumber": "A7K21174011",
+   "lane": "FILE_NOW",
+   "reason": "Liquidated 70 days before 2026-10-29, inside CBP's 80-day Phase 1 window (FAQ: liquidated within the preceding 80 days); nothing else blocks it."
+  },
+  {
+   "n": 16,
+   "entryNumber": "A7K90384188",
+   "lane": "FILE_NOW",
+   "reason": "Liquidated 78 days before 2026-10-29, inside CBP's 80-day Phase 1 window (FAQ: liquidated within the preceding 80 days); nothing else blocks it."
+  },
+  {
+   "n": 17,
+   "entryNumber": "A7K63252888",
+   "lane": "FILE_NOW",
+   "reason": "Liquidated exactly 80 days before 2026-10-29. CBP's error is 'liquidated/reliquidated more than 80 days ago', and 80 is not more than 80, so the last eligible day."
+  },
+  {
+   "n": 18,
+   "entryNumber": "A7K21937388",
+   "lane": "BLOCKED",
+   "reason": "Liquidated 81 days before 2026-10-29: more than 80 days, so CBP rejects it as 'Entry Summary is in Final Liquidation Status'."
+  },
+  {
+   "n": 19,
+   "entryNumber": "A7K19919100",
+   "lane": "BLOCKED",
+   "reason": "Liquidated 95 days ago: past the 80-day window ('Final Liquidation Status')."
+  },
+  {
+   "n": 20,
+   "entryNumber": "A7K50476422",
+   "lane": "BLOCKED",
+   "reason": "Liquidated 130 days ago: past the 80-day window ('Final Liquidation Status')."
+  },
+  {
+   "n": 21,
+   "entryNumber": "A7K59416755",
+   "lane": "FILE_NOW",
+   "reason": "Liquidation status Extended, no suspension record: CBP's suspension error needs a Pending/Not Liquidated status plus a Suspension record, so nothing blocks it."
+  },
+  {
+   "n": 22,
+   "entryNumber": "A7K97171744",
+   "lane": "FILE_NOW",
+   "reason": "Status Suspended with a Suspension record. CBP's FAQ accepts suspended/extended status; the rejection requires Pending or Not Liquidated status. CBP's FAQ and error table read differently here.",
+   "alsoDefensible": "WAIT"
+  },
+  {
+   "n": 23,
+   "entryNumber": "A7K54114933",
+   "lane": "WAIT",
+   "reason": "Unliquidated with a Suspension record: matches CBP's 'Pending Liquidation or Not Liquidated and Has Suspension Record' error. Resolve the suspension, then file."
+  },
+  {
+   "n": 24,
+   "entryNumber": "A7K49021866",
+   "lane": "WAIT",
+   "reason": "Protest is Open: CBP rejects entries on an Open protest ('Protest on Entry')."
+  },
+  {
+   "n": 25,
+   "entryNumber": "A7K71250833",
+   "lane": "WAIT",
+   "reason": "Protest is Suspended: CBP rejects entries on a Suspended protest ('Protest on Entry')."
+  },
+  {
+   "n": 26,
+   "entryNumber": "A7K19925655",
+   "lane": "WAIT",
+   "reason": "Protest Denied with the AFR box checked: CBP rejects it ('Protest on Entry')."
+  },
+  {
+   "n": 27,
+   "entryNumber": "A7K45901599",
+   "lane": "FILE_NOW",
+   "reason": "Protest Denied but the AFR box is not checked: CBP only rejects Denied protests with AFR checked."
+  },
+  {
+   "n": 28,
+   "entryNumber": "A7K44795766",
+   "lane": "FILE_NOW",
+   "reason": "Protest Granted: not Open, Suspended or Denied+AFR, so no protest error."
+  },
+  {
+   "n": 29,
+   "entryNumber": "A7K51863244",
+   "lane": "FILE_NOW",
+   "reason": "Recon-flagged, Type 09 not filed, recon deadline 120 days away (CBP's priority rule is under 30 days). CBP accepts Recon-flagged entries before the 09 is filed."
+  },
+  {
+   "n": 30,
+   "entryNumber": "A7K72000077",
+   "lane": "FILE_NOW",
+   "reason": "Recon-flagged, Type 09 not filed, recon deadline 95 days away (over the 30-day priority threshold)."
+  },
+  {
+   "n": 31,
+   "entryNumber": "A7K15986055",
+   "lane": "WAIT",
+   "reason": "Recon-flagged, Type 09 not filed, deadline 21 days away (under 30): CBP says to prioritise the reconciliation filing first. A broker could instead claim now, so the call is the broker's.",
+   "alsoDefensible": "NET_BILL_RISK"
+  },
+  {
+   "n": 32,
+   "entryNumber": "A7K57641988",
+   "lane": "BLOCKED",
+   "reason": "Recon already filed (Type 09 on file): CBP error 'Recon Already Filed for Entry Summary', not allowed this phase."
+  },
+  {
+   "n": 33,
+   "entryNumber": "A7K45051022",
+   "lane": "BLOCKED",
+   "reason": "Entry type 09 (Reconciliation) is excluded: 'Entry Type Not Allowed'."
+  },
+  {
+   "n": 34,
+   "entryNumber": "A7K59572888",
+   "lane": "BLOCKED",
+   "reason": "Entry type 23 (TIB) is excluded: 'Entry Type Not Allowed'."
+  },
+  {
+   "n": 35,
+   "entryNumber": "A7K59074411",
+   "lane": "BLOCKED",
+   "reason": "Entry type 08 (Duty Deferral) is excluded: 'Entry Type Not Allowed'."
+  },
+  {
+   "n": 36,
+   "entryNumber": "A7K24207088",
+   "lane": "BLOCKED",
+   "reason": "Entry type 47 (Drawback) is excluded: 'Entry Type Not Allowed'."
+  },
+  {
+   "n": 37,
+   "entryNumber": "A7K22858255",
+   "lane": "BLOCKED",
+   "reason": "Entry is already designated on a drawback claim: CBP error 'Entry on Drawback'."
+  },
+  {
+   "n": 38,
+   "entryNumber": "A7K87307599",
+   "lane": "FILE_NOW",
+   "reason": "A drawback claim is only planned, not filed. CBP guidance: file CAPE before the drawback claim; no error today."
+  },
+  {
+   "n": 39,
+   "entryNumber": "A7K91119744",
+   "lane": "FILE_NOW",
+   "reason": "A drawback claim is only planned, not filed (two lines). No CBP error today."
+  },
+  {
+   "n": 40,
+   "entryNumber": "0P221551466",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 41,
+   "entryNumber": "0P297183888",
+   "lane": "FILE_NOW",
+   "reason": "Accepted, with CBP, unliquidated, type 01, valid IEEPA line, no CBP error condition: nothing blocks a CAPE declaration."
+  },
+  {
+   "n": 42,
+   "entryNumber": "0P253683599",
+   "lane": "FILE_NOW",
+   "reason": "Liquidated 33 days before 2026-10-29, inside CBP's 80-day Phase 1 window (FAQ: liquidated within the preceding 80 days); nothing else blocks it."
+  },
+  {
+   "n": 43,
+   "entryNumber": "A7K41709811",
+   "lane": "FILE_NOW",
+   "reason": "First occurrence of this entry number in the file; valid on its own.",
+   "alsoDefensible": "BLOCKED"
+  },
+  {
+   "n": 44,
+   "entryNumber": "A7K-4170981-1",
+   "lane": "BLOCKED",
+   "reason": "Same entry number as the row above once dashes are removed (A7K41709811): CBP error 'Duplicate Entry'."
+  },
+  {
+   "n": 45,
+   "entryNumber": "A7K1234567",
+   "lane": "BLOCKED",
+   "reason": "Entry number has 10 characters after stripping dashes: CBP file error 'Not 11 characters long'."
+  },
+  {
+   "n": 46,
+   "entryNumber": "Z3M73705788",
+   "lane": "BLOCKED",
+   "reason": "Prefix Z3M is not a filer code on this ACE account (A7K, 0P2): CBP file error 'Filer Code not matching'."
+  },
+  {
+   "n": 47,
+   "entryNumber": "A7K28544311",
+   "lane": "BLOCKED",
+   "reason": "Entry summary status is Cancelled; it must be Accepted ('Entry Summary is Cancelled/Rejected')."
+  },
+  {
+   "n": 48,
+   "entryNumber": "A7K45117533",
+   "lane": "WAIT",
+   "reason": "Control status is Trade, not CBP: 'Entry Summary is in Trade Control'. Clears when control returns to CBP."
+  },
+  {
+   "n": 49,
+   "entryNumber": "A7K51528177",
+   "lane": "WAIT",
+   "reason": "Court injunction flag is set: 'Entry Summary is Subject to Court Injunction'."
+  },
+  {
+   "n": 50,
+   "entryNumber": "A7K26677355",
+   "lane": "WAIT",
+   "reason": "On a statement authorized for payment that has not processed: 'Statement Processing Not Complete'. Re-check after payment posts."
+  },
+  {
+   "n": 51,
+   "entryNumber": "A7K40611877",
+   "lane": "WAIT",
+   "reason": "Entry summary is in adjusted status: 'Entry Summary Under Review'."
+  },
+  {
+   "n": 52,
+   "entryNumber": "A7K62224999",
+   "lane": "WAIT",
+   "reason": "HTS code on the line is end-dated for its action date: 'Invalid HTS'. File a PSC with the replacement HTS, then resubmit."
+  },
+  {
+   "n": 53,
+   "entryNumber": "A7K30717000",
+   "lane": "WAIT",
+   "reason": "Add/replace/derived HTS without its corresponding HTS: 'HTS Relationship Mismatch'. File a PSC, then resubmit."
+  },
+  {
+   "n": 54,
+   "entryNumber": "A7K79721877",
+   "lane": "WAIT",
+   "reason": "A chapter 99 IEEPA line shows a goods value of $1,500: 'Value Not Allowed on HTS'. Correct by PSC first."
+  },
+  {
+   "n": 55,
+   "entryNumber": "A7K15506011",
+   "lane": "BLOCKED",
+   "reason": "No line carries an IEEPA chapter 99 duty ($0.00 IEEPA): 'No IEEPA HTS on Entry'. Nothing to refund."
+  },
+  {
+   "n": 56,
+   "entryNumber": "A7K53145699",
+   "lane": "WAIT",
+   "reason": "A non-IEEPA PSC is pending. CBP: file that PSC before the CAPE declaration, because PSCs and protests are blocked after CAPE is accepted."
+  },
+  {
+   "n": 57,
+   "entryNumber": "A7K67089188",
+   "lane": "FILE_NOW",
+   "reason": "EU framework line: refund is the IEEPA part only, $6,240 minus the 2.5% Column 1 duty ($2,080) = $4,160 refund; positive, no CBP error."
+  },
+  {
+   "n": 58,
+   "entryNumber": "A7K35748488",
+   "lane": "FILE_NOW",
+   "reason": "EU framework, two lines: IEEPA $14,895 minus Column 1 share $3,078.30 = $11,816.70 refund; no CBP error."
+  },
+  {
+   "n": 59,
+   "entryNumber": "A7K16386644",
+   "lane": "FILE_NOW",
+   "reason": "Liquidated 18 days before 2026-10-29, inside CBP's 80-day Phase 1 window (FAQ: liquidated within the preceding 80 days); nothing else blocks it."
+  },
+  {
+   "n": 60,
+   "entryNumber": "A7K66040199",
+   "lane": "FILE_NOW",
+   "reason": "KR framework: IEEPA $8,790 minus Column 1 share $4,688 = $4,102 refund; no CBP error."
+  },
+  {
+   "n": 61,
+   "entryNumber": "A7K98997222",
+   "lane": "FILE_NOW",
+   "reason": "CH framework: IEEPA $2,685 minus Column 1 share $805.50 = $1,879.50 refund; no CBP error."
+  },
+  {
+   "n": 62,
+   "entryNumber": "A7K53935877",
+   "lane": "FILE_NOW",
+   "reason": "Other duties underpaid by $11,332.36 but IEEPA refund is $28,998, so entry-level net is +$17,665.64: a smaller refund, not a bill (CBP nets per entry). A broker could still review the netting.",
+   "alsoDefensible": "NET_BILL_RISK"
+  },
+  {
+   "n": 63,
+   "entryNumber": "A7K21865533",
+   "lane": "NET_BILL_RISK",
+   "reason": "Other duties underpaid by $9,000 against a $6,000 IEEPA refund: entry nets to a $3,000 bill (CBP FAQ: a CAPE declaration can produce a bill)."
+  },
+  {
+   "n": 64,
+   "entryNumber": "A7K51309444",
+   "lane": "FILE_NOW",
+   "reason": "Other duties underpaid by $5,600 against $8,000 IEEPA: net +$2,400, still a refund, though a thin one (70% of it is offset). A broker could still review it.",
+   "alsoDefensible": "NET_BILL_RISK"
+  },
+  {
+   "n": 65,
+   "entryNumber": "A7K54825900",
+   "lane": "FILE_NOW",
+   "reason": "Clean entry. The importer's $4,200 open debt to CBP is a diversion warning (CBP may offset it), not a CAPE rejection or a bill from this entry."
+  },
+  {
+   "n": 66,
+   "entryNumber": "A7K73449900",
+   "lane": "NET_BILL_RISK",
+   "reason": "Liquidated 44 days ago (inside the window). Other duties underpaid by $13,125 against $10,500 IEEPA: nets to a $2,625 bill."
+  },
+  {
+   "n": 67,
+   "entryNumber": "A7K84534877",
+   "lane": "FILE_NOW",
+   "reason": "Other duties underpaid by $1,520 against $7,600 IEEPA: net +$6,080 refund, not a bill.",
+   "alsoDefensible": "NET_BILL_RISK"
+  },
+  {
+   "n": 68,
+   "entryNumber": "A7K98281700",
+   "lane": "BLOCKED",
+   "reason": "Entry type 21 (Warehouse). CSMS 69127837: since 2026-07-07 CBP rejects types 21/22 with 'Entry Type Not Allowed'."
+  },
+  {
+   "n": 69,
+   "entryNumber": "A7K49804222",
+   "lane": "FILE_NOW",
+   "reason": "Entry type 31 (warehouse withdrawal) is still accepted (CSMS 69127837 only removed types 21 and 22); nothing else blocks it."
+  }
+ ]
+}

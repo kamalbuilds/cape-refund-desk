@@ -209,6 +209,18 @@ for (const [label, vp] of [["1440", { width: 1440, height: 1000 }], ["390", { wi
   ok(/Safe to file changes|No shipment changes/.test(h1) && await page.getByTestId("rescore-move").count() >= 1, `real CBP change re-scores entries with a visible diff: ${h1}`);
   await page.getByTestId("rescore-scenario-window-60").click();
   ok(/Simulation/.test(await rs.innerText()), "what-if scenario is labelled Simulation");
+  // --- scored test section (rules engine vs hand-labelled truth; AI arm pending credit)
+  const st = page.getByTestId("scored-test");
+  await st.scrollIntoViewIfNeeded();
+  await page.getByTestId("arm-rules").waitFor({ timeout: 10000 });
+  const rulesRow = await page.getByTestId("arm-rules").innerText();
+  ok(/Rules engine/.test(rulesRow) && /\d+(\.\d)?%/.test(rulesRow) && /of 69/.test(rulesRow), `scored test shows the rules engine with real numbers: ${rulesRow.replace(/\s+/g, " ")}`);
+  const aiRow = await page.getByTestId("arm-ai").innerText();
+  ok(/AI alone/.test(aiRow) && /Pending credit/.test(aiRow) && !/\d/.test(aiRow), "scored test shows AI alone as Pending credit with no numbers");
+  ok(await page.getByTestId("confusion-matrix").count() === 0, "confusion matrix is hidden until asked for");
+  await page.getByTestId("scored-toggle").click();
+  ok(await page.getByTestId("confusion-matrix").locator("tbody tr").count() === 4, "confusion matrix opens with four rows");
+  if (label === "1440") await st.screenshot({ path: `${OUT}/scored-1440.png` });
   ok(await page.getByTestId("stage-receipt").count() === 0, "in-browser check shows no AI stage receipt (no AI ran)");
   ok(errs.length === 0, `no console/page errors ${errs.slice(0, 6).join(" | ")}`);
   await ctx.close();

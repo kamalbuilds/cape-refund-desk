@@ -1,0 +1,16 @@
+import { parseEs003 } from "./parse";
+import { validateEntries } from "./validate";
+import { scoreArm, type Scored, type Truth } from "./score-metrics";
+import type { Lane } from "./types";
+
+/** Runs the deterministic rules engine over a CSV and scores it against the hand-labelled truth. The truth never goes through validate.ts. */
+export function scoreRulesEngine(csvText: string, meta: { asOf: string; filerCodes: string[] }, truth: Truth): Scored {
+  const { entries } = parseEs003(csvText);
+  const pf = validateEntries(entries, { asOf: meta.asOf, filerCodes: meta.filerCodes });
+  const pred = new Map<string, Lane>();
+  for (const v of pf.verdicts) pred.set(entries[v.entryIdx].entryNumberRaw, v.lane);
+  return scoreArm(truth, pred);
+}
+
+/** The AI-alone arm cannot run without Token Factory credit. It carries no numbers on purpose. */
+export const AI_ALONE_ARM = { id: "ai-alone", label: "AI alone", status: "pending-credit" as const, note: "Pending credit. Not run, so no numbers are shown." };

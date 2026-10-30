@@ -23,6 +23,7 @@ import Deadlines, { DrawerRoutes } from "./Deadlines";
 import ExportExtras from "./ExportExtras";
 import RuleRescore from "./RuleRescore";
 import OfferCheck from "./OfferCheck";
+import ScoredTest from "./ScoredTest";
 import Sources from "./Sources";
 import StageReceipt from "./StageReceipt";
 import WhyLlm from "./WhyLlm";
@@ -389,11 +390,13 @@ export default function Desk() {
           <Deadlines portfolio={board.portfolio} asOf={board.asOf} onOpen={openFirstLane} />
           <RuleWatch />
           <RuleRescore csvText={csvText} asOf={board.asOf} filerCodes={board.filerCodes} isSample={!csvText} />
+          <ScoredTest />
           <ReceiptPanel receipt={receipt} board={board} mode={mode} />
           <StageReceipt receipt={receipt} explanations={expl} portfolioNote={pnote} mode={mode} />
         </>
       )}
       {!board && <RuleWatch />}
+      {!board && <ScoredTest />}
 
       <OfferCheck />
 
