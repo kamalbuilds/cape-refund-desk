@@ -15,7 +15,7 @@ const ff = (a, o = {}) => execFileSync("ffmpeg", ["-y", "-v", "error", ...a], o)
 // Slow push-in: keyframes [t, zoom, cx, cy] (clip pixels, smoothstep between), applied to the clip before captions so captions stay sharp and fixed.
 function pushIn(src, keys, out) {
   const ex = (f) => { let e = String(keys[keys.length - 1][f]); for (let i = keys.length - 2; i >= 0; i--) { const t0 = keys[i][0], t1 = keys[i + 1][0], a = keys[i][f], b = keys[i + 1][f], u = `((t-${t0})/${t1 - t0})`; e = `if(lt(t,${t1}),${a}+(${b}-${a})*${u}*${u}*(3-2*${u}),${e})`; } return `if(lt(t,${keys[0][0]}),${keys[0][f]},${e})`; };
-  const vf = `scale=w='trunc(1920*(${ex(1)})/2)*2':h='trunc(1080*(${ex(1)})/2)*2':eval=frame:flags=bicubic,crop=1920:1080:x='min(max((${ex(2)})*in_w/1920-960,0),in_w-out_w)':y='min(max((${ex(3)})*in_h/1080-540,0),in_h-out_h)',setsar=1,fps=30,format=yuv420p`;
+  const vf = `scale=w='trunc(1920*(${ex(1)})/2)*2':h='trunc(1080*(${ex(1)})/2)*2':eval=frame:flags=bicubic,crop=1920:1080:x='max((${ex(2)})*(${ex(1)})-960,0)':y='max((${ex(3)})*(${ex(1)})-540,0)',setsar=1,fps=30,format=yuv420p`; // crop clips x,y to the frame; in_w is fixed at init so the zoom is written out explicitly
   ff(["-i", src, "-vf", vf, "-c:v", "libx264", "-crf", "15", "-preset", "medium", "-r", "30", out]);
   return out;
 }

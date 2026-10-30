@@ -222,8 +222,12 @@ const beats = {
     await r.at(S(0, 0.9)); await r.ring(tbl, `Models alone: Ultra ${arms.ultra.lane.strictCorrect} of ${arms.ultra.n}, Lightning ${arms.lightning.lane.strictCorrect} of ${arms.lightning.n}`, "blue", 6, "below");
   },
   async B10(p, r, S) {
+    await p.addStyleTag({ content: ".__end .b{margin-top:30px;padding:20px 34px;border:1px solid #2b3a55;border-radius:16px;background:rgba(8,12,22,.85);display:flex;flex-direction:column;align-items:center;gap:16px}.__end .b>span{font-size:13px;letter-spacing:3px;font-weight:800;color:#9fb0cc}.__end .b>div{display:flex;align-items:center;gap:16px}.__end .b b{font-size:34px;color:#fff;letter-spacing:-.3px}.__end .b>div>span{font-size:24px;color:#9fb0cc;font-weight:700}" });
+    const uri = (f) => "data:image/svg+xml;base64," + fs.readFileSync(path.join(HERE, "assets", f)).toString("base64"); // the unmodified official logos, see assets/SOURCES.txt
+    const built = `<div class="b"><span>BUILT WITH</span><div><img src="${uri("nvidia-logo-white.svg")}" style="height:44px"><b>Nemotron</b></div><div><span style="margin-right:6px">on</span><img src="${uri("nebius-logo-lime.svg")}" style="height:30px"><b>Token Factory</b></div></div>`;
     await r.at(S(0, 0.0)); await r.scrollTo(0, 900);
-    await r.at(S(0, 0.15)); await p.evaluate(() => window.__ov.end(`<h1>CAPE Refund Desk</h1><p>Check the file before the upload nobody can undo.</p><div class="u">cape-refund-desk.vercel.app</div><div class="f">Open source: github.com/kamalbuilds/cape-refund-desk<br>Prepared for licensed customs broker review. Not legal or customs advice.</div>`));
+    await r.at(S(0, 0.15)); await p.evaluate((built) => window.__ov.end(`<h1>CAPE Refund Desk</h1><p>Check the file before the upload nobody can undo.</p><div class="u">cape-refund-desk.vercel.app</div>${built}<div class="f">Open source: github.com/kamalbuilds/cape-refund-desk<br>Prepared for licensed customs broker review. Not legal or customs advice.</div>`), built);
+    await r.at(S(0, 0.15) + 1.1); await p.evaluate(() => { const e = document.querySelector('.__end'); e.style.animation = 'none'; e.style.opacity = '1'; }); // settle the fade so the screencast emits the finished, opaque frame
   },
 };
 

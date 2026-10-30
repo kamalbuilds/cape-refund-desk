@@ -12,7 +12,6 @@
     {
      "say": "Cape Refund Desk checks that file before the upload nobody can undo.",
      "speak": "Kayp Refund Desk checks that file before the upload nobody can undo.",
-     "speed": 0.85,
      "cap": "CAPE Refund Desk checks that file before the upload nobody can undo."
     },
     {
@@ -27,6 +26,7 @@
    "sentences": [
     {
      "say": "Plain code does every dollar. Nemotron models, on Nebius Token Factory, tidy the messy data and explain.",
+     "speak": "Plain code does every dollar. Nemmotron models, on Nebius Token Factory, tidy the messy data and explain.",
      "cap": "Plain code does every dollar. Nemotron models, on Nebius Token Factory, tidy the messy data and explain."
     }
    ]

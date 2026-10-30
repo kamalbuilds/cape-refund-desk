@@ -1,0 +1,2 @@
+nvidia-logo-white.svg  https://commons.wikimedia.org/wiki/File:NVIDIA_logo_white.svg  (original https://upload.wikimedia.org/wikipedia/commons/f/f1/NVIDIA_logo_white.svg), unmodified, the official eye + white wordmark for dark backgrounds
+nebius-logo-lime.svg   Nebius footer logo as served on https://nebius.com/ (inline img data URI in the page footer, "Nebius Home"), unmodified lime #E0FF4F wordmark for dark backgrounds
