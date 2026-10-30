@@ -1,1 +1,394 @@
-/* r6 board lane: overrides, loaded last. Follow /DESIGN.md. */
+/* Refund board after a run. Overrides the legacy layer only; see DESIGN.md. */
+@layer components {
+
+/* ---- run summary: quiet control row first ---- */
+html body .runbar{
+  background:transparent;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  padding:0;
+  margin:0 0 28px;
+  animation:none;
+}
+html body .runbar>summary{
+  list-style:none;
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:4px 0;
+  font:400 13px/20px var(--sans);
+  color:#71717a;
+  cursor:pointer;
+}
+html body .runbar>summary::-webkit-details-marker{display:none}
+html body .runbar>summary:hover{color:#18181b}
+html body .runbar[open]{
+  background:#fff;
+  border:1px solid #e4e4e7;
+  border-radius:16px;
+  box-shadow:none;
+  padding:20px 24px;
+  margin-bottom:28px;
+}
+html body .runbar[open]>summary{
+  color:#18181b;
+  font-weight:500;
+  margin-bottom:16px;
+}
+
+/* ---- answer zone ---- */
+html body .zone{min-height:0;padding:4px 0 24px}
+html body .zone .headline{
+  margin:0;
+  font:500 48px/52px var(--sans);
+  letter-spacing:-0.03em;
+  color:#18181b;
+  text-wrap:balance;
+  max-width:22ch;
+}
+html body .zone .headline b{
+  font-family:var(--sans);
+  font-weight:500;
+  font-size:inherit;
+  letter-spacing:inherit;
+  color:#18181b;
+  font-variant-numeric:tabular-nums;
+}
+html body .zone .answer{
+  margin:12px 0 0;
+  font:400 16px/24px var(--sans);
+  letter-spacing:0;
+  color:#52525b;
+  max-width:62ch;
+}
+html body .zone .answer b{font-family:var(--sans);font-weight:500;color:#18181b}
+
+/* hero figure */
+html body .claimcard{
+  margin-top:28px;
+  max-width:560px;
+  background:#fff;
+  border:1px solid #e4e4e7;
+  border-radius:16px;
+  box-shadow:none;
+  padding:32px;
+}
+html body .claim-label{
+  font:400 13px/20px var(--sans);
+  color:#71717a;
+}
+html body .claim-num{
+  margin-top:4px;
+  font:500 48px/52px var(--mono);
+  letter-spacing:-0.03em;
+  font-variant-numeric:tabular-nums;
+  color:#047857;
+}
+html body .claim-sub{
+  margin-top:8px;
+  font:400 16px/24px var(--sans);
+  color:#3f3f46;
+}
+html body .claim-sub b{font-weight:500;color:#18181b}
+html body .claimcard>button{
+  margin-top:20px;
+  border-radius:999px;
+  padding:10px 20px;
+  font-size:13px;
+  line-height:20px;
+}
+
+/* metadata under the headline block */
+html body .zone .runmeta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:2px 0;
+  margin-top:20px;
+  font:400 13px/20px var(--sans);
+  color:#71717a;
+}
+html body .zone .runmeta>span+span::before{content:"·";padding:0 8px;color:#d4d4d8}
+html body .zone .runmeta .mono{
+  font-family:var(--mono);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---- four lane cards ---- */
+html body .stage .tabs{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+html body .stage .tab{
+  grid-column:auto;
+  min-height:0;
+  padding:24px;
+  gap:0;
+  background:#fff;
+  border:1px solid #e4e4e7;
+  border-radius:16px;
+  box-shadow:none;
+  overflow:visible;
+  isolation:auto;
+  transition:border-color 150ms ease;
+}
+html body .stage .tab::after{display:none}
+html body .stage .tab:hover{border-color:#a1a1aa;background:#fff}
+html body .stage .tab[aria-selected="true"]{
+  border-color:#18181b;
+  box-shadow:none;
+}
+html body .stage .tab.dim{opacity:1}
+
+html body .stage .tab-top{
+  justify-content:flex-start;
+  gap:8px;
+}
+html body .stage .tab-dot{
+  order:-1;
+  width:6px;
+  height:6px;
+  flex:none;
+  background:#71717a;
+}
+html body .stage .tab.go .tab-dot{background:#10b981}
+html body .stage .tab.hold .tab-dot{background:#f59e0b}
+html body .stage .tab.decide .tab-dot{background:#71717a}
+html body .stage .tab.stop .tab-dot{background:#dc2626}
+
+html body .stage .lane-t{
+  font:500 16px/24px var(--sans);
+  letter-spacing:0;
+  text-transform:none;
+  color:#18181b;
+}
+html body .stage .lane-h{
+  margin-top:12px;
+  gap:6px;
+}
+html body .stage .lane-n{
+  font:500 16px/24px var(--mono);
+  letter-spacing:-0.01em;
+  font-variant-numeric:tabular-nums;
+  color:#18181b;
+}
+html body .stage .tab.decide .lane-n{color:#18181b}
+html body .stage .tab.ghost .lane-n{opacity:0.4}
+html body .stage .lane-u{
+  font:400 13px/20px var(--sans);
+  color:#71717a;
+}
+html body .stage .tab-m{
+  margin-top:4px;
+  font:400 13px/20px var(--sans);
+  color:#52525b;
+}
+html body .stage .tab-m b{
+  font-family:var(--mono);
+  font-variant-numeric:tabular-nums;
+  font-weight:500;
+  color:#18181b;
+}
+html body .stage .tab-m b.neg{color:#b91c1c}
+html body .stage .tab-s{
+  margin-top:8px;
+  font:400 13px/20px var(--sans);
+  color:#71717a;
+  max-width:46ch;
+}
+
+/* chips: keep the flight, then clear out */
+html body .stage .area{height:0!important;margin-top:0}
+html body .stage.sorted .chips{
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 150ms ease 2000ms;
+}
+html body .stage:not(.sorted) .chips{
+  opacity:1;
+  transition:none;
+}
+html body .stage.sorted .chip{pointer-events:none;cursor:default}
+html body .stage.sorted .chip:hover i{transform:none}
+
+/* ---- lane table ---- */
+html body .hint{
+  margin:0 0 24px;
+  font:400 13px/20px var(--sans);
+  color:#71717a;
+  text-align:left;
+}
+html body .lanepanel{
+  border:1px solid #e4e4e7;
+  border-radius:16px;
+  box-shadow:none;
+  background:#fff;
+  animation:none;
+}
+html body .lanepanel-h{
+  padding:20px 24px;
+  border-bottom:1px solid #e4e4e7;
+  gap:12px;
+}
+html body .lanepanel-h h2{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font:500 16px/24px var(--sans);
+  color:#18181b;
+}
+html body .lanepanel-h h2 .muted{
+  font:400 13px/20px var(--sans);
+  color:#71717a;
+}
+html body .lanepanel-h p{
+  margin-top:2px;
+  font:400 13px/20px var(--sans);
+  color:#71717a;
+}
+html body .lanepanel-h select{
+  height:36px;
+  padding:0 8px;
+  font:400 13px/20px var(--sans);
+  border:1px solid #d4d4d8;
+  border-radius:8px;
+  background:#fff;
+  color:#18181b;
+}
+html body .lanepanel-h label{
+  font:400 13px/20px var(--sans);
+  color:#52525b;
+}
+html body .lanepanel-h>button{
+  border-radius:8px;
+  font-size:13px;
+  line-height:20px;
+}
+html body .ldot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  flex:none;
+  background:#71717a;
+}
+html body .ldot.go{background:#10b981}
+html body .ldot.hold{background:#f59e0b}
+html body .ldot.decide{background:#71717a}
+html body .ldot.stop{background:#dc2626}
+
+html body .lanepanel .thead,
+html body .lanepanel .row{
+  grid-template-columns:32px 132px 84px minmax(0,1fr) 108px 124px;
+  column-gap:16px;
+  padding:0 24px;
+}
+html body .lanepanel .thead{
+  position:sticky;
+  top:0;
+  z-index:2;
+  height:40px;
+  background:#fff;
+  border-top:0;
+  border-bottom:1px solid #e4e4e7;
+  font:500 13px/20px var(--sans);
+  letter-spacing:0;
+  text-transform:none;
+  color:#71717a;
+}
+html body .lanepanel .row{
+  min-height:48px;
+  padding-top:0;
+  padding-bottom:0;
+  border-bottom:1px solid #f4f4f5;
+  transition:background-color 120ms ease;
+}
+html body .lanepanel .row:hover{background:#fafafa}
+html body .lanepanel .row.sel{background:#f4f4f5}
+html body .lanepanel .row.enter{animation:none}
+html body .lanepanel .en{font-size:13px}
+html body .lanepanel .ior{font-size:13px;color:#71717a}
+html body .lanepanel .why .l1{font-size:13px;line-height:20px}
+html body .lanepanel .why .l2{font-size:13px;line-height:18px;color:#71717a}
+html body .lanepanel .win{font-size:13px;color:#71717a}
+html body .lanepanel .win.hot{color:#b45309;font-weight:500}
+html body .lanepanel .amt{
+  text-align:right;
+  font-family:var(--mono);
+  font-variant-numeric:tabular-nums;
+  font-size:13px;
+}
+html body .lanepanel .amt .neg,
+html body .lanepanel .amt .text-red-700\!{color:#b91c1c}
+html body .lanepanel .amt small{
+  font:400 13px/18px var(--sans);
+  color:#71717a;
+}
+html body .lanepanel .chk{
+  width:32px;
+  height:48px;
+  margin:0;
+  justify-content:flex-start;
+}
+html body .lanepanel .chk input{
+  width:16px;
+  height:16px;
+  border-radius:3px;
+}
+html body .lanepanel .empty{
+  padding:32px 24px;
+  font:400 13px/20px var(--sans);
+  color:#71717a;
+}
+
+/* pinbar is the secondary action now */
+html body .pinbar button{
+  background:#fff;
+  color:#18181b;
+  border:1px solid #d4d4d8;
+  box-shadow:none;
+  border-radius:999px;
+  padding:10px 20px;
+  font-size:13px;
+  line-height:20px;
+}
+html body .pinbar button:hover{background:#fafafa;border-color:#a1a1aa}
+
+/* ---- wide ---- */
+@media(min-width:1280px){
+  html body .stage .tabs{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+/* ---- phone ---- */
+@media(max-width:700px){
+  html body .zone{padding:0 0 20px}
+  html body .zone .headline{font-size:32px;line-height:36px;max-width:none}
+  html body .claimcard{margin-top:20px;padding:24px}
+  html body .claim-num{font-size:32px;line-height:36px}
+  html body .zone .runmeta{margin-top:16px}
+  html body .zone .runmeta>span+span::before{padding:0 6px}
+
+  html body .stage .tabs{grid-template-columns:minmax(0,1fr);gap:10px}
+  html body .stage .tab{padding:20px}
+
+  html body .lanepanel-h{padding:16px}
+  html body .lanepanel .thead{display:none}
+  html body .lanepanel .row{
+    grid-template-columns:44px minmax(0,1fr) auto;
+    grid-template-areas:"chk en amt" "chk why why";
+    column-gap:8px;
+    row-gap:2px;
+    min-height:64px;
+    padding:10px 16px;
+  }
+  html body .lanepanel .row .chk{grid-area:chk;align-self:center;width:44px;height:44px}
+  html body .lanepanel .row .chk input{width:20px;height:20px}
+  html body .lanepanel .row .en{grid-area:en}
+  html body .lanepanel .row .ior,
+  html body .lanepanel .row .win{display:none}
+  html body .lanepanel .row .why{grid-area:why}
+  html body .lanepanel .row .amt{grid-area:amt}
+  html body .lanepanel-h>button{min-height:44px}
+  html body .runbar>summary{min-height:44px}
+}
+}
