@@ -100,21 +100,22 @@ export function TwistCard() {
   return (
     <div className={`twist ${bill ? "bill" : ""}`} role="img" aria-label="Example: a shipment worth a $10,500.00 refund turns into a $2,625.00 bill once other duties it underpaid are netted off.">
       <div className="twist-top">
-        <span className="mono">A7K-7344990-0</span>
-        <span className="twist-tag">{bill ? "After other duties come off" : "Struck-down tariff, refundable"}</span>
+        <span className="twist-lbl">{bill ? "You'd owe Customs" : "You'd get back"}</span>
+        <span className="twist-id mono">A7K-7344990-0</span>
       </div>
       <div className="twist-num" aria-hidden>
-        <span className="twist-lbl">{bill ? "You'd owe Customs" : "You'd get back"}</span>
         <b>{fmtUsd(value)}</b>
       </div>
-      <div className="twist-step on" aria-hidden>
-        <span>Other duties underpaid on the same shipment</span>
-        <b>{fmtUsd(-UNDER)}</b>
+      <div className="twist-breakdown" aria-hidden>
+        <div className="twist-row"><span>Refundable tariff</span><b>{fmtUsd(REFUND)}</b></div>
+        <div className="twist-row"><span>Other duties underpaid</span><b>{fmtUsd(-UNDER)}</b></div>
+        <div className="twist-row twist-net"><span>Net</span><b>{fmtUsd(NET)}</b></div>
       </div>
       <div className="twist-bar" aria-hidden>
         <i className="r" style={{ transform: `scaleX(${T < 2600 ? up : 1})` }} />
         <i className="u" style={{ transform: `scaleX(${under ? Math.min(1, (T - 2000) / 1000) : 0})` }} />
       </div>
+      <div className="twist-base" aria-hidden>$0 baseline</div>
       <p className="twist-cap" aria-hidden>Same shipment. One catch. Checked before you file, not after.</p>
     </div>
   );

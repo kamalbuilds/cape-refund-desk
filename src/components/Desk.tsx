@@ -222,29 +222,37 @@ export default function Desk() {
         <>
           <section className="hero">
             <div className="hero-copy">
-              <h2 className="display text-3xl font-semibold tracking-tight text-zinc-900" aria-label="Check the refund file before you send it.">
-                <span className="ln"><Words text="Check the refund file" /></span>
-                <span className="ln"><Words text="before you send it." base={260} /></span>
+              <h2 className="display hero-headline" aria-label="Check the refund file before you send it.">
+                Check the refund file<br />before you send it.
               </h2>
-              <p className="text-base text-zinc-600 max-w-2xl leading-relaxed mt-2">
-                US importers are owed money back for tariffs that were struck down. To get it, they upload one file to Customs, and it can&apos;t be undone. One wrong shipment can turn a refund into a bill. <b className="font-semibold text-zinc-900">This checks the file first.</b>
+              <p className="hero-lead">
+                US importers are owed money back for tariffs that were struck down. To get it, they upload one file to Customs, and it can&apos;t be undone. One wrong shipment can turn a refund into a bill. <b className="font-medium text-zinc-900">This checks the file first.</b>
               </p>
-              <div className="cta mt-6">
-                <button className={BTN_PRIMARY} disabled={running} onClick={replay}>{Icon.play} Run the sample <span className="text-xs font-normal text-zinc-300">recorded real run</span></button>
-                <button className={BTN_SECONDARY} disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls the AI now: allow up to about 3 minutes"}>Run it live</button>
+              <div className="cta mt-6 flex flex-wrap items-center gap-3">
+                <button className="hero-btn-primary" disabled={running} onClick={replay}>{Icon.play} Run the sample</button>
+                <button className="hero-btn-secondary" disabled={running || liveOk === false} onClick={() => live(true)} title={liveOk === false ? "Live runs are disabled on this host" : "Calls the AI now: allow up to about 3 minutes"}>Run it live</button>
               </div>
-              <p className="fine">Sample data: made-up shipments, not real trade data. Not legal advice. We never ask for logins or bank details.</p>
+              <p className="hero-disclosure">Sample data: made-up shipments, not real trade data. Not legal advice. We never ask for logins or bank details.</p>
             </div>
             <TwistCard />
           </section>
 
-          <section aria-label="How it works" className="mt-12 mb-8 max-w-2xl">
-            <h3 className="text-sm font-medium text-zinc-900">How the check works</h3>
-            <ul className="mt-3 space-y-2 text-sm text-zinc-600 leading-relaxed list-disc pl-5">
-              <li><b className="font-medium text-zinc-900">Plain code</b> does all the money math and sorts every shipment. The AI never makes up a number.</li>
-              <li><b className="font-medium text-zinc-900">A fast AI</b> (Nemotron Lightning) cleans up messy data.</li>
-              <li><b className="font-medium text-zinc-900">A reasoning AI</b> (Nemotron Ultra) explains each tricky case.</li>
-            </ul>
+          <section aria-label="How it works" className="how-it-works max-w-2xl">
+            <h3 className="how-title">How the check works</h3>
+            <div className="how-rows">
+              <div className="how-row">
+                <h4 className="how-h">Plain code</h4>
+                <p className="how-p">does all the money math and sorts every shipment. The AI never makes up a number.</p>
+              </div>
+              <div className="how-row">
+                <h4 className="how-h">A fast AI</h4>
+                <p className="how-p">(Nemotron Lightning) cleans up messy data.</p>
+              </div>
+              <div className="how-row">
+                <h4 className="how-h">A reasoning AI</h4>
+                <p className="how-p">(Nemotron Ultra) explains each tricky case.</p>
+              </div>
+            </div>
           </section>
 
           <Reveal>{controls}</Reveal>
@@ -378,13 +386,13 @@ function RunControls(p: RunControlProps) {
       {!p.compact && <h3>Check your own file</h3>}
       {!p.compact && <p className="fine">We never ask for logins, bank details or tax IDs. Files are checked in memory and never stored. You or your broker do the real upload.</p>}
       <div className="field">
-        <label className="file">
+        <label className="file run-file">
           <input type="file" accept=".csv,text/csv" onChange={(e) => p.onFile(e.target.files?.[0] ?? null)} />
           <span>{Icon.file} {p.fileName ? p.fileName : "Upload your Customs shipment export (CSV)"}</span>
         </label>
         <div className="row2">
-          <label className="in" title="The first 3 characters of your Customs entry numbers">Filer code<input placeholder="A7K" maxLength={3} value={p.filer} onChange={(e) => p.setFiler(e.target.value.toUpperCase())} aria-label="Filer code" /></label>
-          <label className="in">Check as of<input type="date" value={p.asOf} onChange={(e) => p.setAsOf(e.target.value)} aria-label="Check as of date" /></label>
+          <label className="in run-field" title="The first 3 characters of your Customs entry numbers"><span className="run-label">Filer code</span><input className="run-input" placeholder="A7K" maxLength={3} value={p.filer} onChange={(e) => p.setFiler(e.target.value.toUpperCase())} aria-label="Filer code" /></label>
+          <label className="in run-field"><span className="run-label">Check as of</span><input className="run-input" type="date" value={p.asOf} onChange={(e) => p.setAsOf(e.target.value)} aria-label="Check as of date" /></label>
         </div>
         <div className="btnrow">
           <button className={BTN_PRIMARY} disabled={p.running || !p.csvText} onClick={p.inBrowser}>Check in this browser (no upload)</button>
