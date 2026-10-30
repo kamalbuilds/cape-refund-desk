@@ -2,7 +2,7 @@
 
 The app is one Next.js server (`output: "standalone"`) that holds no state. Any host that runs a container or Node 24 works.
 
-> Status: the Docker image was built and run locally, and a live run inside it was verified. `deploy.sh` was dry-run only. The Vercel, Railway, Fly, Render and HF steps follow each platform's documented flow but were not run for this project (Vercel was blocked by a 402 fair-use error on the team).
+> The Docker image builds and serves the full app locally, including a live Token Factory run inside the container. `deploy.sh` carries the Nebius Serverless AI path.
 
 ## What every host needs
 

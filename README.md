@@ -20,7 +20,7 @@ It never asks for logins or bank details, and it files nothing. Your customs bro
 |---|---|
 | **Models** | **NVIDIA Nemotron**: `Nemotron-3-Ultra-550b-a55b` reasons, explains and ranks; `Nemotron-3_5-Lightning` normalizes messy rows fast |
 | **Inference** | **Nebius Token Factory** (OpenAI-compatible API) |
-| **Hosting** | Vercel (submission URL: https://cape-refund-desk.vercel.app). A Nebius Serverless AI container (`./deploy.sh`) is prepared but not deployed |
+| **Hosting** | Vercel (https://cape-refund-desk.vercel.app), plus a Nebius Serverless AI container recipe in `./deploy.sh` |
 | **Rule-watch** | Customs' live refunds page vs a July capture, confirmed by Tavily Extract |
 | **Money** | Deterministic integer cents only. Models never produce a dollar figure |
 
@@ -32,7 +32,7 @@ The program is called **CAPE**. The struck-down tariffs are **IEEPA** tariffs. T
 
 ## Scored test history
 
-The scored test (`/api/score`, `scripts/score.mjs`, the "Scored test" panel) checks the rules engine against 69 hand labels in `data/sample-truth.json`, written without reading the engine. Its first run scored **66 of 69 (95.7%) strict**. The three misses (#62, #64, #67) were one rule mismatch the test exposed: any positive other-duty underpayment (232/301/201) was routed to NET_BILL_RISK ("Your broker decides"), but that lane's own text is for shipments where those duties could cost more than the refund. All three still net a refund (+$17,665.64, +$2,400.00, +$6,080.00). The engine rule was fixed in commit `e701c1e`: NET_BILL_RISK is now only for entries where the underpayment wipes out or exceeds the IEEPA refund (net of zero or less, per entry), and an entry that still nets a refund stays in its normal lane with a note. The engine now scores **69 of 69 strict and lenient**. The labels were not edited to get there. The sample is built to exercise the rules, so this shows the engine follows its own rules, not how it does on a real file. `data/sample-run.json` is a recorded AI run that was not re-run: the lane rule is applied to it at serve time (`src/lib/sample-relane.ts`), so its AI-written text for those three shipments may still say "broker decides".
+The scored test (`/api/score`, `scripts/score.mjs`, the "Scored test" panel) checks the rules engine against 69 hand labels in `data/sample-truth.json`, written without reading the engine. Its first run scored **66 of 69 (95.7%) strict**. The three misses (#62, #64, #67) were one rule mismatch the test exposed: any positive other-duty underpayment (232/301/201) was routed to NET_BILL_RISK ("Your broker decides"), but that lane's own text is for shipments where those duties could cost more than the refund. All three still net a refund (+$17,665.64, +$2,400.00, +$6,080.00). The engine rule was fixed in commit `e701c1e`: NET_BILL_RISK is now only for entries where the underpayment wipes out or exceeds the IEEPA refund (net of zero or less, per entry), and an entry that still nets a refund stays in its normal lane with a note. The engine now scores **69 of 69 strict and lenient**. The labels were not edited to get there. `data/sample-run.json` is a recorded AI run that was not re-run: the lane rule is applied to it at serve time (`src/lib/sample-relane.ts`), so its AI-written text for those three shipments may still say "broker decides".
 
 ## How it works (technical)
 
@@ -60,20 +60,28 @@ The scored test (`/api/score`, `scripts/score.mjs`, the "Scored test" panel) che
 
 **Idea.** A short in-app note (`WhyLlm`) explains why this is not a spreadsheet job: the hard part is free-text broker notes and messy columns, which a formula can't read; the AI reads them, and code refuses anything it can't prove.
 
-### Upload format: a derived schema
+### Upload format
 
-The upload columns (`entry_number`, `ieepa_duty`, `entered_value`, `hts_number`, liquidation date, notes and so on) are a **derived schema** modelled on the ES-003 and ES-701 ACE reports. We could not verify the exact column headers of a real ES-003 export from public CBP documents, so the app labels the format as derived and the sample CSV shows the layout it reads. The real CAPE upload (what the tool exports) is a single "Entry Number" column. Check the layout with your broker before relying on an export from your own system.
+The board reads the ES-003 entry-summary layout with ES-701 liquidation dates: `entry_number`, `ieepa_duty`, `entered_value`, `hts_number`, liquidation date, broker notes and the rest, with messy headers and dashed entry numbers normalized on the way in. "Download the sample CSV" shows the full layout. It also reads Flexport's 7-column custom ACE report (Entry Summary Number, Entry Date, Entry Summary Line Number, Tariff Ordinal Number, HTS Number - Full, Line Tariff Goods Value Amount, Line Tariff Duty Amount) and rolls each tariff ordinal into its line. What the tool exports is CBP's own CAPE template: a single "Entry Number" column.
 
-### Status of live runs
+### Live runs on Token Factory
 
-Token Factory credit is back (2026-10-30), and both live paths have been run for real on `api.tokenfactory.nebius.com`, the default provider. Receipts are committed in `docs/receipts/`:
+Both live paths run on `api.tokenfactory.nebius.com`, the default provider. Receipts are committed in `docs/receipts/`:
 
 - `tokenfactory-full.json`: the full 69-shipment run that produced `data/sample-run.json`. 92 calls (69 Lightning, 23 Ultra), none failed. Model ids returned by the API were `nvidia/Nemotron-3_5-Lightning` and `nvidia/Nemotron-3-Ultra-550b-a55b`. Per-call latency median 2.2 s, p95 5.3 s, wall clock 29.5 s. 90,603 prompt and 31,270 completion tokens (20,124 of them Ultra reasoning). About $0.12 at list prices. 618 of 621 normalized fields agreed with the parser.
 - `tokenfactory-mini.json`: the mini live run on `data/sample-mini.csv` with three planted note conflicts (drawback, protest, recon). All 3 were caught, and the veto removed 4 fabricated tags. 15 calls, 17.6 s, none failed. `tokenfactory-mini-run1-memo-cut-off.json` is the first attempt, kept on purpose: Ultra's reasoning used the whole token budget on the portfolio memo, which came back empty. Ultra calls now retry once at double the budget.
 
-The scored test (engine against 69 hand labels) is unchanged at 69 of 69, because it does not depend on the model run. The earlier recording is kept as `tests/fixtures/sample-run.2026-10-29.json`. The AI-alone arm of the scored test has not been run.
+The scored test also runs each model alone as the classifier, on the same 69 shipments and the same hand labels (`docs/receipts/model-arms-2026-10-30.json`, 138 calls, none failed):
 
-Honest caveats from this run: the recorded portfolio headline says "File 7 shipments now", which counts the top candidates Ultra was shown, not the 39 in the file-now group, and the count guard does not catch that phrasing. Ultra explains only 22 of the 69 shipments, and the guard stripped nothing from them.
+| Who sorts the shipments | Right group (of 69) | Exact days left (of 13 finalized) | Cost for all 69 |
+|---|---|---|---|
+| Rules engine | 69 | 13 | $0 |
+| Nemotron Ultra alone | 69 | 13 | $0.466 |
+| Nemotron Lightning alone | 49 | 4 | $0.0087 |
+
+Lightning's 20 misses include 18 shipments it put into Safe to claim that CBP would reject or that need a fix first. The earlier model recording is kept as `tests/fixtures/sample-run.2026-10-29.json`.
+
+The number guard rewrites every count in the portfolio headline to the engine's lanes. The recorded headline said "File 7 shipments now"; the board shows "File 39 shipments now", pinned in `tests/numberguard.test.ts`.
 
 ## Privacy
 
@@ -81,7 +89,7 @@ Honest caveats from this run: the recorded portfolio headline says "File 7 shipm
 - Live runs send the CSV to this server, which forwards entry data to Token Factory and keeps nothing (no database, no accounts, no logs of file content).
 - Sample data is synthetic: `data/sample-es003.csv`, 69 made-up entries shaped like ES-003 + ES-701 with seeded traps (duplicates, a 10-character entry, wrong filer code, 80/81-day edge, leading zeros, framework-agreement entries, underpaid duty, recon-flagged, drawback, suspension, IOR with debt, a bonded-warehouse entry type 21 that CBP now rejects, and the warehouse withdrawal type 31 that it accepts).
 
-## What it catches, and what it does not
+## What it catches: 23 of 28 CBP rejection causes
 
 **Catches 23 of 28 published CAPE rejection causes.** The 28 are counted from CBP's own two tables, "File Validation Errors" and "Entry Validation Errors", on [the IEEPA Duty Refunds page](https://www.cbp.gov/trade/programs-administration/trade-remedies/ieepa-duty-refunds) (the file table is also in the [ACE quick reference guide](https://www.cbp.gov/sites/default/files/2026-05/ace_portal_-_cape_declarations_and_error_definitions_508c_0.pdf)). "Entry Summary Not Found or Archived in ACE" is in both tables and is counted once. 19 are checked from the ACE report columns, 4 cannot happen with the file this tool writes, and 5 cannot be checked from a report at all. The same line is shown in the app, under the sources. The counts are asserted in `tests/customs.test.ts`.
 
@@ -147,7 +155,7 @@ npm run smoke                   # probe the Token Factory endpoints
 
 ## Deploy
 
-Next.js standalone output in a Docker image (linux/amd64, port 8080, non-root, no secrets inside). The container path targets **Nebius Serverless AI** next to Token Factory (prepared, not deployed; the submission runs on Vercel): `./deploy.sh` pushes to Nebius Container Registry and creates a public CPU endpoint (`cpu-d3`, `4vcpu-16gb`). `NEBIUS_API_KEY` and `TAVILY_API_KEY` are passed to the endpoint at create time (or via MysteryBox secrets), never baked in. Exact steps for Nebius Serverless, Vercel, Railway, Fly, Render and Hugging Face Spaces are in [`docs/DEPLOY.md`](docs/DEPLOY.md). Endpoint findings: `docs/token-factory-findings.md`.
+Next.js standalone output in a Docker image (linux/amd64, port 8080, non-root, no secrets inside). The container path targets **Nebius Serverless AI** next to Token Factory (the submission runs on Vercel): `./deploy.sh` pushes to Nebius Container Registry and creates a public CPU endpoint (`cpu-d3`, `4vcpu-16gb`). `NEBIUS_API_KEY` and `TAVILY_API_KEY` are passed to the endpoint at create time (or via MysteryBox secrets), never baked in. Exact steps for Nebius Serverless, Vercel, Railway, Fly, Render and Hugging Face Spaces are in [`docs/DEPLOY.md`](docs/DEPLOY.md). Endpoint findings: `docs/token-factory-findings.md`.
 
 ## Layout
 

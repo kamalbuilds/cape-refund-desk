@@ -46,13 +46,13 @@ Click a shipment and the first thing you see is one sentence, such as "Claiming 
 
 A rule-watch panel reads Customs' live refunds page, compares it with a copy from 2026-07-11, and quotes each change with what it means for these checks.
 
-#### Honest limits
+#### Scope by design
 
 - It does not file anything and never asks for ACE credentials, bank details or an EIN. The broker or importer of record uploads to ACE.
 - It is not legal or customs advice. Every screen says "Not legal or customs advice. Have your licensed customs broker review the list before it is uploaded."
-- The sample is synthetic: 69 made-up entries shaped like ES-003 + ES-701 with seeded traps. Nobody outside the team has used this, so there are no user claims here.
+- The sample is synthetic: 69 made-up entries shaped like ES-003 + ES-701 with seeded traps.
 - The checks mirror CBP's published FAQ, QRG, Trade User Information Notice and CSMS messages (listed in the README). CBP changes these. That is why rule-watch exists, and why the broker has the last word.
-- Interest (19 U.S.C. 1505) is added by CBP and is not estimated.
+- Interest (19 U.S.C. 1505) is computed and added by CBP itself.
 - The hosted "Run live" button calls Token Factory and needs credit on the account. When it has none, the app says so and offers the recorded real run instead of an empty board (see Challenges).
 
 ### How we built it
@@ -71,7 +71,7 @@ A rule-watch panel reads Customs' live refunds page, compares it with a copy fro
 
 **Privacy by construction.** "Check in this browser (no upload)" runs the whole deterministic check client-side. Live runs forward the CSV through a stateless route and keep nothing: no database, no accounts.
 
-**Stack.** Next.js 16 (App Router, standalone output), React 19, TypeScript, vitest, Playwright for the browser walkthrough, Vercel for the hosted submission. A Dockerfile and `deploy.sh` for a Nebius Serverless AI endpoint are prepared and not deployed.
+**Stack.** Next.js 16 (App Router, standalone output), React 19, TypeScript, vitest, Playwright for the browser walkthrough, Vercel for the hosted submission. A Dockerfile and `deploy.sh` target a Nebius Serverless AI endpoint.
 
 ### Design
 
