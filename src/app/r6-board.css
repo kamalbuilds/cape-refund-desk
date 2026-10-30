@@ -1,40 +1,45 @@
 /* Refund board after a run. Overrides the legacy layer only; see DESIGN.md. */
 @layer components {
 
-/* ---- run summary: quiet control row first ---- */
-html body .runbar{
-  background:transparent;
-  border:0;
-  border-radius:0;
-  box-shadow:none;
-  padding:0;
-  margin:0 0 28px;
-  animation:none;
+/* ---- board bar: run status left, tertiary action right ---- */
+html body .boardbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:40px;
+  margin:0 0 20px;
+  padding:0 0 12px;
+  border-bottom:1px solid var(--rule);
 }
-html body .runbar>summary{
-  list-style:none;
+html body .boardbar-t{
   display:inline-flex;
   align-items:center;
-  min-height:32px;
-  padding:4px 0;
-  font:400 13px/20px var(--sans);
-  color:var(--faint);
-  cursor:pointer;
+  gap:8px;
+  margin:0;
+  font:480 13px/20px var(--sans);
+  color:var(--soft);
 }
-html body .runbar>summary::-webkit-details-marker{display:none}
-html body .runbar>summary:hover{color:var(--text)}
-html body .runbar[open]{
+html body .boardbar-t{white-space:nowrap}
+html body .boardbar-dot{flex:none;width:6px;height:6px;border-radius:999px;background:var(--periwinkle)}
+html body .boardbar-btn{
+  min-height:40px;
+  padding:0 14px;
+  font:480 13px/20px var(--sans);
+  color:var(--muted);
+  border:1px solid transparent;
+  white-space:nowrap;
+  transition:color 150ms ease,background-color 150ms ease,border-color 150ms ease;
+}
+html body .boardbar-btn:hover{color:var(--text);background:var(--glass);border-color:var(--glass-line)}
+html body .boardbar-btn[aria-expanded="true"]{color:var(--text);background:var(--raised)}
+html body .runbar-panel{
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:16px;
   box-shadow:none;
   padding:20px 24px;
-  margin-bottom:28px;
-}
-html body .runbar[open]>summary{
-  color:var(--text);
-  font-weight:480;
-  margin-bottom:16px;
+  margin:0 0 28px;
 }
 
 /* ---- answer zone ---- */
@@ -65,9 +70,19 @@ html body .zone .answer{
 html body .zone .answer b{font-family:var(--sans);font-weight:480;color:var(--text)}
 
 /* hero figure */
+html body .board-top{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:28px;
+  align-items:start;
+}
+html body .board-copy{min-width:0}
+html body .board-copy .runmeta{flex-direction:column;align-items:flex-start;gap:4px;margin-top:24px}
+html body .zone .board-copy .runmeta>span+span::before{content:none;padding:0}
+html body .zone .board-top{max-width:none}
 html body .claimcard{
-  margin-top:28px;
-  max-width:560px;
+  margin-top:0;
+  max-width:none;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:16px;
@@ -355,6 +370,11 @@ html body .pinbar button{
 html body .pinbar button:hover{background:var(--raised);border-color:var(--control-hi)}
 
 /* ---- wide ---- */
+@media(min-width:1024px){
+  html body .board-top{grid-template-columns:minmax(0,1.15fr) minmax(360px,.85fr);gap:48px;align-items:center}
+  html body .claimcard{padding:36px}
+  html body .claimcard>button{align-self:flex-start}
+}
 @media(min-width:1280px){
   html body .stage .tabs{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
@@ -363,7 +383,8 @@ html body .pinbar button:hover{background:var(--raised);border-color:var(--contr
 @media(max-width:700px){
   html body .zone{padding:0 0 20px}
   html body .zone .headline{font-size:32px;line-height:36px;max-width:none}
-  html body .claimcard{margin-top:20px;padding:24px}
+  html body .claimcard{padding:24px}
+  html body .board-top{gap:20px}
   html body .claim-num{font-size:32px;line-height:36px}
   html body .zone .runmeta{margin-top:16px}
   html body .zone .runmeta>span+span::before{padding:0 6px}
@@ -389,6 +410,8 @@ html body .pinbar button:hover{background:var(--raised);border-color:var(--contr
   html body .lanepanel .row .why{grid-area:why}
   html body .lanepanel .row .amt{grid-area:amt}
   html body .lanepanel-h>button{min-height:44px}
-  html body .runbar>summary{min-height:44px}
+  html body .boardbar-btn{min-height:44px}
+  html body .boardbar-more{display:none}
+  html body .claimcard>button{width:100%;justify-content:center}
 }
 }

@@ -14,7 +14,7 @@ import { LANES, laneOf } from "@/lib/lanes-ui";
 import Stage from "./Stage";
 import { CountInt, CountMoney, Reveal, TwistCard, Words } from "./motion";
 import Waterfall from "./Waterfall";
-import { AlertTriangle, ChevronDown, Download, FileText, Play, X } from "lucide-react";
+import { AlertTriangle, ChevronDown, Download, FileText, Play, Upload, X } from "lucide-react";
 import { BTN_PRIMARY, BTN_SECONDARY, BTN_TERTIARY, Id } from "./ui";
 import Audience from "./Audience";
 import ExportExtras from "./ExportExtras";
@@ -48,6 +48,7 @@ function Mark() {
 
 export default function Desk() {
   const [board, setBoard] = useState<Board | null>(null);
+  const [runOpen, setRunOpen] = useState(false);
   const [expl, setExpl] = useState<Record<string, Explanation>>({});
   const [pnote, setPnote] = useState<PortfolioNote | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
@@ -182,27 +183,28 @@ export default function Desk() {
   );
 
   const zone = board ? (
-    <div className="zone-in">
-      <h2 className="headline"><b><CountInt n={attention} animate={animate} dur={1000} delay={500} /></b> of {verdicts.length} shipments shouldn&apos;t go in the refund file yet. Here&apos;s why.</h2>
-      {laneTotals && (
-        <>
+    <div className="zone-in board-top">
+      <div className="board-copy">
+        <h2 className="headline"><b><CountInt n={attention} animate={animate} dur={1000} delay={500} /></b> of {verdicts.length} shipments shouldn&apos;t go in the refund file yet. Here&apos;s why.</h2>
+        {laneTotals && (
           <p className="answer">
             {laneTotals.NET_BILL_RISK.count} {laneTotals.NET_BILL_RISK.count === 1 ? "shipment" : "shipments"} could turn a refund into a bill. Open a group below to see what Customs found.
           </p>
-          <div className="claimcard">
-            <p className="claim-label">Safe to claim</p>
-            <p className="claim-num"><CountMoney cents={laneTotals.FILE_NOW.refundCents} animate={animate} dur={800} delay={300} /></p>
-            <p className="claim-sub"><b>{laneTotals.FILE_NOW.count} {laneTotals.FILE_NOW.count === 1 ? "shipment" : "shipments"}</b> · Customs&apos; checks found nothing wrong</p>
-            <button className={BTN_PRIMARY} onClick={() => document.querySelector(".dock")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" })}>Add safe shipments to the refund file</button>
-          </div>
-        </>
+        )}
+        <p className="runmeta">
+          <span>{/^SYNTHETIC SAMPLE/.test(board.label) ? `Sample data: ${verdicts.length} made-up shipments. Not real trade data.` : board.label}</span>
+          <span>Checked as of <span className="mono">{board.asOf}</span></span>
+          {board.asOf !== today() && <span data-testid="asof-note">Day counts run from {board.asOf}, the date in this data, not from today ({today()}).</span>}
+        </p>
+      </div>
+      {laneTotals && (
+        <div className="claimcard">
+          <p className="claim-label">Safe to claim</p>
+          <p className="claim-num"><CountMoney cents={laneTotals.FILE_NOW.refundCents} animate={animate} dur={800} delay={300} /></p>
+          <p className="claim-sub"><b>{laneTotals.FILE_NOW.count} {laneTotals.FILE_NOW.count === 1 ? "shipment" : "shipments"}</b> · Customs&apos; checks found nothing wrong</p>
+          <button className={BTN_PRIMARY} onClick={() => document.querySelector(".dock")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" })}>Add safe shipments to the refund file</button>
+        </div>
       )}
-      <p className="runmeta">
-        <span>{mode === "replay" ? "Recorded run" : mode === "live" ? "Live run" : "Browser-only check"}</span>
-        <span>{/^SYNTHETIC SAMPLE/.test(board.label) ? `Sample data: ${verdicts.length} made-up shipments. Not real trade data.` : board.label}</span>
-        <span>Checked as of <span className="mono">{board.asOf}</span></span>
-        {board.asOf !== today() && <span data-testid="asof-note">Day counts run from {board.asOf}, the date in this data, not from today ({today()}).</span>}
-      </p>
     </div>
   ) : (
     <div className="zone-in">
@@ -278,17 +280,22 @@ export default function Desk() {
       )}
 
       {(board || running) && (
-        <details className="panel runbar" open={false}>
-          <summary>Check another file or use your own</summary>
-          {controls}
-        </details>
+        <>
+          <div className="boardbar">
+            <p className="boardbar-t"><span className="boardbar-dot" aria-hidden />{mode === "replay" ? "Recorded run" : mode === "live" ? "Live run" : mode === "browser" ? "Browser-only check" : "Checking"}</p>
+            <button type="button" className={`${BTN_TERTIARY} boardbar-btn`} aria-expanded={runOpen} aria-controls="runbar-panel" onClick={() => setRunOpen((o) => !o)}>
+              <Upload size={14} aria-hidden /><span>Check another file<span className="boardbar-more"> or use your own</span></span>
+            </button>
+          </div>
+          {runOpen && <section id="runbar-panel" className="panel runbar-panel">{controls}</section>}
+        </>
       )}
 
       {notice && <Notice n={notice} replay={replay} canBrowser={!!csvText} inBrowser={inBrowser} />}
 
       {(board || running) && (
         <>
-          <Stage verdicts={verdicts} count={total || 69} arrived={arrived} lanes={laneTotals} animate={animate} lane={lane} onLane={pickLane} onOpen={openFirstLane} explained={explained} zone={zone} running={running} />
+          <Stage verdicts={verdicts} count={total || 69} arrived={arrived} lanes={laneTotals} animate={animate} lane={lane} onLane={pickLane} onOpen={openFirstLane} explained={explained} zone={zone} running={running} hero={!!board} />
 
           {board && running && <section className="panel"><Progress prog={prog} stage={stage} /></section>}
           {board && !lane && <p className="hint">Pick a group above to see its shipments.</p>}

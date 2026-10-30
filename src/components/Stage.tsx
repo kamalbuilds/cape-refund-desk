@@ -16,9 +16,9 @@ type LaneTotals = { count: number; refundCents: number; billCents: number };
 export default function Stage(p: {
   verdicts: Verdict[]; count: number; arrived: number; lanes: Record<Lane, LaneTotals> | null; animate: boolean;
   lane: Lane | null; onLane: (l: Lane) => void; onOpen: (id: string) => void; explained: Set<string>;
-  zone: ReactNode; running: boolean;
+  zone: ReactNode; running: boolean; hero?: boolean;
 }) {
-  const { verdicts, count, arrived, lanes, animate, lane, onLane, onOpen, explained, zone, running } = p;
+  const { verdicts, count, arrived, lanes, animate, lane, onLane, onOpen, explained, zone, running, hero } = p;
   const stageRef = useRef<HTMLDivElement>(null);
   const intakeRef = useRef<HTMLDivElement>(null);
   const areaRefs = useRef<Partial<Record<Lane, HTMLSpanElement | null>>>({});
@@ -86,7 +86,7 @@ export default function Stage(p: {
                 <span className="lane-u">shipments</span>
               </span>
               <span className="tab-m">
-                {t ? (l.id === "NET_BILL_RISK"
+                {t ? (l.id === "FILE_NOW" && hero ? <>Dollar total is in the card above</> : l.id === "NET_BILL_RISK"
                   ? <><b><CountMoney cents={t.refundCents} animate={animate} delay={450 + li * 90} /></b> refund, but up to <b className="neg"><CountMoney cents={t.billCents} animate={animate} delay={450 + li * 90} /></b> in bills</>
                   : <><b><CountMoney cents={t.refundCents} animate={animate} delay={450 + li * 90} /></b> in tariffs paid</>) : <>&nbsp;</>}
               </span>
